@@ -1,0 +1,22 @@
+# Dados de quem usa: conversas, chave criptografada, memória, anexos. Nunca no git.
+dados/
+
+# Ambientes e motores baixados pelo instalador
+.venv/
+runtime/
+node_modules/
+
+# Python e lixo de sistema
+__pycache__/
+*.pyc
+*.log
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Lista local de termos que não podem aparecer no repositório (o próprio teste não publica a lista)
+testes/privacidade-local.txt
+
+# Segredo, por garantia
+.env
+.env.*

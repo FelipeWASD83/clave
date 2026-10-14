@@ -1,0 +1,39 @@
+# Padrões sem barra no início valem em qualquer nível: servem para a raiz e
+# para cada projeto (o _organizacao/git-setup.ps1 copia este arquivo para eles).
+
+# Dependências e builds: nunca versionar
+node_modules/
+dist/
+build/
+.vite/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Bancos e artefatos de execução
+*.db-wal
+*.db-shm
+*.sqlite-journal
+uploads/
+
+# Segredo: nunca, em hipótese alguma
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Material bruto insubstituível: backup disso é cópia de arquivo, não commit
+_originais/
+
+# Pacotes soltos
+*.zip
+*.rar
+*.7z
+
+# Lixo de sistema e editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

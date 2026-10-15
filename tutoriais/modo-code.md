@@ -43,7 +43,7 @@ Isso vale em qualquer modo. Se preferir que ele vá direto, desligue em **Config
 
 ## Desfazer
 
-Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou mudou naquela resposta voltam a ser como eram. (Comandos que apagam ou mexem fora da pasta não têm como ser desfeitos: por isso eles sempre pedem OK.)
+Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou editou naquela resposta voltam a ser como eram. O que um **comando** fez (mover, renomear, apagar, rodar um script) não volta com o botão: por isso o card do comando mostra o que vai rodar antes, e os que apagam ou mexem fora da pasta sempre pedem OK. Para uma mudança grande feita por comando, peça antes uma lista do que vai ser mexido, ou uma cópia.
 
 ## Arquivos protegidos
 

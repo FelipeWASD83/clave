@@ -4,6 +4,7 @@ trilha: 1. Primeiros passos
 ordem: 0
 duracao: 4 min
 resumo: Pagar pelo que usa, sem limite de 5 horas, com os seus dados no seu computador. E quando o app oficial é melhor.
+video: por-que-o-clave
 ---
 
 O Clave conversa com o Claude pela [API](#/aprender/glossario/api), com a sua [chave](#/aprender/glossario/chave-da-api). Parece um detalhe técnico, mas muda muita coisa para quem usa.

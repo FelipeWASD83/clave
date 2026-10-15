@@ -4,6 +4,7 @@ trilha: 1. First steps
 ordem: 2
 duracao: 6 min
 resumo: How to create your Anthropic account, get your key, add credit and avoid spending more than you want.
+video: chave-da-api
 ---
 
 Clave talks to Claude through Anthropic's [API](#/aprender/glossario/api). To do that, it needs your [API key](#/aprender/glossario/chave-da-api): a long password that tells Anthropic which account the payment comes out of.

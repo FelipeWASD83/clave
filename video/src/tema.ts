@@ -1,9 +1,8 @@
-// Identidade do Clave (a mesma do app: papel, tinta e um verde-azulado de ação) e o relógio do vídeo.
+// Identidade do Clave (a mesma do app: papel, tinta e um verde-azulado de ação) e o relógio dos vídeos.
 // A linha do tempo sai da narração: cada cena dura o que a fala dela dura, mais as folgas daqui.
 import {loadFont as carregarSerifa} from '@remotion/google-fonts/SourceSerif4';
 import {loadFont as carregarSans} from '@remotion/google-fonts/IBMPlexSans';
 import {loadFont as carregarMono} from '@remotion/google-fonts/IBMPlexMono';
-import narracao from './narracao.gerado.json';
 
 export const {fontFamily: SERIFA} = carregarSerifa('normal', {weights: ['400', '500', '600'], subsets: ['latin', 'latin-ext']});
 export const {fontFamily: SANS} = carregarSans('normal', {weights: ['400', '500', '600'], subsets: ['latin', 'latin-ext']});
@@ -42,54 +41,24 @@ export const ALTURA = 1080;
 export const TROCA = 16;
 const ANTES = 10; // da folha assentar até a fala começar
 const DEPOIS = 22; // da fala acabar até a próxima folha
-const EXTRA: Record<string, number> = {fecho: 60, custo: 10, code: 8};
 
-// o fundo de cada cena: claro e escuro se alternando
-export const FUNDO: Record<string, 'papel' | 'tinta'> = {
-  gancho: 'tinta',
-  apresenta: 'papel',
-  custo: 'tinta',
-  limite: 'papel',
-  dados: 'tinta',
-  fluxo: 'papel',
-  code: 'tinta',
-  aprender: 'papel',
-  fecho: 'tinta',
-};
-
+export type Lingua = 'pt-BR' | 'en';
 export type Palavra = {t: number; d: number; texto: string};
-export type Cena = {id: string; de: number; dura: number; fala: number; arquivo: string; palavras: Palavra[]};
+export type CenaNarrada = {id: string; arquivo: string; duracao: number; texto: string; palavras: Palavra[]; marcas: Record<string, number>};
+export type Narracao = {video: string; lingua: Lingua; voz: string; cenas: CenaNarrada[]};
+export type Cena = {id: string; de: number; dura: number; fala: number; arquivo: string; marcas: Record<string, number>};
 
-export const CENAS: Cena[] = (() => {
+// extra: quadros a mais no fim de uma cena (para a tela respirar depois da fala)
+export const montarCenas = (narracao: Narracao, extra: Record<string, number> = {}): {cenas: Cena[]; duracao: number} => {
   let de = 0;
-  return narracao.cenas.map((c, i) => {
+  const cenas = narracao.cenas.map((c, i) => {
     const fala = (i === 0 ? 0 : TROCA) + ANTES;
-    const dura = fala + Math.ceil(c.duracao * FPS) + DEPOIS + (EXTRA[c.id] ?? 0);
-    const cena = {id: c.id, de, dura, fala, arquivo: c.arquivo, palavras: c.palavras};
+    const dura = fala + Math.ceil(c.duracao * FPS) + DEPOIS + (extra[c.id] ?? 0);
+    const cena = {id: c.id, de, dura, fala, arquivo: c.arquivo, marcas: c.marcas};
     de += dura;
     return cena;
   });
-})();
-
-export const DURACAO = CENAS[CENAS.length - 1].de + CENAS[CENAS.length - 1].dura;
-
-export const cena = (id: string): Cena => {
-  const c = CENAS.find((x) => x.id === id);
-  if (!c) throw new Error(`cena sem narração: ${id}`);
-  return c;
-};
-
-const normal = (s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
-
-// Quadro (relativo ao começo da cena) em que a n-ésima ocorrência de uma palavra começa a ser dita.
-export const quando = (id: string, palavra: string, n = 0): number => {
-  const c = cena(id);
-  const alvo = normal(palavra);
-  const achadas = c.palavras.filter((p) => normal(p.texto) === alvo);
-  const p = achadas[n];
-  if (!p) throw new Error(`a cena ${id} não diz "${palavra}" (${n})`);
-  return c.fala + Math.round(p.t * FPS);
+  return {cenas, duracao: de};
 };
 
 // molas: um vocabulário só de movimento

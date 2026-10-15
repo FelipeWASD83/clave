@@ -10,11 +10,11 @@ resumo: Ready-made packages of skills, agents and workflows, and the shortcuts t
 
 Type `/` in the message box and the list of shortcuts appears:
 
-- **Clave's own:** `/novo`, `/modelo haiku`, `/esforco alto`, `/plano` (Plan mode in Code), `/custo`, `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`. (These names stay in Portuguese because that is what the app accepts.)
-- **Commands:** ready-made requests with room for you to fill in, like `/escrita:email to the supplier asking for more time`.
-- **Skills:** call a [skill](#/aprender/glossario/skill) directly, like `/escritorio:excel-avancado`.
+- **Clave's own:** `/new`, `/model haiku`, `/effort high`, `/plan` (Plan mode in Code), `/cost`, `/workflow`, `/memory`, `/permissions`, `/plugins`, `/help`. Every command that comes with Clave also works with its Portuguese name (`/ajuda`, `/resumo`, `/vendas:proposta`...).
+- **Commands:** ready-made requests with room for you to fill in, like `/writing:email to the supplier asking for more time`.
+- **Skills:** call a [skill](#/aprender/glossario/skill) directly, like `/office:advanced-excel`.
 
-You create your own commands in a file `.claude/commands/name.md` (inside the folder or in your personal folder). The text becomes the message, and `$ARGUMENTS` is replaced by whatever you write after the command. Or ask Claude: `/crie-o-seu:nova-skill`.
+You create your own commands in a file `.claude/commands/name.md` (inside the folder or in your personal folder). The text becomes the message, and `$ARGUMENTS` is replaced by whatever you write after the command. Or ask Claude: `/make-your-own:new-skill`.
 
 ## Plugins
 

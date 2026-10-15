@@ -1,20 +1,22 @@
 // Cena 1: "Vinte dólares por mês de assinatura. E, mesmo assim: limite atingido. Volte em cinco horas."
+import {useLinha} from '../../linha';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Entra, Fundo, Rotulo} from '../componentes/Base';
-import {Icone} from '../componentes/Icones';
-import {COR, MOLA, MONO, SANS, SERIFA, quando} from '../tema';
+import {Entra, Fundo, Rotulo} from '../../componentes/Base';
+import {Icone} from '../../componentes/Icones';
+import {COR, MOLA, MONO, SANS, SERIFA} from '../../tema';
 
 const C = 'gancho';
 
 export const Gancho: React.FC = () => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const tVinte = quando(C, 'Vinte');
-  const tMes = quando(C, 'mês');
+  const {quando, T} = useLinha();
+  const tVinte = quando(C, 'vinte');
+  const tMes = quando(C, 'mes');
   const tAssinatura = quando(C, 'assinatura');
   const tMesmo = quando(C, 'mesmo');
   const tLimite = quando(C, 'limite');
-  const tVolte = quando(C, 'Volte');
+  const tVolte = quando(C, 'volte');
 
   const preco = spring({frame: f - tVinte, fps, config: {damping: 14, mass: 0.8, stiffness: 120}});
   const conta = Math.round(interpolate(f - tVinte, [0, 14], [0, 20], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}));
@@ -39,14 +41,14 @@ export const Gancho: React.FC = () => {
           }}
         >
           <div style={{display: 'flex', alignItems: 'baseline', gap: 18, opacity: preco, transform: `translateY(${(1 - preco) * 60}px)`}}>
-            <span style={{fontFamily: SERIFA, fontSize: 110, color: COR.tintaTexto2}}>US$</span>
+            <span style={{fontFamily: SERIFA, fontSize: 110, color: COR.tintaTexto2}}>{T('US$')}</span>
             <span style={{fontFamily: SERIFA, fontSize: 300, fontWeight: 500, letterSpacing: '-0.04em', color: COR.tintaTexto, lineHeight: 1}}>{conta}</span>
             <span style={{fontFamily: SERIFA, fontSize: 96, color: COR.tintaTexto2, opacity: interpolate(f - tMes, [0, 8], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
-              /mês
+              {T('/mês')}
             </span>
           </div>
           <div style={{marginTop: 26}}>
-            <Rotulo texto="de assinatura, use você muito ou pouco" inicio={tAssinatura} cor={COR.tintaTexto3} tamanho={30} />
+            <Rotulo texto={T('de assinatura, use você muito ou pouco')} inicio={tAssinatura} cor={COR.tintaTexto3} tamanho={30} />
           </div>
         </div>
 
@@ -68,9 +70,9 @@ export const Gancho: React.FC = () => {
               <Icone nome="ampulheta" tamanho={64} cor={COR.erroClaro} />
             </div>
             <div style={{flex: 1}}>
-              <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 52, color: COR.tintaTexto}}>Limite atingido</div>
+              <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 52, color: COR.tintaTexto}}>{T('Limite atingido')}</div>
               <div style={{fontFamily: SANS, fontSize: 32, color: COR.tintaTexto2, marginTop: 10, opacity: interpolate(f - tVolte, [0, 8], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
-                Volte em
+                {T('Volte em')}
                 <span style={{fontFamily: MONO, fontWeight: 500, fontSize: 46, color: COR.erroClaro, marginLeft: 18, opacity: pisca}}>{relogio}</span>
               </div>
             </div>

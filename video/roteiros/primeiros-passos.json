@@ -1,0 +1,30 @@
+{
+ "_como_ler": "Igual ao por-que-o-clave.json. Bate com o README (instalação) e com a lição tutoriais/primeira-conversa.md (e en/).",
+ "id": "primeiros-passos",
+ "cenas": [
+  {"id": "abre",
+   "pt-BR": "{do}Do download à {primeira}primeira conversa com o Clód, {um}em um minuto.",
+   "en": "{do}From download to your {primeira}first conversation with Claude, {um}in one minute."},
+  {"id": "instalar",
+   "pt-BR": "{baixe}Baixe o Clave no Guít Râb e {extraia}extraia o ZIP numa pasta sua. {dois}Depois, dois cliques no {instalar}instalar ponto bat: {prepara}ele prepara tudo e {atalho}cria o atalho Clave na área de trabalho.",
+   "en": "{baixe}Download the Clave app from GitHub and {extraia}extract the ZIP into a folder of yours. {dois}Then double-click the {instalar}installer file: {prepara}it sets everything up and {atalho}puts a Clave shortcut on your desktop."},
+  {"id": "boas",
+   "pt-BR": "{primeira}Na primeira vez, a janela de boas-vindas pede {chave}a sua chave da A P I, {teto}o teto de gasto do mês {nome}e como você quer ser chamado.",
+   "en": "{primeira}The first time, the welcome window asks for {chave}your API key, {teto}your monthly spending cap {nome}and what you'd like to be called."},
+  {"id": "conversa",
+   "pt-BR": "{clique}Para conversar, clique em Nova conversa {escreva}e escreva o pedido.",
+   "en": "{clique}To chat, click New chat {escreva}and type your request."},
+  {"id": "modelo",
+   "pt-BR": "{antes}Antes de enviar, escolha quem responde no {botao}botão do modelo: {raicu}Ráicu para o simples, {sonnet}Sonnet para o dia a dia, {opus}Opus para o difícil.",
+   "en": "{antes}Before sending, pick who answers with the {botao}model button: {raicu}Haiku for simple things, {sonnet}Sonnet for everyday work, {opus}Opus for the hard stuff."},
+  {"id": "resposta",
+   "pt-BR": "Agora é só apertar {enter}Enter. {embaixo}Embaixo da resposta aparece o modelo e {quanto}quanto ela custou: {menos}menos de um centavo de dólar.",
+   "en": "{enter}Press Enter. {embaixo}Under the answer you'll see the model and {quanto}what it cost: {menos}less than a cent."},
+  {"id": "uso",
+   "pt-BR": "{com}Com o tempo, o painel {seu}Seu uso, na tela inicial, mostra {tokens}os tokens, {dias}os dias seguidos {mes}e quanto você já gastou no mês.",
+   "en": "{com}Over time, the {seu}Your usage panel on the start screen shows {tokens}your tokens, {dias}your streak of days {mes}and how much you've spent this month."},
+  {"id": "fecho",
+   "pt-BR": "{pronto}Tudo pronto. {duvida}Bateu dúvida? Tem {licoes}lições do zero em Aprender, na barra da esquerda.",
+   "en": "{pronto}That's it. {duvida}Got questions? There are {licoes}lessons from scratch under Learn, in the left sidebar."}
+ ]
+}

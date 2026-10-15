@@ -1,6 +1,6 @@
 // Fluxos e agentes: os fluxos prontos (e os seus), os agentes que fazem as etapas e o histórico do que já rodou.
 import { api } from './api.js';
-import { cfg, salvarConfig, modeloInfo, estado } from './estado.js';
+import { cfg, salvarConfig, modeloInfo, estado, nomeComando } from './estado.js';
 import { ic } from './icones.js';
 import { el, janela, aviso, confirmar, usd, chaveLiga, dataHora } from './ui.js';
 import { t } from './i18n.js';
@@ -22,7 +22,9 @@ function rotuloOrigem(o) {
 }
 
 function usarFluxo(m, modo) {
-  sessionStorage.setItem('clave:rascunho', `/fluxo ${m.id} `);
+  // em inglês, /workflow e o id em inglês dos fluxos que vêm com o Clave (os da pessoa ficam com o id dela)
+  const id = m.origem === 'clave' || String(m.origem || '').startsWith('plugin:') ? nomeComando(m.id) : m.id;
+  sessionStorage.setItem('clave:rascunho', `/${nomeComando('fluxo')} ${id} `);
   location.hash = modo === 'code' ? '#/code' : '#/novo';
 }
 

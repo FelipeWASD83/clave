@@ -10,7 +10,7 @@ resumo: Pacotes prontos de skills, agentes e fluxos, e os atalhos que começam c
 
 Digite `/` na caixa de mensagem e aparece a lista de atalhos:
 
-- **Do Clave:** `/novo`, `/modelo haiku`, `/esforco alto`, `/plano` (modo Plano no Code), `/custo`, `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`.
+- **Do Clave:** `/novo`, `/modelo haiku`, `/esforco alto`, `/plano` (modo Plano no Code), `/custo`, `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`. Todo comando que vem com o Clave também funciona com o nome em inglês (`/help`, `/summary`, `/sales:proposal`...).
 - **Comandos:** pedidos prontos com espaço para completar, como `/escrita:email para o fornecedor pedindo prazo`.
 - **Skills:** chamar uma [skill](#/aprender/glossario/skill) direto, como `/escritorio:excel-avancado`.
 

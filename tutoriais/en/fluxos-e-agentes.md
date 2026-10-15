@@ -31,7 +31,7 @@ Nothing happens until you click **Run workflow**. While it runs, click a step to
 ## How to start a workflow
 
 - Ask: "do this as a workflow" and Claude builds the steps.
-- Or type `/fluxo` in the message box and pick a ready-made workflow (Plan, do and test; Deep research; Parallel review; Large spreadsheet; Write and review).
+- Or type `/workflow` in the message box and pick a ready-made workflow (Plan, do and test; Deep research; Parallel review; Large spreadsheet; Write and review).
 - Or go to **Workflows & agents** in the left sidebar, pick one and click *Use in chat* or *Use in Code*.
 
 Some steps run **at the same time** (for example, three searches in parallel), which makes the workflow faster without costing more.

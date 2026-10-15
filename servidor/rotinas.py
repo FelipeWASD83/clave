@@ -127,6 +127,27 @@ def apagar(rid: str) -> None:
     banco.apagar_rotina(rid)
 
 
+def desligar_todas() -> int:
+    """"Sair da conta": sem chave nenhuma rotina conseguiria rodar; elas ficam salvas, desligadas e fora do
+    Agendador do Windows até a pessoa religar."""
+    n = 0
+    for r in banco.listar_rotinas():
+        if r.get("agendador") and sys.platform == "win32":
+            desagendar_windows(r["id"])
+        if r.get("ligada"):
+            banco.marcar_rotina(r["id"], ligada=0)
+            n += 1
+    return n
+
+
+def desagendar_todas() -> None:
+    """Desinstalar: nenhuma tarefa "Clave\\Rotina ..." pode sobrar no Agendador apontando para uma pasta apagada."""
+    if sys.platform != "win32":
+        return
+    for r in banco.listar_rotinas():
+        desagendar_windows(r["id"])
+
+
 def avisos_desde(n: int) -> tuple[list[dict], int]:
     with _trava:
         return _avisos[n:], len(_avisos)

@@ -1,0 +1,33 @@
+{
+ "_como_ler": "A fala de cada cena, por idioma. {marca} antes de uma palavra marca a hora em que ela é dita: a cena usa quando(cena, marca) para animar na hora certa. A fala em português usa grafia de pronúncia (Clód, Ráicu, A P I, Guít Râb); a tela mostra o nome certo.",
+ "id": "por-que-o-clave",
+ "cenas": [
+  {"id": "gancho",
+   "pt-BR": "{vinte}Vinte dólares por {mes}mês de {assinatura}assinatura. E, {mesmo}mesmo assim: {limite}limite atingido. {volte}Volte em cinco horas.",
+   "en": "{vinte}Twenty dollars a {mes}month for a {assinatura}subscription. And {mesmo}even so: {limite}limit reached. {volte}Come back in five hours."},
+  {"id": "apresenta",
+   "pt-BR": "{conheca}Conheça o {clave}Clave. Um app para {windows}Windows que usa o {claude}Clód, pela A P I, com a sua própria {chave}chave.",
+   "en": "{conheca}Meet {clave}Clave. A {windows}Windows app that uses {claude}Claude through the API, with your own {chave}key."},
+  {"id": "custo",
+   "pt-BR": "{na}Na A P I, {voce}você paga só o que usa. {mil}Mil mensagens curtas no Ráicu saem por uns {quarenta}quarenta centavos de dólar. E o Clave mostra o {custo}custo de cada {resposta}resposta, com um {teto}teto mensal que você mesmo {define}define.",
+   "en": "{na}With the API, {voce}you only pay for what you use. {mil}A thousand short messages on Haiku come to about {quarenta}forty cents. And Clave shows the {custo}cost of every {resposta}answer, with a monthly {teto}cap that you {define}set yourself."},
+  {"id": "limite",
+   "pt-BR": "{sem}Sem janela de cinco {horas}horas. {sem2}Sem limite {semanal}semanal.",
+   "en": "{sem}No five-hour {horas}window. {sem2}No weekly {semanal}limit."},
+  {"id": "dados",
+   "pt-BR": "{na}Na A P I, por padrão, as suas {mensagens}mensagens {nao}não são usadas para treinar modelos. E as suas {conversas}conversas {ficam}ficam no seu {computador}computador.",
+   "en": "{na}With the API, by default, your {mensagens}messages are {nao}not used to train models. And your {conversas}conversations {ficam}stay on your {computador}computer."},
+  {"id": "fluxo",
+   "pt-BR": "{escolha}Escolha o {modelo}modelo {certo}certo para cada {tarefa}tarefa. {ou}Ou junte todos num {fluxo}fluxo: o {opus}Opus planeja, o {sonnet}Sonnet faz, o {raicu}Ráicu confere. E você vê o {preco}preço antes de {aprovar}aprovar.",
+   "en": "{escolha}Choose the {modelo}right {certo}model for each {tarefa}task. {ou}Or put them all together in a {fluxo}workflow: {opus}Opus plans, {sonnet}Sonnet does the work, {raicu}Haiku checks it. And you see the {preco}price before you {aprovar}approve."},
+  {"id": "code",
+   "pt-BR": "{no}No modo Code, o Clód {trabalha}trabalha nas suas pastas: {planilhas}planilhas, {arquivos}arquivos, {scripts}scripts. {voce}Você {aprova}aprova cada mudança, e pode {desfazer}desfazer. Com as {rotinas}rotinas, ele trabalha sozinho, no {horario}horário que você escolher.",
+   "en": "{no}In Code mode, Claude {trabalha}works in your folders: {planilhas}spreadsheets, {arquivos}files, {scripts}scripts. {voce}You {aprova}approve every change, and you can {desfazer}undo it. With {rotinas}routines, it works on its own, on the {horario}schedule you choose."},
+  {"id": "aprender",
+   "pt-BR": "{nunca}Nunca usou inteligência {artificial}artificial? {tem}Tem {licoes}lições em português, do {zero}zero.",
+   "en": "{nunca}Never used {artificial}AI before? {tem}There are {licoes}lessons that start from {zero}scratch."},
+  {"id": "fecho",
+   "pt-BR": "{o}O {clave}Clave é {codigo}código aberto e {gratuito}gratuito. {voce}Você só paga o que usar. É só baixar no Guít Râb.",
+   "en": "{o}Best of all, {clave}Clave is {codigo}open source and {gratuito}free. {voce}You only pay for what you use. Just download it on GitHub."}
+ ]
+}

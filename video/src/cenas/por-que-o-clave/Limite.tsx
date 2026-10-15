@@ -1,8 +1,9 @@
 // Cena 4: "Sem janela de cinco horas. Sem limite semanal."
+import {useLinha} from '../../linha';
 import {AbsoluteFill, Easing, interpolate, useCurrentFrame} from 'remotion';
-import {Entra, Fundo, Nota, Rotulo} from '../componentes/Base';
-import {Icone} from '../componentes/Icones';
-import {COR, SANS, SERIFA, quando} from '../tema';
+import {Entra, Fundo, Nota, Rotulo} from '../../componentes/Base';
+import {Icone} from '../../componentes/Icones';
+import {COR, SANS, SERIFA} from '../../tema';
 
 const C = 'limite';
 
@@ -40,20 +41,21 @@ const Bloco: React.FC<{inicio: number; risco: number; icone: string; grande: str
 };
 
 export const Limite: React.FC = () => {
-  const tSem = quando(C, 'Sem');
+  const {quando, T} = useLinha();
+  const tSem = quando(C, 'sem');
   const tHoras = quando(C, 'horas');
-  const tSem2 = quando(C, 'Sem', 1);
+  const tSem2 = quando(C, 'sem2');
   const tSemanal = quando(C, 'semanal');
   return (
     <Fundo tipo="papel">
       <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
-        <Rotulo texto="Na API" inicio={tSem - 6} cor={COR.acao} tamanho={30} />
+        <Rotulo texto={T('Na API')} inicio={tSem - 6} cor={COR.acao} tamanho={30} />
         <div style={{display: 'flex', gap: 80, marginTop: 40}}>
-          <Bloco inicio={tSem} risco={tHoras} icone="relogio" grande="5 h" legenda="janela de uso" />
-          <Bloco inicio={tSem2} risco={tSemanal} icone="calendario" grande="7 dias" legenda="limite da semana" />
+          <Bloco inicio={tSem} risco={tHoras} icone="relogio" grande="5 h" legenda={T('janela de uso')} />
+          <Bloco inicio={tSem2} risco={tSemanal} icone="calendario" grande={T('7 dias')} legenda={T('limite da semana')} />
         </div>
       </AbsoluteFill>
-      <Nota texto="Na API o limite é de pedidos por minuto, folgado para uma pessoa." inicio={tSem2} claro />
+      <Nota texto={T('Na API o limite é de pedidos por minuto, folgado para uma pessoa.')} inicio={tSem2} claro />
     </Fundo>
   );
 };

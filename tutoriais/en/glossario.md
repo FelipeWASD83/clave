@@ -106,7 +106,7 @@ A list of plugins published in a GitHub repository (a `marketplace.json` file). 
 
 ## Slash command {#comando-de-barra}
 
-A shortcut that starts with `/` in the message box, like `/novo` (starts a new chat), `/modelo haiku` (switches the model) or `/escrita:email` (a command from the writing plugin). Some belong to Clave itself, others are ready-made requests saved in a file (`.claude/commands`) or skills.
+A shortcut that starts with `/` in the message box, like `/new` (starts a new chat), `/model haiku` (switches the model) or `/writing:email` (a command from the writing plugin). Some belong to Clave itself, others are ready-made requests saved in a file (`.claude/commands`) or skills.
 
 ## Permission rule {#regra-de-permissao}
 

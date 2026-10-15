@@ -1,6 +1,7 @@
-# Gerados: a narração (voz da Microsoft pelo edge-tts), os sons e o vídeo pronto. Saem dos scripts de ferramentas/.
+# Gerados: a narração (voz da Microsoft pelo edge-tts), os sons, os prints do app e os vídeos prontos. Saem dos
+# scripts de ferramentas/ (npm run narrar, sons, telas, videos). As capas (capas/ e capa.jpg) ficam no git.
 public/narracao/
 public/sons/
-src/narracao.gerado.json
+public/telas/
 saida/
 quadros/

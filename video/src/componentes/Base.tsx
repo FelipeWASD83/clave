@@ -74,6 +74,9 @@ export const Sobe: React.FC<{
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
   const palavras = texto.split(' ');
+  // a letra itálica inclina para a direita e passa da caixa da palavra, que corta (é ela que esconde a palavra antes
+  // de subir): uma folga à direita, descontada da margem, deixa a última letra inteira sem mudar o espaçamento
+  const folga = italico ? 0.2 : 0;
   return (
     <div style={{fontFamily: fonte, fontSize: tamanho, fontWeight: peso, color: cor, lineHeight: 1.08, letterSpacing: fonte === SERIFA ? '-0.02em' : '-0.01em', fontStyle: italico ? 'italic' : 'normal', ...estilo}}>
       {palavras.map((p, i) => {
@@ -87,7 +90,8 @@ export const Sobe: React.FC<{
               verticalAlign: 'bottom',
               paddingBottom: '0.08em',
               marginBottom: '-0.08em',
-              marginRight: i < palavras.length - 1 ? '0.24em' : 0,
+              paddingRight: `${folga}em`,
+              marginRight: i < palavras.length - 1 ? `${0.24 - folga}em` : `${-folga}em`,
             }}
           >
             <span style={{display: 'inline-block', transform: `translateY(${(1 - s) * 105}%)`, opacity: s}}>{p}</span>
@@ -138,3 +142,11 @@ export const Entra: React.FC<{inicio: number; children: React.ReactNode; distanc
     <div style={{opacity: s, transform: `translateY(${(1 - s) * distancia}px) scale(${escala ? 0.94 + s * 0.06 : 1})`, ...estilo}}>{children}</div>
   );
 };
+
+// o título das cenas de tutorial: número do passo (ou um rótulo curto) e o que se faz nele, em cima da janela do app
+export const Passo: React.FC<{rotulo: string; titulo: string; inicio: number; claro: boolean; x?: number; y?: number}> = ({rotulo, titulo, inicio, claro, x = 220, y = 52}) => (
+  <div style={{position: 'absolute', left: x, top: y, display: 'flex', alignItems: 'baseline', gap: 26}}>
+    <Rotulo texto={rotulo} inicio={inicio} cor={claro ? COR.acao : COR.tintaAcao} tamanho={24} />
+    <Sobe texto={titulo} inicio={inicio + 4} tamanho={56} cor={claro ? COR.texto : COR.tintaTexto} passo={2} />
+  </div>
+);

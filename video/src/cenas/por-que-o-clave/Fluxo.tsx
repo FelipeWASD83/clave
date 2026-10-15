@@ -1,10 +1,11 @@
 // Cena 6: "Escolha o modelo certo para cada tarefa. Ou junte todos num fluxo: o Opus planeja, o Sonnet faz,
 // o Haiku confere. E você vê o preço antes de aprovar."
 // A estimativa do cartão é a que o próprio Clave calculou num fluxo de verdade (teste de 14/10/2026).
+import {useLinha} from '../../linha';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Entra, Fundo, Rotulo, Sobe} from '../componentes/Base';
-import {Icone} from '../componentes/Icones';
-import {COR, MOLA, MONO, SANS, SERIFA, quando} from '../tema';
+import {Entra, Fundo, Rotulo, Sobe} from '../../componentes/Base';
+import {Icone} from '../../componentes/Icones';
+import {COR, MOLA, MONO, SANS, SERIFA} from '../../tema';
 
 const C = 'fluxo';
 
@@ -23,18 +24,19 @@ const Pontos: React.FC<{n: number}> = ({n}) => (
 );
 
 const ETAPAS = [
-  {n: 1, nome: 'Planejar', modelo: 'Opus 5.5', agente: 'planejador', palavra: 'Opus'},
-  {n: 2, nome: 'Fazer', modelo: 'Sonnet 5.5', agente: 'executor', palavra: 'Sonnet'},
-  {n: 3, nome: 'Conferir', modelo: 'Haiku 5.5', agente: 'revisor', palavra: 'Ráicu'},
+  {n: 1, nome: 'Planejar', modelo: 'Opus 5.5', agente: 'planejador', palavra: 'opus'},
+  {n: 2, nome: 'Fazer', modelo: 'Sonnet 5.5', agente: 'executor', palavra: 'sonnet'},
+  {n: 3, nome: 'Conferir', modelo: 'Haiku 5.5', agente: 'revisor', palavra: 'raicu'},
 ];
 
 export const Fluxo: React.FC = () => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const tEscolha = quando(C, 'Escolha');
-  const tOu = quando(C, 'Ou');
+  const {quando, T} = useLinha();
+  const tEscolha = quando(C, 'escolha');
+  const tOu = quando(C, 'ou');
   const tFluxo = quando(C, 'fluxo');
-  const tPreco = quando(C, 'preço');
+  const tPreco = quando(C, 'preco');
   const tAprovar = quando(C, 'aprovar');
   const troca = spring({frame: f - tOu, fps, config: MOLA, durationInFrames: 18});
   const cartao = spring({frame: f - (tFluxo - 6), fps, config: MOLA, durationInFrames: 18});
@@ -46,10 +48,10 @@ export const Fluxo: React.FC = () => {
         {/* título 1 e título 2 trocam de lugar */}
         <div style={{position: 'relative', height: 120}}>
           <div style={{position: 'absolute', opacity: 1 - troca, transform: `translateY(${-troca * 30}px)`}}>
-            <Sobe texto="O modelo certo para cada tarefa." inicio={tEscolha} tamanho={86} cor={COR.texto} />
+            <Sobe texto={T('O modelo certo para cada tarefa.')} inicio={tEscolha} tamanho={86} cor={COR.texto} />
           </div>
           <div style={{position: 'absolute', opacity: troca}}>
-            <Sobe texto="Ou todos juntos, num fluxo." inicio={tOu} tamanho={86} cor={COR.texto} />
+            <Sobe texto={T('Ou todos juntos, num fluxo.')} inicio={tOu} tamanho={86} cor={COR.texto} />
           </div>
         </div>
 
@@ -60,7 +62,7 @@ export const Fluxo: React.FC = () => {
               <div style={{background: COR.papel2, border: `2px solid ${COR.linha}`, borderRadius: 22, padding: '48px 48px 44px'}}>
                 <Icone nome="faisca" tamanho={48} cor={COR.acao} />
                 <div style={{fontFamily: SERIFA, fontSize: 70, fontWeight: 500, marginTop: 18, color: COR.texto}}>{m.nome}</div>
-                <div style={{fontFamily: SANS, fontSize: 32, color: COR.texto3, marginTop: 6}}>{m.papel}</div>
+                <div style={{fontFamily: SANS, fontSize: 32, color: COR.texto3, marginTop: 6}}>{T(m.papel)}</div>
                 <div
                   style={{
                     borderTop: `1.5px solid ${COR.linha}`,
@@ -76,9 +78,9 @@ export const Fluxo: React.FC = () => {
                     color: COR.texto3,
                   }}
                 >
-                  <span>inteligência</span>
+                  <span>{T('inteligência')}</span>
                   <Pontos n={m.cabeca} />
-                  <span>custo</span>
+                  <span>{T('custo')}</span>
                   <Pontos n={m.custo} />
                 </div>
               </div>
@@ -105,8 +107,8 @@ export const Fluxo: React.FC = () => {
           <div style={{display: 'flex', alignItems: 'center', gap: 22, padding: '28px 40px', borderBottom: `2px solid ${COR.linha}`}}>
             <Icone nome="fluxo" tamanho={46} cor={COR.acao} />
             <div>
-              <Rotulo texto="Fluxo proposto" inicio={tFluxo - 6} cor={COR.texto3} tamanho={20} />
-              <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 36, color: COR.texto, marginTop: 2}}>Planejar, fazer e conferir</div>
+              <Rotulo texto={T('Fluxo proposto')} inicio={tFluxo - 6} cor={COR.texto3} tamanho={20} />
+              <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 36, color: COR.texto, marginTop: 2}}>{T('Planejar, fazer e conferir')}</div>
             </div>
           </div>
           {ETAPAS.map((e) => {
@@ -115,7 +117,7 @@ export const Fluxo: React.FC = () => {
             return (
               <div key={e.n} style={{display: 'flex', alignItems: 'center', gap: 26, padding: '22px 40px', borderBottom: `1.5px solid ${COR.papel3}`, opacity: 0.25 + s * 0.75}}>
                 <div style={{width: 52, height: 52, borderRadius: 26, background: s > 0.5 ? COR.acao : COR.papel3, color: COR.papel, display: 'grid', placeItems: 'center', fontFamily: MONO, fontSize: 26}}>{e.n}</div>
-                <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 36, color: COR.texto, width: 260}}>{e.nome}</div>
+                <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 36, color: COR.texto, width: 260}}>{T(e.nome)}</div>
                 <div
                   style={{
                     fontFamily: MONO,
@@ -129,16 +131,16 @@ export const Fluxo: React.FC = () => {
                 >
                   {e.modelo}
                 </div>
-                <div style={{fontFamily: SANS, fontSize: 28, color: COR.texto3}}>agente {e.agente}</div>
+                <div style={{fontFamily: SANS, fontSize: 28, color: COR.texto3}}>{T('agente ' + e.agente)}</div>
               </div>
             );
           })}
           <div style={{display: 'flex', alignItems: 'center', gap: 30, padding: '28px 40px', background: COR.papel2}}>
             <div style={{fontFamily: SANS, fontSize: 30, color: COR.texto2, opacity: interpolate(f - tPreco, [0, 8], [0.25, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
-              Estimativa <span style={{fontFamily: MONO, color: COR.texto, background: f >= tPreco ? COR.acaoSuave : 'transparent', borderRadius: 8, padding: '2px 10px'}}>US$ 0,19 a 1,23</span>
-              <span style={{marginLeft: 26}}>Teto</span> <span style={{fontFamily: MONO, color: COR.texto}}>US$ 1,50</span>
+              {T('Estimativa')} <span style={{fontFamily: MONO, color: COR.texto, background: f >= tPreco ? COR.acaoSuave : 'transparent', borderRadius: 8, padding: '2px 10px'}}>{T('US$ 0,19 a 1,23')}</span>
+              <span style={{marginLeft: 26}}>{T('Teto')}</span> <span style={{fontFamily: MONO, color: COR.texto}}>{T('US$ 1,50')}</span>
             </div>
-            <div style={{marginLeft: 'auto', fontFamily: SANS, fontSize: 30, color: COR.texto3, padding: '14px 26px'}}>Recusar</div>
+            <div style={{marginLeft: 'auto', fontFamily: SANS, fontSize: 30, color: COR.texto3, padding: '14px 26px'}}>{T('Recusar')}</div>
             <div
               style={{
                 fontFamily: SANS,
@@ -156,7 +158,7 @@ export const Fluxo: React.FC = () => {
               }}
             >
               {aprovado && <Icone nome="certo" tamanho={30} cor={COR.papel} espessura={2.6} />}
-              {aprovado ? 'Rodando' : 'Rodar o fluxo'}
+              {aprovado ? T('Rodando') : T('Rodar o fluxo')}
             </div>
           </div>
         </div>

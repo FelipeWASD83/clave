@@ -278,5 +278,22 @@
   "Como o Claude vai falar": "How Claude will talk",
   "Com o jeito de falar e o resto da sua personalização. Troque a pergunta se quiser.": "With the way of talking and the rest of your personalization. Change the question if you like.",
   "Pedir OK antes de tarefas grandes": "Ask for OK before big tasks",
-  "Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer \"pode ir\", em qualquer modo. Vale para as conversas novas.": "Before touching several files or doing something hard to undo, Claude shows the plan and waits for you to say \"go ahead\", in any mode. Applies to new chats."
+  "Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer \"pode ir\", em qualquer modo. Vale para as conversas novas.": "Before touching several files or doing something hard to undo, Claude shows the plan and waits for you to say \"go ahead\", in any mode. Applies to new chats.",
+  "Sair da conta? A chave da API e as senhas salvas (e-mail, GitHub, conectores) são apagadas deste computador, todas as configurações voltam ao padrão e as rotinas são desligadas. As conversas, os projetos e a memória ficam. Depois aparecem a apresentação e os tours de novo, como na primeira vez.": "Sign out? The API key and the saved passwords (e-mail, GitHub, connectors) are deleted from this computer, every setting goes back to default and routines are turned off. Chats, projects and memory stay. Then the welcome screens and the tours show up again, like the first time.",
+  "Sair da conta": "Sign out",
+  "Desinstalar o Clave": "Uninstall Clave",
+  "O Clave fecha e apaga a pasta dele (com as conversas, os projetos, a memória e as configurações, que moram lá dentro), os atalhos da área de trabalho e do menu Iniciar e as tarefas das rotinas no Agendador do Windows. Não dá para desfazer.": "Clave closes and deletes its folder (with the chats, projects, memory and settings, which live inside it), the desktop and Start menu shortcuts and the routines' tasks in the Windows Task Scheduler. This can't be undone.",
+  "Quer guardar as conversas? Baixe o backup antes: dá para importar numa instalação nova.": "Want to keep your chats? Download the backup first: you can import it into a new install.",
+  "Desinstalar": "Uninstall",
+  "O Clave está sendo desinstalado. Pode fechar esta janela.": "Clave is being uninstalled. You can close this window.",
+  "Conselheiro de modelo": "Model advisor",
+  "O Haiku lê a conversa na primeira mensagem e depois a cada 5 e diz qual modelo faz a tarefa pelo menor preço. Cada avaliação custa uma fração de centavo.": "Haiku reads the chat at the first message and then every 5 and says which model does the task for the lowest price. Each check costs a fraction of a cent.",
+  "Sugerir o modelo certo para cada tarefa": "Suggest the right model for each task",
+  "Aparece um aviso na conversa quando outro modelo combina mais com o que você pediu.": "A note shows up in the chat when another model fits what you asked better.",
+  "Deixar o Clave trocar o modelo sozinho": "Let Clave switch the model on its own",
+  "Em vez de só sugerir, ele troca e avisa, com um botão para voltar. Numa conversa em que você voltar, ele não troca mais.": "Instead of just suggesting, it switches and tells you, with a button to go back. In a chat where you go back, it stops switching.",
+  "Sair e desinstalar": "Sign out and uninstall",
+  "Apaga a chave e as senhas, volta tudo ao padrão e mostra a apresentação e os tours de novo. As conversas ficam.": "Deletes the key and the passwords, sets everything back to default and shows the welcome screens and the tours again. Your chats stay.",
+  "Esta é uma cópia de desenvolvimento: apague a pasta à mão, se quiser.": "This is a development copy: delete the folder by hand if you want.",
+  "Tira o Clave do computador: a pasta, os atalhos e as tarefas das rotinas.": "Removes Clave from the computer: the folder, the shortcuts and the routines' tasks."
 }

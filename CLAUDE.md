@@ -76,6 +76,9 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
 | `servidor/compactar.py` | `/compact`: on-demand compaction (beta `compact-2026-09-04`); the block becomes a `compactacao` message and the request starts from it |
 | `servidor/importar.py` | Import from Claude or ChatGPT: the request to paste there, reading the reply (sections and one entry per line) and applying it |
 | `servidor/tom.py` | The way of talking (base tone and the Less, Default, More controls): the sentence for each choice in the system prompt and the example on Haiku |
+| `servidor/conselheiro.py` | The model advisor: Haiku reads the chat at the 1st message and every 5 and recommends the cheapest model that does the task (`recomendar_modelo`, forced tool call) |
+| `servidor/desinstalador.py` | Checks whether this folder may uninstall itself and launches `desinstalar.ps1` outside the server's process tree |
+| `ferramentas/desinstalar.ps1` | Uninstall, run from `%TEMP%` after the app closes: shortcuts that point to this folder, `%APPDATA%\Clave` and the Clave folder, behind safety checks |
 | `servidor/videos.py` | The lesson videos: the local file in the development copy (`video/saida/`), otherwise downloaded once from the `videos` release into `dados/videos`, served with Range |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP and SMTP with an app password, or the classic Outlook by COM) and Word (.docx with the standard library, PDF through the installed Word) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Model launch cards: the presentation card (opens once for a new model), the "new model" banner, the "Models" cards, the intelligence score and its source (`_inteligencia`) and models the account has that Clave doesn't know yet (Models API, once a day) |
@@ -146,7 +149,39 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
 - **The videos never ship inside the app.** Each MP4 is several MB and the Update button would download all of
   them on every version. They live in the `videos` release, created as a pre-release so `releases/latest` (the
   Update button) never picks it; re-rendered video: `gh release upload videos <file> --clobber`. Lessons point to
-  them with `video: <id>` in the front matter (`<id>.<pt-BR|en>.mp4`).
+  them with `video: <id>` in the front matter (`<id>.<pt-BR|en>.mp4`), and the README links there too, with the
+  covers from `video/capas/`.
+- **Haiku is the default model since 4.3** (new installs only: the saved config of existing users keeps their
+  model). The **model advisor** runs before the reply on the 1st user message and every 5 (`(n - 1) % 5 == 0`),
+  only in chat and Code, never in routines, workflow steps, lesson helpers, a command or skill with a fixed model,
+  "generate another answer" or a chat with `modelo_fixo`. It only suggests unless `trocar_modelo_sozinho` is on.
+  The advice is saved in the user message `meta.conselho` (the screen redraws the chat when the reply ends, and the
+  note with its buttons must survive); what the person decides goes to the chat `ajustes` (`conselho_visto`,
+  `modelo`, `modelo_fixo`) through `PATCH ... ajustes_mesclar`. `r_enviar` saves the `ajustes` before starting the
+  run, so the advisor's write is not lost. With `CLAVE_FORCAR_MODELO` (real-API tests) it reports the switch but the
+  forced model keeps answering. Tested on real Haiku: keeps Haiku for simple questions, goes up for big tasks, goes
+  down from Opus for a short translation, answers the reason in English when the app is in English.
+- **Commands in two languages**: the Portuguese name (the file name) is the real one; `comandos.NOMES_EN` gives the
+  English name of everything that ships with Clave (app commands, plugins, their commands and skills, ready-made
+  workflows), each `:`-part translated. Resolution tries the exact typed name first, then `canonico()`, so a user's
+  own skill named like an English alias still wins. A test fails when a shipped plugin, command, skill or workflow
+  has no English name.
+- **Sign out keeps data and removes credentials**: `segredos.apagar_tudo()`, `config.resetar()` (the language
+  follows Windows again, so the welcome flow and tours show up), the account's model cache and routines turned off
+  and out of the Task Scheduler. Conversations, projects, memory and attachments stay. `resetar()` keeps what is not
+  a preference: `plugins` (resetting would turn a third-party plugin the person disabled back on), `ajudantes` (the
+  lesson helper chats would be orphaned) and `web_por_padrao_migrada` (the 3.1.0 migration would run again and wipe
+  each chat's Web choice).
+- **Uninstall never runs on a development copy, in the demo or outside the launcher** (`servidor/desinstalador.py`
+  refuses `.git`, `DEMO` and a missing `CLAVE_LANCADOR`; the tests start the real server from the Clave folder, so
+  this is what keeps the test suite from uninstalling an install), only deletes a folder with `versao.json` and
+  `servidor\servidor.py`, never a drive root or a user folder, and only removes shortcuts that point inside it. Two
+  traps the review found and a test now covers: **no `DETACHED_PROCESS`** (Windows PowerShell 5.1 started that way
+  exits 0 without running the script), and the script must be **outside the server's process tree** (Electron kills
+  the tree with `taskkill /T` when it closes): it is started by a short-lived PowerShell running `Start-Process`,
+  before the server answers, with its parameters in a `.json` next to it. It kills processes that live in the folder
+  and the Edge window of the no-Electron mode (profile in `dados\janela-edge`), never an editor that just has the
+  folder open.
 - **Every release also carries `clave.zip`** (same package, fixed name, folder `clave/`), so
   `releases/latest/download/clave.zip` is always the newest version. The short link `tinyurl.com/instalar-clave`
   points there; it is what the repository owner sends in the one-line PowerShell install. The Update button takes

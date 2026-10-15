@@ -11,10 +11,10 @@ pay-as-you-go and with a spending cap that you set.
 
 ## Why you should use Clave
 
-[![Video: why use Clave (1 min 27 s, narrated in Brazilian Portuguese)](video/capa.jpg)](https://github.com/FelipeWASD83/clave/releases/download/v2.0.0/por-que-o-clave.mp4)
+[![Video: why use Clave (1 min 27 s)](video/capas/por-que-o-clave.en.jpg)](https://github.com/FelipeWASD83/clave/releases/download/videos/por-que-o-clave.en.mp4)
 
-**[Watch the video: why use Clave](https://github.com/FelipeWASD83/clave/releases/download/v2.0.0/por-que-o-clave.mp4)**
-(1 min 27 s, narrated in Brazilian Portuguese)
+**[Watch the video: why use Clave](https://github.com/FelipeWASD83/clave/releases/download/videos/por-que-o-clave.en.mp4)**
+(1 min 27 s; also [in Brazilian Portuguese](https://github.com/FelipeWASD83/clave/releases/download/videos/por-que-o-clave.pt-BR.mp4))
 
 **You pay for what you use, not a monthly fee.** The Claude Pro subscription
 costs $20 a month, whether you use it a lot or a little. Through the API, each
@@ -93,7 +93,7 @@ you.
 - **Plugins and slash commands**: eight ready-made plugins with 31 skills
   (Excel, email, sales, research with sources, Windows scripts, tests...), installing
   plugins from GitHub in the Claude Code format, and shortcuts like
-  `/modelo haiku`, `/fluxo` and `/escrita:email`.
+  `/model haiku`, `/workflow` and `/writing:email`.
 - **Routines**: requests that Claude carries out on its own on a schedule
   (every day, on some days of the week, every few hours), even with Clave
   closed, through the Windows Task Scheduler.
@@ -133,8 +133,14 @@ you.
   WhatsApp and hundreds of apps through a guided Zapier connection.
 - **Import from Claude or ChatGPT**: bring your rules, projects, preferences and
   routines with one copy and paste.
-- **Saves your credit**: /compact, /economia, Claude suggesting cheaper models and
-  a program without AI instead of a routine for work that always repeats.
+- **Saves your credit**: it starts on Haiku, the cheapest model, and a **model
+  advisor** (Haiku itself, at the first message and every 5) suggests the model
+  that does the task for the lowest price, or switches on its own if you allow it.
+  Plus /compact, /savings and a program without AI instead of a routine for work
+  that always repeats.
+- **Commands in English and Portuguese**: every command, skill and workflow that
+  comes with Clave works with both names (/summary or /resumo, /sales:proposal or
+  /vendas:proposta), and the menu shows the one in your language.
 
 - **Learn**: lessons for people who have never used AI, with a glossary of terms
   (API, JSON, Git...) and a helper that answers questions about each lesson.
@@ -183,6 +189,17 @@ language that Windows is set to; to change it, go to Settings > Appearance.
 
 The key is stored only on your computer, encrypted by Windows.
 
+## Videos
+
+Short narrated videos, in English and in Brazilian Portuguese. They also play inside Clave, in the
+lessons (**Learn**): the lesson downloads the video the first time you press play.
+
+| Video | What it shows |
+|---|---|
+| <a href="https://github.com/FelipeWASD83/clave/releases/download/videos/primeiros-passos.en.mp4"><img src="video/capas/primeiros-passos.en.jpg" width="260" alt="Video: First steps"></a> | **[First steps](https://github.com/FelipeWASD83/clave/releases/download/videos/primeiros-passos.en.mp4)** (1 min 10 s): installing, the welcome window, the first chat, the model button and what an answer costs. [Em português](https://github.com/FelipeWASD83/clave/releases/download/videos/primeiros-passos.pt-BR.mp4) (1 min 10 s). |
+| <a href="https://github.com/FelipeWASD83/clave/releases/download/videos/chave-da-api.en.mp4"><img src="video/capas/chave-da-api.en.jpg" width="260" alt="Video: Your API key"></a> | **[Your API key](https://github.com/FelipeWASD83/clave/releases/download/videos/chave-da-api.en.mp4)** (1 min 24 s): creating the account in the Anthropic Console, adding credit, creating the key, pasting it into Clave and the monthly cap. [Em português](https://github.com/FelipeWASD83/clave/releases/download/videos/chave-da-api.pt-BR.mp4) (1 min 22 s). |
+| <a href="https://github.com/FelipeWASD83/clave/releases/download/videos/primeira-automacao.en.mp4"><img src="video/capas/primeira-automacao.en.jpg" width="260" alt="Video: Your first automation"></a> | **[Your first automation](https://github.com/FelipeWASD83/clave/releases/download/videos/primeira-automacao.en.mp4)** (1 min 16 s): Code mode sorting the Downloads folder: the plan first, the approval card and checking the result. [Em português](https://github.com/FelipeWASD83/clave/releases/download/videos/primeira-automacao.pt-BR.mp4) (1 min 17 s). |
+
 ## How much it costs
 
 You pay Anthropic for what you use, by number of tokens. Approximate examples: a
@@ -226,8 +243,14 @@ issue here with the name of the blocked file.
 
 ## Uninstall
 
-Delete Clave's folder and the two shortcuts. If you want to keep your
-conversations first, use Settings > Data & backup.
+In **Settings > Updates & about > Uninstall**: Clave closes and deletes its
+folder, the shortcuts and the routines' tasks in the Task Scheduler. The
+conversations live inside the folder, so download the backup first (Settings >
+Data & backup) if you want to keep them. By hand: delete Clave's folder and the
+two shortcuts.
+
+**Sign out** (same place) deletes the key and the saved passwords and sets every
+setting back to default, keeping your conversations.
 
 ## For developers
 

@@ -191,11 +191,16 @@ class TestVideos(unittest.TestCase):
             with self.assertRaises(ValueError):
                 videos.nome_arquivo(ruim, "en")
 
-    def test_licao_diz_o_video(self):
-        # o campo existe em toda lição; vazio enquanto ela não tem vídeo
+    def test_licoes_com_video(self):
+        esperado = {"por-que-o-clave": "por-que-o-clave", "chave-da-api": "chave-da-api",
+                    "primeira-conversa": "primeiros-passos", "primeira-automacao": "primeira-automacao"}
         for lingua in ("pt-BR", "en"):
-            for li in tutoriais.listar(lingua):
-                self.assertIn("video", li)
+            por_id = {li["slug"]: li for li in tutoriais.listar(lingua)}
+            for licao, vid in esperado.items():
+                self.assertEqual(por_id[licao]["video"], vid, (lingua, licao))
+            # o resto tem o campo, vazio
+            self.assertTrue(all("video" in li for li in por_id.values()))
+            self.assertEqual(tutoriais.ler("chave-da-api", lingua)["video"], "chave-da-api")
 
 
 if __name__ == "__main__":

@@ -1,96 +1,96 @@
-// O vídeo inteiro: as nove cenas em sequência, a folha em cada troca, a narração de cada cena e os efeitos.
-import {AbsoluteFill, Sequence, interpolate, staticFile, useVideoConfig} from 'remotion';
+// Um vídeo inteiro: as cenas em sequência, a folha em cada troca, a narração de cada cena, os efeitos e a trilha.
+// Serve a todos os vídeos e aos dois idiomas: o que muda vem de src/videos/<vídeo>.ts e da narração.
+import {AbsoluteFill, Freeze, Sequence, interpolate, staticFile, useVideoConfig} from 'remotion';
 import {Audio} from '@remotion/media';
 import {Folha} from './componentes/Troca';
-import {Apresenta} from './cenas/Apresenta';
-import {Aprender} from './cenas/Aprender';
-import {Code} from './cenas/Code';
-import {Custo} from './cenas/Custo';
-import {Dados} from './cenas/Dados';
-import {Fecho} from './cenas/Fecho';
-import {Fluxo} from './cenas/Fluxo';
-import {Gancho} from './cenas/Gancho';
-import {Limite} from './cenas/Limite';
-import {CENAS, DURACAO, FPS, TROCA, cena, quando} from './tema';
+import {LinhaProvider, criarApi, type Alvos, type Linha} from './linha';
+import {FPS, TROCA, montarCenas, type Lingua, type Narracao} from './tema';
+import {VIDEOS} from './videos';
 
-const COMPONENTES: Record<string, React.FC> = {
-  gancho: Gancho,
-  apresenta: Apresenta,
-  custo: Custo,
-  limite: Limite,
-  dados: Dados,
-  fluxo: Fluxo,
-  code: Code,
-  aprender: Aprender,
-  fecho: Fecho,
+export type PropsVideo = {
+  video: string;
+  lingua: Lingua;
+  trilha?: boolean;
+  // preenchidos pelo calculateMetadata do Root (lidos de public/)
+  narracao?: Narracao | null;
+  alvos?: Alvos | null;
 };
 
-export type PropsVideo = {trilha?: boolean};
+export const montarLinha = (p: PropsVideo): {linha: Linha; duracao: number} => {
+  const def = VIDEOS[p.video];
+  if (!def) throw new Error(`vídeo desconhecido: ${p.video}`);
+  if (!p.narracao) throw new Error(`sem narração para ${p.video} (${p.lingua}): rode npm run narrar`);
+  const {cenas, duracao} = montarCenas(p.narracao, def.extra);
+  return {linha: {lingua: p.lingua, cenas, alvos: p.alvos ?? undefined}, duracao};
+};
 
-// efeito sonoro num quadro absoluto: cena + quadro relativo
-const em = (id: string, relativo: number) => cena(id).de + relativo;
+export const quadroDaCapa = (p: PropsVideo): number => {
+  const {linha, duracao} = montarLinha(p);
+  const api = criarApi(linha);
+  return VIDEOS[p.video].capa(api, (id, rel) => api.cena(id).de + rel, duracao);
+};
 
-const SONS: {arquivo: string; quadro: number; volume: number}[] = [
-  // a folha em cada troca
-  ...CENAS.slice(1).map((c) => ({arquivo: 'sons/folha.wav', quadro: c.de - 2, volume: 0.5})),
-  // gancho: o relógio do limite fazendo tique a cada segundo
-  {arquivo: 'sons/toque.wav', quadro: em('gancho', quando('gancho', 'limite') - 2), volume: 0.4},
-  ...Array.from({length: 4}, (_, i) => ({arquivo: 'sons/tique.wav', quadro: em('gancho', quando('gancho', 'Volte') + i * FPS), volume: 0.5})),
-  // apresentação: a marca chega
-  {arquivo: 'sons/selo.wav', quadro: em('apresenta', quando('apresenta', 'Conheça')), volume: 0.45},
-  ...['Windows', 'Clód', 'chave'].map((p) => ({arquivo: 'sons/toque.wav', quadro: em('apresenta', quando('apresenta', p)), volume: 0.3})),
-  // custo: a impressora imprimindo cada linha do recibo
-  ...[quando('custo', 'Mil'), quando('custo', 'custo'), quando('custo', 'resposta'), quando('custo', 'teto')].map((q) => ({
-    arquivo: 'sons/impressora.wav',
-    quadro: em('custo', q),
-    volume: 0.35,
-  })),
-  // limite: os dois riscos
-  ...[quando('limite', 'horas'), quando('limite', 'semanal')].map((q) => ({arquivo: 'sons/toque.wav', quadro: em('limite', q), volume: 0.4})),
-  // fluxo: cada etapa e o clique em "Rodar o fluxo"
-  ...['Opus', 'Sonnet', 'Ráicu'].map((p) => ({arquivo: 'sons/toque.wav', quadro: em('fluxo', quando('fluxo', p)), volume: 0.28})),
-  {arquivo: 'sons/toque.wav', quadro: em('fluxo', quando('fluxo', 'aprovar')), volume: 0.5},
-  // code: arquivos, o "Permitir", o desfazer e a rotina
-  ...['planilhas', 'arquivos', 'scripts'].map((p) => ({arquivo: 'sons/toque.wav', quadro: em('code', quando('code', p)), volume: 0.25})),
-  {arquivo: 'sons/toque.wav', quadro: em('code', quando('code', 'aprova')), volume: 0.5},
-  {arquivo: 'sons/toque.wav', quadro: em('code', quando('code', 'horário')), volume: 0.4},
-  // fecho: a marca
-  {arquivo: 'sons/selo.wav', quadro: em('fecho', quando('fecho', 'O')), volume: 0.5},
-];
-
-export const Video: React.FC<PropsVideo> = ({trilha = true}) => {
+export const Video: React.FC<PropsVideo> = (props) => {
   const {durationInFrames} = useVideoConfig();
+  const def = VIDEOS[props.video];
+  const {linha} = montarLinha(props);
+  const api = criarApi(linha);
+  const em = (id: string, relativo: number) => api.cena(id).de + relativo;
+  const sons = [
+    // a folha em cada troca
+    ...linha.cenas.slice(1).map((c) => ({arquivo: 'sons/folha.wav', quadro: c.de - 2, volume: 0.5})),
+    ...def.sons(api, em),
+  ];
+  // a trilha abaixa enquanto a voz fala (com rampa de 10 quadros), se o vídeo pedir
+  const falas = linha.cenas.map((c, i) => [c.de + c.fala, c.de + c.fala + Math.ceil((props.narracao?.cenas[i]?.duracao ?? 0) * FPS)]);
+  const abaixa = def.abaixaTrilha ?? 0;
+  const sobFala = (q: number) => {
+    let m = 0;
+    for (const [a, b] of falas) {
+      const d = q < a ? a - q : q > b ? q - b : 0;
+      m = Math.max(m, 1 - Math.min(1, d / 10));
+    }
+    return 1 - abaixa * m;
+  };
   return (
-    <AbsoluteFill style={{background: '#1f1d1a'}}>
-      {CENAS.map((c, i) => {
-        const Cena = COMPONENTES[c.id];
-        const ultima = i === CENAS.length - 1;
-        return (
-          <Sequence key={c.id} from={c.de} durationInFrames={c.dura + (ultima ? 0 : TROCA)} name={`${i + 1} ${c.id}`}>
-            <Folha comTroca={i > 0}>
-              <Cena />
-            </Folha>
+    <LinhaProvider value={linha}>
+      <AbsoluteFill style={{background: '#1f1d1a'}}>
+        {linha.cenas.map((c, i) => {
+          const Cena = def.cenas[c.id];
+          if (!Cena) throw new Error(`o vídeo ${def.id} não tem o componente da cena ${c.id}`);
+          const ultima = i === linha.cenas.length - 1;
+          return (
+            <Sequence key={c.id} from={c.de} durationInFrames={c.dura + (ultima ? 0 : TROCA)} name={`${i + 1} ${c.id}`}>
+              <Folha comTroca={i > 0}>
+                <Cena />
+              </Folha>
+            </Sequence>
+          );
+        })}
+        {linha.cenas.map((c) => (
+          <Sequence key={`fala-${c.id}`} from={c.de + c.fala} name={`fala ${c.id}`} layout="none">
+            <Audio src={staticFile(c.arquivo)} volume={1} />
           </Sequence>
-        );
-      })}
-      {CENAS.map((c) => (
-        <Sequence key={`fala-${c.id}`} from={c.de + c.fala} name={`fala ${c.id}`} layout="none">
-          <Audio src={staticFile(c.arquivo)} volume={1} />
-        </Sequence>
-      ))}
-      {SONS.map((s, i) => (
-        <Sequence key={`som-${i}`} from={s.quadro} name={`som ${s.arquivo}`} layout="none">
-          <Audio src={staticFile(s.arquivo)} volume={s.volume} />
-        </Sequence>
-      ))}
-      {trilha && (
-        <Audio
-          src={staticFile('sons/trilha.wav')}
-          volume={(q) => 0.32 * interpolate(q, [0, 45, durationInFrames - 75, durationInFrames - 5], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}
-        />
-      )}
-    </AbsoluteFill>
+        ))}
+        {sons.map((s, i) => (
+          <Sequence key={`som-${i}`} from={Math.max(0, s.quadro)} name={`som ${s.arquivo}`} layout="none">
+            <Audio src={staticFile(s.arquivo)} volume={s.volume} />
+          </Sequence>
+        ))}
+        {props.trilha !== false && (
+          <Audio
+            src={staticFile('sons/trilha.wav')}
+            volume={(q) => (def.trilha ?? 0.32) * sobFala(q) * interpolate(q, [0, 45, durationInFrames - 75, durationInFrames - 5], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}
+          />
+        )}
+      </AbsoluteFill>
+    </LinhaProvider>
   );
 };
 
-export {DURACAO};
+// a capa: um quadro parado do vídeo (o que o vídeo de cada lição mostra antes do play)
+export const Capa: React.FC<PropsVideo> = (props) => (
+  <Freeze frame={quadroDaCapa(props)}>
+    <Video {...props} trilha={false} />
+  </Freeze>
+);

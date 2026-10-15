@@ -89,9 +89,18 @@
   "Conversa compactada ({valor}). As próximas mensagens partem do resumo e gastam menos.": "Chat compacted ({valor}). The next messages start from the summary and cost less.",
   "Ainda não tem conversa para exportar.": "There's no chat to export yet.",
   "Esta conversa já tem uns {n} mil tokens, e cada mensagem nova relê tudo. Use /compact para resumir, ou comece uma conversa nova para assunto novo.": "This chat already has about {n}k tokens, and every new message rereads all of it. Use /compact to summarize, or start a new chat for a new subject.",
-  "Para coisa simples (texto curto, pergunta rápida, conferir algo), use o Haiku: /modelo haiku. Ele custa uma fração do Opus.": "For simple things (short text, a quick question, checking something), use Haiku: /modelo haiku. It costs a fraction of Opus.",
-  "Raciocínio alto pensa mais e gasta mais. Para tarefa fácil, /esforco baixo.": "High reasoning thinks more and costs more. For an easy task, /esforco baixo.",
+  "Para coisa simples (texto curto, pergunta rápida, conferir algo), use o Haiku: /modelo haiku. Ele custa uma fração do Opus.": "For simple things (short text, a quick question, checking something), use Haiku: /model haiku. It costs a fraction of Opus.",
+  "Raciocínio alto pensa mais e gasta mais. Para tarefa fácil, /esforco baixo.": "High reasoning thinks more and costs more. For an easy task, /effort low.",
   "Tarefa que se repete sempre do mesmo jeito não precisa de IA toda vez: peça ao modo Code um programa que faça sozinho (veja a lição \"Um app de pedidos sem IA\").": "A task that always repeats the same way doesn't need AI every time: ask Code mode for a program that does it on its own (see the lesson \"An order app without AI\").",
   "A busca na web custa US$ 0,01 por busca. Se a resposta não depende de nada atual, /web off.": "Web search costs $0.01 per search. If the answer doesn't depend on anything current, /web off.",
-  "Como gastar menos": "How to spend less"
+  "Como gastar menos": "How to spend less",
+  "Os comandos, skills e fluxos que vêm com o Clave funcionam com o nome em português e em inglês (/resumo ou /summary, /vendas:proposta ou /sales:proposal).": "The commands, skills and workflows that come with Clave work with their English and their Portuguese names (/summary or /resumo, /sales:proposal or /vendas:proposta).",
+  "Para esta tarefa, o {modelo} deve ir melhor: {motivo}": "For this task, {modelo} should do better: {motivo}",
+  "Troquei para o {modelo}: {motivo}": "I switched to {modelo}: {motivo}",
+  "Usar o {modelo}": "Use {modelo}",
+  "Combinado: o {modelo} responde a partir da próxima mensagem.": "Done: {modelo} answers from the next message on.",
+  "Manter o {modelo}": "Keep {modelo}",
+  "Deixar ele trocar sozinho": "Let it switch on its own",
+  "Voltar para o {modelo}": "Go back to {modelo}",
+  "Voltei para o {modelo} e não troco mais o modelo nesta conversa.": "Back to {modelo}, and I won't switch the model in this chat anymore."
 }

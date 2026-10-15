@@ -4,6 +4,7 @@ trilha: 1. First steps
 ordem: 3
 duracao: 5 min
 resumo: Send a message, attach files, edit, ask for another answer and find old conversations.
+video: primeiros-passos
 ---
 
 ## Send a message

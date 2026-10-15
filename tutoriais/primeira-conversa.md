@@ -4,6 +4,7 @@ trilha: 1. Primeiros passos
 ordem: 3
 duracao: 5 min
 resumo: Mandar mensagem, anexar arquivos, editar, pedir outra resposta e achar conversas antigas.
+video: primeiros-passos
 ---
 
 ## Mandar uma mensagem

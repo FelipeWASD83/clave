@@ -41,8 +41,25 @@ export function notificar(titulo, corpo) {
 }
 
 // ---------- aprovação de uma ação ----------
+// o cartão pede permissão para algo que ainda vai acontecer: o verbo vai no infinitivo (o histórico usa o passado)
+const PEDIDO = () => ({
+  escrever_arquivo: (e) => [t('Escrever'), e.caminho],
+  editar_arquivo: (e) => [t('Editar'), e.caminho],
+  rodar_comando: () => [t('Rodar este comando'), ''],
+  word_criar: (e) => [t('Criar o documento'), e.caminho],
+  word_alterar: (e) => [t('Mexer no documento'), e.caminho],
+  word_no_app: (e) => [t('Exportar o documento para PDF'), e.caminho],
+  email_enviar: (e) => [t('Enviar um e-mail para'), e.para],
+  email_salvar_anexo: (e) => [t('Salvar o anexo'), e.anexo],
+  excel_alterar: (e) => [t('Mexer na planilha'), e.caminho],
+  excel_no_app: (e) => [{ recalcular: t('Recalcular no Excel'), pdf: t('Exportar para PDF'), converter_xlsx: t('Converter para .xlsx') }[e.acao] || t('Usar o Excel'), e.caminho],
+  excel_abrir: (e) => [t('Abrir no Excel'), e.caminho],
+  planilha_criar: (e) => [t('Criar a planilha'), e.nome_arquivo],
+});
+
 export function cartaoAprovacao(ev, { execucaoId, temPasta = true, etapa = '' } = {}) {
-  const [, verbo, alvo] = descreverFerramenta(ev.nome, ev.entrada || {});
+  const pedido = PEDIDO()[ev.nome];
+  const [verbo, alvo] = pedido ? pedido(ev.entrada || {}) : descreverFerramenta(ev.nome, ev.entrada || {}).slice(1);
   const comentario = el('input', { class: 'entrada', placeholder: t('Se recusar, diga o que prefere (opcional)') });
   const regra = el('input', { class: 'entrada mono', 'aria-label': t('Regra de permissão'), spellcheck: 'false' });
   regra.value = ev.sugestao || '';

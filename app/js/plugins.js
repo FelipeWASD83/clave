@@ -1,6 +1,6 @@
 // Plugins: pacotes de skills, agentes, comandos e fluxos, no formato dos plugins do Claude Code.
 import { api } from './api.js';
-import { cfg, salvarConfig } from './estado.js';
+import { cfg, salvarConfig, nomeComando } from './estado.js';
 import { ic } from './icones.js';
 import { el, janela, aviso, confirmar, chaveLiga } from './ui.js';
 import { escolherPasta } from './pastas.js';
@@ -18,10 +18,11 @@ function conteudo(p) {
 function detalhes(p) {
   const lista = (titulo, itens, prefixo = '') => itens?.length ? el('div', {},
     el('div', { class: 'rotulo-detalhe', texto: titulo }),
-    el('ul', { class: 'lista-simples' }, ...itens.map((x) => el('li', {}, el('code', { texto: prefixo + x.nome }), x.descricao ? ` ${x.descricao}` : '')))) : null;
+    el('ul', { class: 'lista-simples' }, ...itens.map((x) => el('li', {}, el('code', { texto: prefixo + nomeComando(x.nome) }), x.descricao ? ` ${x.descricao}` : '')))) : null;
+  const nome = nomeComando(p.nome);  // em inglês: /sales:proposal (os dois nomes funcionam)
   return el('div', { class: 'plugin-detalhes' },
-    lista(t('Skills (o Claude usa sozinho ou você chama com /)'), p.skills, `/${p.nome}:`),
-    lista(t('Comandos'), p.comandos, `/${p.nome}:`),
+    lista(t('Skills (o Claude usa sozinho ou você chama com /)'), p.skills, `/${nome}:`),
+    lista(t('Comandos'), p.comandos, `/${nome}:`),
     lista(t('Agentes (para as etapas dos fluxos)'), p.agentes, `${p.nome}:`),
     lista(t('Fluxos prontos'), p.fluxos),
     ...(p.avisos || []).map((a) => el('p', { class: 'nota-plugin' }, el('span', { html: ic('alerta') }), el('span', { texto: a }))),

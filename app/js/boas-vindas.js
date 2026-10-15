@@ -71,7 +71,7 @@ export function boasVindas() {
         el('small', { texto: t('Ela fica guardada só neste computador, criptografada pelo Windows. Nunca mostre a chave para ninguém.') })),
       el('a', { href: '#/aprender/chave-da-api', texto: t('Passo a passo com mais detalhes'), onclick: () => fechar() }),
       estado.info.tem_chave ? el('p', { class: 'ajuda', texto: t('Já existe uma chave salva ({chave}). Pode deixar em branco.', { chave: estado.info.chave }) }) : null,
-    ];
+    ].filter(Boolean);  // sem chave salva, o null virava o texto "null" embaixo do campo
   }
   chave.avancar = async () => {
     if (estado.info.demo) return true;

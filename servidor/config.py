@@ -77,11 +77,14 @@ PADRAO = {
     "memoria_ligada": False,
     "titulos_automaticos": True,
     # modelos
-    "modelo_chat": "claude-opus-5-5",
+    "modelo_chat": "claude-haiku-5-5",  # desde a 4.3: o mais barato; o conselheiro sugere outro quando a tarefa pede
     "esforco_chat": "medium",
-    "modelo_code": "claude-opus-5-5",
+    "modelo_code": "claude-haiku-5-5",
     "esforco_code": "high",
     "mostrar_raciocinio": True,
+    # o conselheiro de modelo (conselheiro.py): o Haiku sugere o modelo na 1ª mensagem e a cada 5; trocar só se deixar
+    "conselheiro_modelo": True,
+    "trocar_modelo_sozinho": False,
     "modelos_antigos": False,
     # recursos
     "busca_web": True,  # desde a 3.1.0: o Claude decide quando pesquisar; o botão Web desliga numa conversa
@@ -183,6 +186,28 @@ def salvar(alteracoes: dict) -> dict:
         os.replace(tmp, _arquivo())
         _cache = copy.deepcopy(atual)
     return atual
+
+
+def resetar() -> dict:
+    """"Sair da conta": todas as configurações voltam ao padrão, como numa instalação nova (o idioma volta a seguir o
+    Windows, a apresentação e os tours aparecem de novo). Conversas, projetos, memória e anexos não são tocados."""
+    global _cache
+    antes = carregar()
+    novo = copy.deepcopy(PADRAO)
+    novo["idioma"] = detectar_idioma()
+    # não são preferências: os plugins instalados (com a fonte e o liga-desliga de cada um; zerar religaria um plugin
+    # de terceiro que a pessoa desligou), o índice das conversas dos ajudantes das lições (zerar deixaria essas
+    # conversas órfãs) e a marca da migração da 3.1.0 (zerar faria ela rodar de novo e apagar a escolha de Web das
+    # conversas)
+    for chave in ("plugins", "ajudantes", "web_por_padrao_migrada"):
+        novo[chave] = copy.deepcopy(antes.get(chave, PADRAO[chave]))
+    with _trava:
+        DADOS.mkdir(parents=True, exist_ok=True)
+        tmp = _arquivo().with_suffix(".tmp")
+        tmp.write_text(json.dumps(novo, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(tmp, _arquivo())
+        _cache = copy.deepcopy(novo)
+    return novo
 
 
 def recarregar() -> None:

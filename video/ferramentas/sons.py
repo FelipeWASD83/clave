@@ -85,6 +85,30 @@ def selo():
     return grave + corpo
 
 
+def clique():
+    """Clique de mouse: o aperto e a soltura, secos e curtos."""
+    t = tempo(0.09)
+    batida = lambda t0, ganho: passa_alta(rng.standard_normal(len(t)), 2500) * np.exp(-np.clip(t - t0, 0, None) * 900) * (t >= t0) * ganho
+    corpo = np.sin(2 * np.pi * 2100 * t) * np.exp(-t * 120) * 0.25
+    return batida(0, 1.0) + batida(0.055, 0.55) + corpo
+
+
+def teclas(segundos=1.3):
+    """Alguém digitando: toques de tecla com ritmo irregular."""
+    t = tempo(segundos)
+    saida = np.zeros(len(t))
+    pos = 0.02
+    while pos < segundos - 0.08:
+        n = int(pos * TAXA)
+        dur = int(0.045 * TAXA)
+        tt = np.arange(dur) / TAXA
+        toque = passa_alta(rng.standard_normal(dur), 1800) * np.exp(-tt * 380) * rng.uniform(0.55, 1.0)
+        toque += np.sin(2 * np.pi * rng.uniform(900, 1300) * tt) * np.exp(-tt * 200) * 0.2
+        saida[n:n + dur] += toque[: len(saida) - n]
+        pos += rng.uniform(0.07, 0.16)
+    return saida
+
+
 def trilha(segundos=100):
     """Uma cama bem calma por baixo da narração: quatro acordes abertos (Rém7M, Sim7, Sol7M, Lá6) que se
     cruzam devagar, de senos levemente desafinados entre si (o "coro"), com o grave da tônica. Sem bateria."""
@@ -125,3 +149,5 @@ if __name__ == "__main__":
     gravar("impressora.wav", impressora(), -9)
     gravar("folha.wav", folha(), -8)
     gravar("selo.wav", selo(), -5)
+    gravar("clique.wav", clique(), -9)
+    gravar("teclas.wav", teclas(), -14)

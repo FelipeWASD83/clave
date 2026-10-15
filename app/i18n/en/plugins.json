@@ -30,7 +30,7 @@
   "Instalar do GitHub": "Install from GitHub",
   "Instalados por você": "Installed by you",
   "Vêm com o Clave": "Included with Clave",
-  "Quer fazer o seu? Na conversa, digite <code>/crie-o-seu:criar-plugin</code> e o Claude te guia.": "Want to make your own? In a chat, type <code>/crie-o-seu:criar-plugin</code> and Claude will guide you.",
+  "Quer fazer o seu? Na conversa, digite <code>/crie-o-seu:criar-plugin</code> e o Claude te guia.": "Want to make your own? In a chat, type <code>/make-your-own:create-plugin</code> and Claude will guide you.",
   "Plugins trazem instruções e às vezes scripts para o Claude. Instale só de quem você confia. Os scripts continuam passando pelas suas regras de permissão (o Clave pergunta antes de rodar comandos).": "Plugins bring instructions and sometimes scripts for Claude. Only install from people you trust. Scripts still go through your permission rules (Clave asks before running commands).",
   "Cancelar": "Cancel",
   "Instalar": "Install",

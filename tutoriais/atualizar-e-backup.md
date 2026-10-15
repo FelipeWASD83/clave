@@ -29,3 +29,10 @@ Em **Configurações > Dados e backup**:
 Os arquivos anexados e a chave não vão no backup. A chave você cria de novo no Console; os anexos, mande de novo se precisar.
 
 Para não perder nada, guarde também uma cópia da pasta `dados` do Clave num HD externo ou na nuvem de vez em quando (com o Clave fechado).
+
+## Sair da conta e desinstalar
+
+Em **Configurações > Atualizações e sobre**, embaixo:
+
+- **Sair da conta**: apaga a chave da API e as senhas salvas (e-mail, GitHub, conectores), volta todas as configurações ao padrão e desliga as rotinas. As conversas, os projetos e a memória ficam. Depois aparecem a apresentação e os tours de novo, como na primeira vez. Serve para passar o computador para outra pessoa ou começar do zero com outra chave.
+- **Desinstalar**: o Clave fecha e apaga a pasta dele (com as conversas, que moram lá dentro), os atalhos e as tarefas das rotinas no Agendador do Windows. Não dá para desfazer: se quiser guardar as conversas, baixe o backup antes.

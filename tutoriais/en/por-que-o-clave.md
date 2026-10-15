@@ -4,6 +4,7 @@ trilha: 1. First steps
 ordem: 0
 duracao: 4 min
 resumo: Pay for what you use, with no 5-hour limit and your data on your own computer. And when the official app is better.
+video: por-que-o-clave
 ---
 
 Clave talks to Claude through the [API](#/aprender/glossario/api), using your [key](#/aprender/glossario/chave-da-api). It sounds like a technical detail, but it changes a lot for the person using it.

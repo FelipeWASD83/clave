@@ -1,8 +1,9 @@
 // Cena 9: "O Clave é código aberto e gratuito. Você só paga o que usar. É só baixar no GitHub."
 // Sem o endereço do repositório na tela (decisão do dono do repositório): a fala cita o GitHub e basta.
+import {useLinha} from '../../linha';
 import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
-import {Entra, Fundo, Logo, Sobe} from '../componentes/Base';
-import {COR, SANS, quando} from '../tema';
+import {Entra, Fundo, Logo, Sobe} from '../../componentes/Base';
+import {COR, SANS} from '../../tema';
 
 const C = 'fecho';
 
@@ -16,11 +17,12 @@ const Selo: React.FC<{texto: string; inicio: number}> = ({texto, inicio}) => (
 
 export const Fecho: React.FC = () => {
   const f = useCurrentFrame();
-  const tO = quando(C, 'O');
-  const tClave = quando(C, 'Clave');
-  const tCodigo = quando(C, 'código');
+  const {quando, T} = useLinha();
+  const tO = quando(C, 'o');
+  const tClave = quando(C, 'clave');
+  const tCodigo = quando(C, 'codigo');
   const tGratuito = quando(C, 'gratuito');
-  const tVoce = quando(C, 'Você');
+  const tVoce = quando(C, 'voce');
   return (
     <Fundo tipo="tinta">
       <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', flexDirection: 'column'}}>
@@ -29,12 +31,12 @@ export const Fecho: React.FC = () => {
           <Sobe texto="Clave" inicio={tClave} tamanho={200} cor={COR.tintaTexto} />
         </div>
         <div style={{display: 'flex', gap: 22, marginTop: 50}}>
-          <Selo texto="Código aberto (MIT)" inicio={tCodigo} />
-          <Selo texto="Gratuito" inicio={tGratuito} />
-          <Selo texto="Para Windows" inicio={tGratuito + 6} />
+          <Selo texto={T('Código aberto (MIT)')} inicio={tCodigo} />
+          <Selo texto={T('Gratuito')} inicio={tGratuito} />
+          <Selo texto={T('Para Windows')} inicio={tGratuito + 6} />
         </div>
         <div style={{marginTop: 54}}>
-          <Sobe texto="Você só paga o que usar." inicio={tVoce} tamanho={64} peso={400} cor={COR.tintaTexto2} italico passo={2} />
+          <Sobe texto={T('Você só paga o que usar.')} inicio={tVoce} tamanho={64} peso={400} cor={COR.tintaTexto2} italico passo={2} />
         </div>
       </AbsoluteFill>
       <div
@@ -50,7 +52,7 @@ export const Fecho: React.FC = () => {
           opacity: interpolate(f - tVoce, [0, 14], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}),
         }}
       >
-        O Clave é um app independente, sem ligação com a Anthropic. Claude é marca da Anthropic.
+        {T('O Clave é um app independente, sem ligação com a Anthropic. Claude é marca da Anthropic.')}
       </div>
     </Fundo>
   );

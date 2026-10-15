@@ -21,6 +21,12 @@ Na caixa de texto, o primeiro botão escolhe o [modelo](#/aprender/glossario/mod
 
 **Regra prática:** comece no Haiku para coisas simples e no Opus para o que importa. Se o Haiku errar, gere outra resposta escolhendo o Opus (menu da setinha circular).
 
+## O conselheiro de modelo
+
+O Clave começa no **Haiku**, o mais barato. Para você não ficar adivinhando, o próprio Haiku lê a conversa na primeira mensagem e depois a cada 5 e diz qual modelo faz aquela tarefa pelo menor preço: aparece um aviso como "Para esta tarefa, o Sonnet 5.5 deve ir melhor", com o motivo e os botões **Usar** e **Manter**. Cada avaliação custa uma fração de centavo.
+
+Se preferir, deixe o Clave **trocar sozinho** (Configurações > Modelos > Deixar o Clave trocar o modelo sozinho): ele troca, avisa e mostra um botão para voltar. Numa conversa em que você voltar, ele não troca mais. Dá para desligar o conselheiro ali também.
+
 ## O raciocínio
 
 Antes de responder, o Claude pode pensar. Os níveis são **Baixo**, **Médio**, **Alto**, **Muito alto** e **Máximo**:

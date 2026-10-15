@@ -104,5 +104,19 @@
   "Outra: {resposta}": "Other: {resposta}",
   "(sem resposta)": "(no answer)",
   "Você respondeu": "You answered",
-  "Ficou sem resposta": "Not answered"
+  "Ficou sem resposta": "Not answered",
+  "Escrever": "Write",
+  "Rodar este comando": "Run this command",
+  "Criar o documento": "Create the document",
+  "Mexer no documento": "Change the document",
+  "Exportar o documento para PDF": "Export the document to PDF",
+  "Enviar um e-mail para": "Send an e-mail to",
+  "Salvar o anexo": "Save the attachment",
+  "Mexer na planilha": "Change the spreadsheet",
+  "Recalcular no Excel": "Recalculate in Excel",
+  "Exportar para PDF": "Export to PDF",
+  "Converter para .xlsx": "Convert to .xlsx",
+  "Usar o Excel": "Use Excel",
+  "Abrir no Excel": "Open in Excel",
+  "Criar a planilha": "Create the spreadsheet"
 }

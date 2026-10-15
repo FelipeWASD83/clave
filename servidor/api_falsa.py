@@ -67,6 +67,19 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     pensa = thinking.get("type") == "adaptive" and thinking.get("display") == "summarized"
     blocos: list[dict] = []
     sistema = str(corpo.get("system", ""))
+    if (corpo.get("tool_choice") or {}).get("name") == "recomendar_modelo":
+        # o conselheiro de modelo: código ou tarefa difícil pede o Sonnet; o resto fica no modelo atual
+        pedido = _texto_usuario(ultima)
+        atual = pedido.split("(", 1)[1].split(")", 1)[0] if "(" in pedido else "claude-haiku-5-5"
+        conversa = pedido.split("\n", 1)[1] if "\n" in pedido else ""  # a 1ª linha diz o modo ("Code"): fica de fora
+        dificil = any(p in conversa.lower() for p in ("código", "codigo", "code", "difícil", "dificil", "hard", "complex"))
+        en = "Current model" in pedido
+        escolha = "claude-sonnet-5-5" if dificil else atual
+        motivo = (("Code across several files needs more care than Haiku gives." if en
+                   else "Código com vários arquivos pede mais cuidado do que o Haiku dá.") if dificil
+                  else ("A simple request: the current model is enough." if en else "Pedido simples: o modelo atual dá conta."))
+        return [{"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "recomendar_modelo",
+                 "input": {"modelo": escolha, "motivo": motivo}}], "tool_use"
     etapa = "de um fluxo (" in sistema
     if _tem_resultado(ultima):
         res = next(b for b in ultima["content"] if b.get("type") == "tool_result")

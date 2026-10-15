@@ -4,7 +4,7 @@ import { estado, cfg, modeloInfo } from './estado.js';
 import { ic } from './icones.js';
 import { el, menu, aviso, escolherArquivos, tokens, usd } from './ui.js';
 import { escolherDoGitHub } from './github.js';
-import { t, localidade } from './i18n.js';
+import { t, localidade, emIngles } from './i18n.js';
 
 // funções, e não constantes, para o t() rodar depois que o catálogo do idioma carregou
 const DESC_ESFORCO = () => ({
@@ -38,7 +38,9 @@ export function opcoesPadrao(modo, ajustes = {}) {
 
 const ALIAS_MODELO = { opus: 'claude-opus-5-5', sonnet: 'claude-sonnet-5-5', haiku: 'claude-haiku-5-5', fable: 'claude-fable-5-1' };
 const ALIAS_ESFORCO = { baixo: 'low', medio: 'medium', médio: 'medium', alto: 'high', 'muito-alto': 'xhigh', maximo: 'max', máximo: 'max',
-  low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: 'max' };
+  low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', 'very-high': 'xhigh', max: 'max' };
+// o nome de um comando como a pessoa vê: os que vêm com o Clave têm nome em inglês e em português, e os dois valem
+const nomeNaTela = (c) => (emIngles() ? c.nome_en || c.nome : c.nome);
 const ROTULO_TIPO = () => ({ app: t('Do Clave'), comando: t('Comandos'), skill: t('Skills'), fluxo: t('Fluxos prontos') });
 // preço por milhão de tokens com a vírgula ou o ponto do idioma (era String(v).replace('.', ','))
 const preco = (v) => Number(v).toLocaleString(localidade(), { maximumFractionDigits: 4 });
@@ -198,7 +200,13 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
   async function comandoDoApp(texto) {
     const m = /^\/([\w-]+)(?:\s+(.*))?$/s.exec(texto);
     if (!m) return false;
-    const [, nome, args = ''] = m;
+    const [, digitado, args = ''] = m;
+    // /help, /summary, /export... viram o nome em português, que é o que o resto do código conhece
+    // (um comando ou skill da pessoa com o mesmo nome, como um plan.md do Claude Code, vence a tradução)
+    const lista = await carregarComandos();
+    const daPessoa = new Set(lista.filter((c) => c.tipo !== 'app').map((c) => c.nome));
+    const daApp = Object.fromEntries(lista.filter((c) => c.tipo === 'app' && c.nome_en && !daPessoa.has(c.nome_en)).map((c) => [c.nome_en, c.nome]));
+    const nome = daApp[digitado] || digitado;
     const limpar = () => { area.value = ''; ajustarAltura(); sugerirComandos(); };  // fecha o menu de comandos também
     if (nome === 'novo') { location.hash = modo === 'code' ? '#/code' : '#/novo'; limpar(); return true; }
     if (nome === 'modelo') {
@@ -267,20 +275,24 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     if (!m) return;
     const lista = await carregarComandos();
     let filtrados;
+    const busca = m[1].toLowerCase();
     if (m[2] !== undefined) {
-      if (m[1] !== 'fluxo') return;  // "/fluxo " mostra os fluxos prontos
-      filtrados = lista.filter((c) => c.tipo === 'fluxo' && c.nome.slice(6).startsWith(m[3] || ''));
+      if (busca !== 'fluxo' && busca !== 'workflow') return;  // "/fluxo " (ou "/workflow ") mostra os fluxos prontos
+      const id = (c) => nomeNaTela(c).split(' ').slice(1).join(' ');
+      filtrados = lista.filter((c) => c.tipo === 'fluxo' && (id(c).startsWith(m[3] || '') || c.nome.slice(6).startsWith(m[3] || '')));
     } else {
-      filtrados = lista.filter((c) => c.tipo !== 'fluxo' && c.nome.toLowerCase().includes(m[1].toLowerCase()))
-        .sort((a, b) => (b.nome.startsWith(m[1]) - a.nome.startsWith(m[1])));
+      const acha = (c) => [c.nome, c.nome_en || ''].some((n) => n.toLowerCase().includes(busca));
+      filtrados = lista.filter((c) => c.tipo !== 'fluxo' && acha(c))
+        .sort((a, b) => (nomeNaTela(b).startsWith(busca) - nomeNaTela(a).startsWith(busca)));
     }
     if (modo !== 'code') filtrados = filtrados.filter((c) => c.nome !== 'plano');
     const itens = [];
     let tipoAtual = null;
     for (const c of filtrados.slice(0, 14)) {
       if (c.tipo !== tipoAtual) { tipoAtual = c.tipo; itens.push({ titulo: ROTULO_TIPO()[c.tipo] || c.tipo }); }
-      itens.push({ texto: '/' + c.nome + (c.argumentos ? ` ${c.argumentos}` : ''), sub: (c.descricao || '').slice(0, 120),
-        acao: () => { area.value = `/${c.nome} `; area.focus(); ajustarAltura(); if (c.nome === 'fluxo') sugerirComandos(); } });
+      const exibido = nomeNaTela(c);
+      itens.push({ texto: '/' + exibido + (c.argumentos ? ` ${c.argumentos}` : ''), sub: (c.descricao || '').slice(0, 120),
+        acao: () => { area.value = `/${exibido} `; area.focus(); ajustarAltura(); if (c.nome === 'fluxo') sugerirComandos(); } });
     }
     if (itens.length) menu(area, itens, { acima: true });
   }
@@ -312,6 +324,7 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     definirCusto(v) { custoTexto.textContent = v ? usd(v) : ''; if (!cfg().mostrar_custo) custoTexto.textContent = ''; },
     definirSkills(lista) { skills = lista || []; comandos = null; },
     definirPermissao(p) { op.permissao = p; desenharChips(); },
+    definirModelo(id) { if (id) { op.modelo = id; desenharChips(); } },
   };
 }
 

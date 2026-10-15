@@ -4,6 +4,7 @@ trilha: 1. Primeiros passos
 ordem: 2
 duracao: 6 min
 resumo: Como criar a conta na Anthropic, pegar a chave, pôr crédito e não gastar mais do que quer.
+video: chave-da-api
 ---
 
 O Clave conversa com o Claude pela [API](#/aprender/glossario/api) da Anthropic. Para isso ele precisa da sua [chave da API](#/aprender/glossario/chave-da-api): uma senha comprida que diz de qual conta sai o pagamento.

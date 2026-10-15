@@ -2,6 +2,37 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 4.3.0 (2026-10-15)
+
+**New**
+
+- **Haiku is the default model** on new installs: the cheapest one. If you already use Clave, your model stays.
+- **Model advisor**: at the first message of each chat and then every 5, Haiku reads the chat and says which model
+  does the task for the lowest price ("For this task, Sonnet 5.5 should do better", with Use and Keep). If you
+  allow it (Settings > Models), Clave switches on its own and shows a button to go back; in a chat where you go
+  back, it stops switching. Each check costs a fraction of a cent, and it can be turned off.
+- **Commands in English and Portuguese**: every command, skill and workflow that comes with Clave works with both
+  names (/summary or /resumo, /sales:proposal or /vendas:proposta, /workflow deep-research), and the menu, the help
+  and the Plugins and Workflows pages show the one in your language. A command or skill of your own with the same
+  name as a translation stays yours.
+- **Sign out** (Settings > Updates & about): deletes the API key and the saved passwords, sets the settings back to
+  default, turns routines off and shows the welcome screens and the tours again. Conversations, projects, memory and
+  installed plugins stay.
+- **Uninstall** (same place): closes Clave and removes its folder, the shortcuts and the routines' tasks in the
+  Task Scheduler, with a link to download the backup first.
+- **Videos in the lessons**, in Portuguese and in English: why use Clave, how to get the API key, first steps and
+  the first automation in Code mode. They are not inside the app: the lesson downloads the video from GitHub the
+  first time you press play (a few MB) and keeps it on the computer.
+
+**Fixed**
+
+- The welcome window showed the word "null" under the API key field when no key was saved.
+- The approval card's title now says what Claude is asking to do ("Write", "Run this command", "Send an e-mail to")
+  instead of describing it as already done.
+- The lessons "Your first automation" and "How Code mode works" promised too much from **Undo changes**: it brings back the
+  files Claude wrote or edited, not what a command did (like moving files). They now say so, and the first lesson
+  uses the folder button's real name (**Choose the working folder**).
+
 ## 4.2.0 (2026-10-15)
 
 **New**

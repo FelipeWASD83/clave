@@ -327,6 +327,7 @@ def r_estado(h: Manipulador):
         "cfg": _cfg_publica(cfg),
         "estilos": config.estilos(cfg),
         "tom": tom.opcoes(),
+        "nomes_en": comandos.NOMES_EN,  # o nome em inglês dos comandos, plugins, skills e fluxos que vêm com o Clave
         "orcamento": orcamento.situacao(),
         "modelos": modelos.lista_publica(cfg.get("modelos_antigos"), _modelos_cache["lista"]),
         "esforcos": [{"id": e, "nome": t(modelos.NOMES_ESFORCO[e])} for e in modelos.ESFORCOS],
@@ -545,6 +546,9 @@ def r_conversa_editar(h: Manipulador, cid):
         campos["projeto_id"] = d["projeto_id"] or None
     if "ajustes" in d and isinstance(d["ajustes"], dict):
         campos["ajustes"] = d["ajustes"]
+    if isinstance(d.get("ajustes_mesclar"), dict):  # muda só as chaves mandadas (ex.: modelo_fixo do conselheiro)
+        campos["ajustes"] = {**(banco.conversa(cid).get("ajustes") or {}), **campos.get("ajustes", {}),
+                             **{k: v for k, v in d["ajustes_mesclar"].items() if k in ("modelo", "modelo_fixo", "conselho_visto")}}
     banco.atualizar_conversa(cid, **campos)
     h._json({"conversa": banco.conversa(cid)})
 
@@ -592,11 +596,12 @@ def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, d
     texto = texto or ""
     pasta = conv.get("pasta") if conv["modo"] == "code" else None
     sep = comandos.separar(texto)
-    if sep and sep[0] == "fluxo":
+    # /fluxo, ou /workflow quando a pessoa não tem um comando ou skill dela com esse nome
+    if sep and (sep[0] == "fluxo" or (comandos.canonico(sep[0]) == "fluxo" and not comandos.expandir(texto, pasta))):
         ident, _, pedido_fluxo = sep[1].partition(" ")
         m = fluxos.modelo(ident) if ident else None
         meta["exibir"] = texto
-        meta["comando"] = "fluxo"
+        meta["comando"] = sep[0]  # o balão mostra o nome que a pessoa digitou
         if m:
             texto = fluxos.texto_para_comando(m, pedido_fluxo.strip())
         else:
@@ -606,7 +611,7 @@ def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, d
         exp = comandos.expandir(texto, pasta)
         if exp:
             meta["exibir"] = texto
-            meta["comando"] = exp["nome"]
+            meta["comando"] = sep[0]  # o balão mostra o nome que a pessoa digitou (/sales:proposal ou /vendas:proposta)
             meta["tipo_comando"] = exp["tipo"]
             if exp["tipo"] == "skill":
                 meta["skill"] = exp["nome"]
@@ -615,6 +620,7 @@ def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, d
             if exp.get("modelo"):
                 import agentes as _ag
                 extras["modelo"] = _ag.resolver_modelo(exp["modelo"], "")
+                extras["modelo_do_comando"] = True  # o conselheiro de modelo não mexe
             if exp.get("ferramentas_permitidas"):
                 extras["regras_tarefa"] = exp["ferramentas_permitidas"]
     if texto.strip():
@@ -702,8 +708,9 @@ def r_enviar(h: Manipulador, cid):
             raise Erro(404, t("Mensagem não encontrada."))
         pai = original["pai_id"]
     msg = banco.adicionar_mensagem(cid, pai, "user", conteudo, meta=meta)
-    ex = execucao.iniciar(cid, {**_opcoes(d), **extras})
+    # antes de começar: o conselheiro de modelo pode gravar o modelo novo nos ajustes enquanto a resposta roda
     banco.atualizar_conversa(cid, ajustes={**(conv.get("ajustes") or {}), **_opcoes(d)})
+    ex = execucao.iniciar(cid, {**_opcoes(d), **extras})
     h._json({"execucao": ex.id, "mensagem": msg["id"]})
 
 
@@ -723,7 +730,7 @@ def r_regenerar(h: Manipulador, cid):
     if not m:
         raise Erro(400, t("Não achei a pergunta dessa resposta."))
     banco.atualizar_conversa(cid, folha_id=m["id"])
-    ex = execucao.iniciar(cid, _opcoes(d))
+    ex = execucao.iniciar(cid, {**_opcoes(d), "sem_conselheiro": True})  # ao gerar outra resposta, quem escolhe é a pessoa
     h._json({"execucao": ex.id})
 
 
@@ -1411,6 +1418,40 @@ def r_sair(h: Manipulador):
     _desligar(0)
 
 
+@rota("POST", "/api/sair-da-conta")
+def r_sair_da_conta(h: Manipulador):
+    """Logout: apaga a chave e as senhas, volta todas as configurações ao padrão e desliga as rotinas. Conversas,
+    projetos, memória e anexos ficam. A tela recarrega e mostra a apresentação e os tours de novo."""
+    if execucao.alguma_rodando():
+        raise Erro(409, t("Espere as respostas em andamento terminarem."))
+    desligadas = rotinas.desligar_todas()
+    segredos.apagar_tudo()
+    config.resetar()
+    _modelos_cache.update(em=0, lista=None)
+    lancamentos._CACHE_CONTA.unlink(missing_ok=True)  # os modelos da conta da chave antiga
+    h._json({"ok": True, "rotinas_desligadas": desligadas})
+
+
+@rota("POST", "/api/desinstalar")
+def r_desinstalar(h: Manipulador):
+    """Tira as tarefas das rotinas do Agendador e entrega o resto a ferramentas/desinstalar.ps1, que roda do %TEMP%
+    depois que o app fecha: atalhos que apontam para esta pasta, %APPDATA%\\Clave e a pasta do Clave inteira."""
+    import desinstalador
+    if DEMO:  # a demonstração e os testes rodam o servidor de verdade a partir da pasta do Clave: nunca desinstalar
+        raise Erro(400, t("Na demonstração não dá para desinstalar."))
+    motivo = desinstalador.motivo_para_nao(config.RAIZ)
+    if motivo:
+        raise Erro(400, motivo)
+    if os.environ.get("CLAVE_LANCADOR") != "1":
+        raise Erro(400, t("Para desinstalar pelo app, abra o Clave pelo atalho (ou Clave.bat). Ou apague a pasta à mão."))
+    if execucao.alguma_rodando():
+        raise Erro(409, t("Espere as respostas em andamento terminarem."))
+    rotinas.desagendar_todas()
+    desinstalador.lancar(config.RAIZ, os.getpid())  # o script fica esperando este processo acabar
+    h._json({"ok": True})
+    _desligar(0)
+
+
 # ---------- prévia e backup ----------
 
 @rota("POST", "/api/previa")
@@ -1581,8 +1622,15 @@ def r_comandos(h: Manipulador):
     q = h.query()
     pasta = _pasta_param(q.get("pasta"))
     lista = comandos.listar(pasta)
-    for m in fluxos.listar_modelos():
-        lista.append({"nome": f"fluxo {m['id']}", "descricao": m.get("descricao") or m.get("nome", ""),
+    modelos_fluxo = fluxos.listar_modelos()
+    ids = {m["id"] for m in modelos_fluxo}
+    for m in modelos_fluxo:
+        # o id em inglês só para os fluxos que vêm com o Clave, e só se não for o id de outro fluxo (um da pessoa)
+        en = comandos.nome_en(m["id"]) if m["origem"] == "clave" or str(m["origem"]).startswith("plugin:") else m["id"]
+        if en != m["id"] and en in ids:
+            en = m["id"]
+        lista.append({"nome": f"fluxo {m['id']}", "nome_en": f"workflow {en}",
+                      "descricao": m.get("descricao") or m.get("nome", ""),
                       "tipo": "fluxo", "origem": m["origem"], "argumentos": m.get("pede", "")})
     h._json({"comandos": lista})
 
@@ -1627,7 +1675,7 @@ def r_fluxo_estimar(h: Manipulador):
         p = fluxos.normalizar({"titulo": "x", "objetivo": "x", "etapas": d.get("etapas") or []}, fid="estimativa",
                               pasta=str(_pasta_param(d.get("pasta")) or "") or None if d.get("pasta") else
                               ("." if d.get("modo") == "code" else None),
-                              modelo_padrao=cfg.get("modelo_code") or "claude-opus-5-5")
+                              modelo_padrao=cfg.get("modelo_code") or "claude-haiku-5-5")
     except fluxos.ErroFluxo as e:
         raise Erro(400, str(e))
     h._json({"estimativa": p["estimativa"], "etapas": [{"i": e["i"], "estimativa": e["estimativa"],

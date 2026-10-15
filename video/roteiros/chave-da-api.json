@@ -1,0 +1,33 @@
+{
+ "_como_ler": "Igual ao por-que-o-clave.json. Bate com a lição tutoriais/chave-da-api.md (e en/chave-da-api.md): mudou a lição, conferir aqui.",
+ "id": "chave-da-api",
+ "cenas": [
+  {"id": "abre",
+   "pt-BR": "{chave}A chave da A P I é o que liga o {clave}Clave à {conta}sua conta na Anthropic. {pegar}Pegar a sua leva uns dois minutos.",
+   "en": "{chave}Your API key is what connects {clave}Clave to {conta}your Anthropic account. {pegar}Getting yours takes about two minutes."},
+  {"id": "conta",
+   "pt-BR": "{crie}Primeiro, crie a sua conta no {console}Console da Anthropic: {endereco}o endereço é este aqui.",
+   "en": "{crie}First, create your account in the {console}Anthropic Console: {endereco}this is the address."},
+  {"id": "credito",
+   "pt-BR": "{billing}Em Billing, ponha crédito. {cada}Cada resposta desconta um pouquinho. {max}Se você assina o Max, {plano}o plano já vem com crédito mensal na A P I: {ative}ative no site do Clód, nas configurações de cobrança.",
+   "en": "{billing}Under Billing, add credit. {cada}Each answer takes a tiny bit off. {max}On the Max plan? {plano}It already comes with monthly API credit: {ative}turn it on at claude dot ai, in the billing settings."},
+  {"id": "criar",
+   "pt-BR": "{menu}No menu, abra a página {apikeys}êi pi ai kís e clique em {create}Create Key. {nome}Escolha um nome para ela, como Clave.",
+   "en": "{menu}In the menu, click {apikeys}API Keys, then {create}Create Key. {nome}Give it a name, like Clave."},
+  {"id": "copiar",
+   "pt-BR": "{copie}Copie a chave. {comeca}Ela começa com ésse cá, traço, ânt, e {uma}só aparece inteira uma vez. {perdeu}Perdeu? É só criar outra.",
+   "en": "{copie}Copy the key. {comeca}It starts with s k dash ant, and it {uma}only shows in full once. {perdeu}Lost it? Just create another one."},
+  {"id": "colar",
+   "pt-BR": "{no}No Clave, abra {config}Configurações, {conta}Conta e chave. {cole}Cole a chave e clique em {conferir}Conferir e salvar. {cripto}Ela fica criptografada, só no seu computador.",
+   "en": "{no}In Clave, open {config}Settings, {conta}Account and key. {cole}Paste the key and click {conferir}Check and save. {cripto}It's stored encrypted, only on your computer."},
+  {"id": "teto",
+   "pt-BR": "{limite}Em Limite de gasto, {teto}defina um teto por mês. {chegou}Chegou nele, o Clave {para}para de responder até o mês virar.",
+   "en": "{limite}Under Spending limit, {teto}set a monthly cap. {chegou}When you reach it, Clave {para}stops answering until the month rolls over."},
+  {"id": "regras",
+   "pt-BR": "{duas}Duas regras de ouro. {nunca}Nunca mostre a chave para ninguém. {vazou}E se ela vazar, {apague}apague no Console e {outra}crie outra.",
+   "en": "{duas}Two golden rules. {nunca}Never show your key to anyone. {vazou}And if it ever leaks, {apague}delete it in the Console and {outra}create a new one."},
+  {"id": "fecho",
+   "pt-BR": "{pronto}Tudo pronto: a sua chave está no Clave. {agora}Agora é só conversar.",
+   "en": "{pronto}All done: your key is in Clave. {agora}Now you can start chatting."}
+ ]
+}

@@ -4,13 +4,14 @@ trilha: 3. Automation with Code mode
 ordem: 21
 duracao: 6 min
 resumo: A complete example, from the request to the review, with no risk of losing anything.
+video: primeira-automacao
 ---
 
 Let's build a real automation: sorting the mess in the Downloads folder into subfolders by type (Documents, Images, Spreadsheets, Installers, Other).
 
 ## 1. Choose the folder
 
-**New Code task** > **Choose environment** > pick your Downloads folder. Leave the permission mode on **Ask**.
+**New Code task** > **Choose the working folder** > **Another folder…** > pick your Downloads folder (if you have used other folders before, the button is called **Choose environment**). Leave the permission mode on **Ask**.
 
 ## 2. Ask for the plan first
 
@@ -26,7 +27,7 @@ Reply with something like "go ahead". It will ask for permission to create the s
 
 ## 4. Check the result
 
-Open the folder in File Explorer (click the folder name at the top of the conversation) and see if it came out the way you wanted. Don't like it? Ask for adjustments ("the .zip files go to Other") or use **Undo changes**.
+Open the folder in File Explorer (click the folder name at the top of the conversation) and see if it came out the way you wanted. Don't like it? Ask for adjustments in the same chat ("the .zip files go to Other"). The **Undo changes** button doesn't help here: it brings back the files Claude wrote or edited, and the files were moved by a command. Want a way back? Ask before: "keep a list of what was moved and where".
 
 ## 5. Turn it into something you can repeat
 
@@ -46,5 +47,5 @@ Set up the Windows Task Scheduler to run organize-downloads.ps1 every day at 6 P
 
 - Asking for the plan first avoids surprises.
 - The permission cards show exactly what is going to happen.
-- Undo works for files it created or changed.
+- Undo changes brings back the files it wrote or edited, not what a command did (like moving files).
 - A good automation becomes a script you can reuse.

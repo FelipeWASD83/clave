@@ -2,6 +2,37 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 4.3.0 (15/10/2026)
+
+**Novo**
+
+- **O Haiku é o modelo padrão** nas instalações novas: o mais barato. Se você já usa o Clave, o seu modelo continua.
+- **Conselheiro de modelo**: na primeira mensagem de cada conversa e depois a cada 5, o Haiku lê a conversa e diz
+  qual modelo faz a tarefa pelo menor preço ("Para esta tarefa, o Sonnet 5.5 deve ir melhor", com Usar e Manter).
+  Se você deixar (Configurações > Modelos), o Clave troca sozinho e mostra um botão para voltar; numa conversa em que
+  você voltar, ele não troca mais. Cada avaliação custa uma fração de centavo, e dá para desligar.
+- **Comandos em português e inglês**: todo comando, skill e fluxo que vem com o Clave funciona com os dois nomes
+  (/resumo ou /summary, /vendas:proposta ou /sales:proposal, /fluxo pesquisa-profunda), e o menu, a ajuda e as
+  páginas Plugins e Fluxos mostram o do seu idioma. Um comando ou skill seu com o mesmo nome de uma tradução
+  continua sendo seu.
+- **Sair da conta** (Configurações > Atualizações e sobre): apaga a chave da API e as senhas salvas, volta as
+  configurações ao padrão, desliga as rotinas e mostra a apresentação e os tours de novo. Conversas, projetos,
+  memória e plugins instalados ficam.
+- **Desinstalar** (no mesmo lugar): fecha o Clave e tira a pasta dele, os atalhos e as tarefas das rotinas no
+  Agendador, com um link para baixar o backup antes.
+- **Vídeos nas lições**, em português e em inglês: por que usar o Clave, como pegar a chave da API, primeiros passos
+  e a primeira automação no modo Code. Eles não vêm dentro do app: a lição baixa o vídeo do GitHub na primeira vez
+  que você dá play (alguns MB) e guarda no computador.
+
+**Corrigido**
+
+- A janela de boas-vindas mostrava a palavra "null" embaixo do campo da chave da API quando não havia chave salva.
+- O título do cartão de aprovação agora diz o que o Claude pede para fazer ("Escrever", "Rodar este comando",
+  "Enviar um e-mail para") em vez de descrever como se já tivesse feito.
+- As lições "Primeira automação" e "Como o modo Code funciona" prometiam demais do **Desfazer mudanças**: ele volta os arquivos
+  que o Claude escreveu ou editou, não o que um comando fez (como mover arquivos). Agora elas dizem isso, e a
+  primeira usa o nome de verdade do botão da pasta (**Escolher a pasta de trabalho**).
+
 ## 4.2.0 (15/10/2026)
 
 **Novo**

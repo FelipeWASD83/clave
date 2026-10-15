@@ -444,7 +444,10 @@ def listar_modelos() -> list[dict]:
 
 
 def modelo(ident: str) -> dict | None:
-    return next((m for m in listar_modelos() if m["id"] == ident), None)
+    import comandos  # o id em inglês de um fluxo pronto (/workflow deep-research) também vale
+    lista = listar_modelos()
+    return (next((m for m in lista if m["id"] == ident), None)
+            or next((m for m in lista if m["id"] == comandos.canonico(ident)), None))
 
 
 def salvar_modelo(dados: dict) -> dict:

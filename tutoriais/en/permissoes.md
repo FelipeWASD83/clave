@@ -48,7 +48,7 @@ The rules for a folder live in that folder's `.claude/settings.local.json` file,
 
 ## Test and check
 
-In **Permissions** (Settings > Code mode, or by typing `/permissoes`), you can:
+In **Permissions** (Settings > Code mode, or by typing `/permissions`), you can:
 
 - see and delete rules;
 - **test** ("would this command go through?") without running anything;

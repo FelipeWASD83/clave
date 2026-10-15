@@ -104,6 +104,14 @@ def apagar(nome: str) -> None:
             _gravar_tudo(tudo)
 
 
+def apagar_tudo() -> int:
+    """"Sair da conta": a chave da API e as senhas (e-mail, GitHub, conectores) saem deste computador."""
+    with _trava:
+        n = len(_ler_tudo())
+        _gravar_tudo({})
+    return n
+
+
 def existe(nome: str) -> bool:
     return ler(nome) is not None
 

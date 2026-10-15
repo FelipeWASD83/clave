@@ -1,0 +1,30 @@
+{
+ "_como_ler": "Igual ao por-que-o-clave.json. Bate com as lições tutoriais/primeira-automacao.md e modo-code.md (e en/).",
+ "id": "primeira-automacao",
+ "cenas": [
+  {"id": "abre",
+   "pt-BR": "{sua}Sua primeira automação: {arrumar}arrumar a pasta Downloads, {sem}sem risco de perder nada.",
+   "en": "{sua}Your first automation: {arrumar}tidying up the Downloads folder, {sem}with no risk of losing anything."},
+  {"id": "novo",
+   "pt-BR": "{barra}Na barra da esquerda, clique em {novo}Novo trabalho no Code. {escolha}Depois, escolha a pasta em que ele vai trabalhar: {downloads}a Downloads.",
+   "en": "{barra}In the left sidebar, click {novo}New Code task. {escolha}Then choose the folder it will work in: {downloads}Downloads."},
+  {"id": "permissao",
+   "pt-BR": "{deixe}Deixe a permissão em {perguntar}Perguntar: {le}ele lê sozinho, {pede}mas pede o seu OK antes de mudar qualquer arquivo.",
+   "en": "{deixe}Leave the permission mode on {perguntar}Ask: {le}it reads on its own, {pede}but asks for your OK before changing any file."},
+  {"id": "pedido",
+   "pt-BR": "{peca}Peça o plano primeiro: {separar}separar os arquivos por tipo e, {antes}antes de mexer, {mostrar}mostrar quantos iriam para cada subpasta.",
+   "en": "{peca}Ask for the plan first: {separar}sort the files by type and, {antes}before changing anything, {mostrar}show how many would go into each subfolder."},
+  {"id": "plano",
+   "pt-BR": "{olha}Ele olha a pasta, {passos}mostra os passos {conta}e devolve a contagem. {confira}Confira se faz sentido.",
+   "en": "{olha}It looks at the folder, {passos}shows its steps {conta}and gives you the count. {confira}Check that it makes sense."},
+  {"id": "aprova",
+   "pt-BR": "{responda}Responda: pode fazer. {cartao}Antes de mexer, ele pede o seu OK num cartão, {mostra}mostrando exatamente o que vai fazer. {leia}Leia e clique em {permitir}Permitir. {nao}Se não quiser, clique em {recusar}Recusar.",
+   "en": "{responda}Reply: go ahead. {cartao}Before touching anything, it asks for your OK on a card, {mostra}showing exactly what it will do. {leia}Read it and click {permitir}Allow. {nao}If you don't want it, click {recusar}Deny."},
+  {"id": "pronto",
+   "pt-BR": "{pronto}Tudo pronto. {clique}Clique no nome da pasta, no topo, para conferir no Explorador. {gostou}Não gostou? {ajuste}É só pedir um ajuste aqui embaixo, na mesma conversa.",
+   "en": "{pronto}All done. {clique}Click the folder name at the top to check it in File Explorer. {gostou}Don't like it? {ajuste}Just ask for a change down here, in the same chat."},
+  {"id": "fecho",
+   "pt-BR": "{script}E o script fica na pasta: {roda}dá para rodar de novo quando quiser.",
+   "en": "{script}And the script stays in the folder: {roda}you can run it again whenever you want."}
+ ]
+}

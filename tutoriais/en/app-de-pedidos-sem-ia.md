@@ -109,7 +109,7 @@ Using classic Outlook (a Microsoft account)? Replace item 1 with "Read the email
 
 What to expect: it will ask for your OK to install a few Python [libraries](#/aprender/glossario/biblioteca) and to create the files. Read each card before allowing it. At the end, double-click `setup.bat` and type the app password from step 3 in the window that opens.
 
-**Shortcut:** the Sales plugin has the `/vendas:automatizar` command for this kind of request. With the plugin turned on (in **Plugins**, in the left sidebar), type the command in Code mode and say what you want to automate. See [Plugins and slash commands](#/aprender/plugins-e-comandos).
+**Shortcut:** the Sales plugin has the `/sales:automate` command for this kind of request. With the plugin turned on (in **Plugins**, in the left sidebar), type the command in Code mode and say what you want to automate. See [Plugins and slash commands](#/aprender/plugins-e-comandos).
 
 ## 6. Sending to the company website
 

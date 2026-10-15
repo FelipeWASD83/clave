@@ -98,6 +98,32 @@ function verExemploTom() {
     botoes: [{ texto: t('Fechar') }] });
 }
 
+// "Sair da conta": a chave e as senhas saem, a configuração volta ao padrão e a tela recarrega na apresentação
+async function sairDaConta() {
+  const ok = await confirmar(t('Sair da conta? A chave da API e as senhas salvas (e-mail, GitHub, conectores) são apagadas deste computador, todas as configurações voltam ao padrão e as rotinas são desligadas. As conversas, os projetos e a memória ficam. Depois aparecem a apresentação e os tours de novo, como na primeira vez.'),
+    { titulo: t('Sair da conta'), sim: t('Sair da conta'), perigo: true });
+  if (!ok) return;
+  try {
+    await api('/sair-da-conta', { metodo: 'POST' });
+    try { localStorage.clear(); sessionStorage.clear(); } catch { /* sem armazenamento, segue */ }
+    location.hash = '#/novo';
+    location.reload();
+  } catch (e) { aviso(e.message, 'erro'); }
+}
+
+function desinstalar() {
+  janela({ titulo: t('Desinstalar o Clave'),
+    corpo: el('div', { style: 'display:grid;gap:12px' },
+      el('p', { style: 'margin:0', texto: t('O Clave fecha e apaga a pasta dele (com as conversas, os projetos, a memória e as configurações, que moram lá dentro), os atalhos da área de trabalho e do menu Iniciar e as tarefas das rotinas no Agendador do Windows. Não dá para desfazer.') }),
+      el('p', { class: 'ajuda', style: 'margin:0', texto: t('Quer guardar as conversas? Baixe o backup antes: dá para importar numa instalação nova.') }),
+      el('a', { class: 'botao', href: '/api/backup', style: 'justify-self:start', html: `${ic('baixar')}${t('Baixar backup das conversas')}` })),
+    botoes: [{ texto: t('Cancelar') }, { texto: t('Desinstalar'), classe: 'perigo', acao: async () => {
+      await api('/desinstalar', { metodo: 'POST' });
+      if (window.clave?.sair) window.clave.sair();
+      else document.body.innerHTML = `<p style="padding:40px;font-family:sans-serif">${t('O Clave está sendo desinstalado. Pode fechar esta janela.')}</p>`;
+    } }] });
+}
+
 const preco = (v) => Number(v).toLocaleString(localidade(), { maximumFractionDigits: 4 });
 const modelosOpcoes = () => (estado.info?.modelos || []).map((m) => [m.id, t('{nome} (US$ {entrada} / {saida} por milhão)', { nome: m.nome, entrada: preco(m.entrada), saida: preco(m.saida) })]);
 const esforcoOpcoes = () => (estado.info?.esforcos || []).map((e) => [e.id, e.nome]);
@@ -275,7 +301,11 @@ const SECOES = {
       secao(t('Modelos'), t('O modelo e o raciocínio de cada conversa nova. Dá para trocar a qualquer momento na caixa de texto.'),
         el('div', { class: 'linha-campos' }, campo(t('Modelo no chat'), selecao('modelo_chat', modelosOpcoes())), campo(t('Raciocínio no chat'), selecao('esforco_chat', esforcoOpcoes()))),
         el('div', { class: 'linha-campos' }, campo(t('Modelo no Code'), selecao('modelo_code', modelosOpcoes())), campo(t('Raciocínio no Code'), selecao('esforco_code', esforcoOpcoes()))),
-        liga('mostrar_raciocinio', t('Mostrar o raciocínio'), t('Mostra um resumo do que o Claude pensou antes de responder. Não muda o preço.')),
+        liga('mostrar_raciocinio', t('Mostrar o raciocínio'), t('Mostra um resumo do que o Claude pensou antes de responder. Não muda o preço.'))),
+      secao(t('Conselheiro de modelo'), t('O Haiku lê a conversa na primeira mensagem e depois a cada 5 e diz qual modelo faz a tarefa pelo menor preço. Cada avaliação custa uma fração de centavo.'),
+        liga('conselheiro_modelo', t('Sugerir o modelo certo para cada tarefa'), t('Aparece um aviso na conversa quando outro modelo combina mais com o que você pediu.')),
+        liga('trocar_modelo_sozinho', t('Deixar o Clave trocar o modelo sozinho'), t('Em vez de só sugerir, ele troca e avisa, com um botão para voltar. Numa conversa em que você voltar, ele não troca mais.'))),
+      secao(t('Mais opções'), null,
         liga('modelos_antigos', t('Mostrar modelos antigos'), t('Modelos anteriores que a Anthropic ainda vende. Costumam ser mais caros e menos inteligentes que os atuais.')),
         el('a', { href: '#/aprender/modelos-e-raciocinio', texto: t('Qual modelo escolher?') })));
   },
@@ -506,6 +536,15 @@ const SECOES = {
           el('button', { class: 'botao perigo', type: 'button', html: `${ic('sair')}${t('Fechar o Clave')}`, onclick: async () => {
             if (!await confirmar(t('Fechar o Clave? Respostas em andamento são interrompidas.'), { sim: t('Fechar') })) return;
             if (window.clave?.sair) window.clave.sair(); else { await api('/sair', { metodo: 'POST' }).catch(() => {}); document.body.innerHTML = `<p style="padding:40px;font-family:sans-serif">${t('O Clave foi fechado. Pode fechar esta janela.')}</p>`; }
-          } }))));
+          } }))),
+      secao(t('Sair e desinstalar'), null,
+        el('div', { class: 'item-lista' }, el('span', { html: ic('chave') }),
+          el('span', { class: 'textos' }, el('b', { texto: t('Sair da conta') }),
+            el('small', { texto: t('Apaga a chave e as senhas, volta tudo ao padrão e mostra a apresentação e os tours de novo. As conversas ficam.') })),
+          el('button', { class: 'botao pequeno', type: 'button', texto: t('Sair da conta'), onclick: sairDaConta })),
+        el('div', { class: 'item-lista' }, el('span', { html: ic('lixo') }),
+          el('span', { class: 'textos' }, el('b', { texto: t('Desinstalar o Clave') }),
+            el('small', { texto: info.dev ? t('Esta é uma cópia de desenvolvimento: apague a pasta à mão, se quiser.') : t('Tira o Clave do computador: a pasta, os atalhos e as tarefas das rotinas.') })),
+          el('button', { class: 'botao pequeno perigo', type: 'button', texto: t('Desinstalar'), disabled: !!info.dev, onclick: desinstalar }))));
   },
 };

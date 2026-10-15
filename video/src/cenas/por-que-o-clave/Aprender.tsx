@@ -1,9 +1,10 @@
 // Cena 8: "Nunca usou inteligência artificial? Tem lições em português, do zero."
 // O "quem é JASON?" é o exemplo do próprio app: o Claude entende o termo escrito errado e indica a lição.
+import {useLinha} from '../../linha';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Entra, Fundo, Sobe} from '../componentes/Base';
-import {Icone} from '../componentes/Icones';
-import {COR, MOLA, MONO, SANS, quando} from '../tema';
+import {Entra, Fundo, Sobe} from '../../componentes/Base';
+import {Icone} from '../../componentes/Icones';
+import {COR, MOLA, MONO, SANS} from '../../tema';
 
 const C = 'aprender';
 
@@ -17,10 +18,11 @@ const LICOES = [
 export const Aprender: React.FC = () => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const tNunca = quando(C, 'Nunca');
+  const {quando, T} = useLinha();
+  const tNunca = quando(C, 'nunca');
   const tArtificial = quando(C, 'artificial');
-  const tTem = quando(C, 'Tem');
-  const tLicoes = quando(C, 'lições');
+  const tTem = quando(C, 'tem');
+  const tLicoes = quando(C, 'licoes');
   const tZero = quando(C, 'zero');
   const risco = interpolate(f - tArtificial - 10, [0, 8], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
@@ -29,25 +31,25 @@ export const Aprender: React.FC = () => {
         <div style={{flex: '0 0 760px'}}>
           <Entra inicio={tNunca} distancia={30}>
             <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-              <div style={{background: COR.papel2, borderRadius: 22, padding: '20px 30px', fontFamily: SANS, fontSize: 38, color: COR.texto}}>quem é JASON?</div>
+              <div style={{background: COR.papel2, borderRadius: 22, padding: '20px 30px', fontFamily: SANS, fontSize: 38, color: COR.texto}}>{T('quem é JASON?')}</div>
             </div>
           </Entra>
           <Entra inicio={tArtificial} distancia={30} estilo={{marginTop: 30}}>
             <div style={{fontFamily: SANS, fontSize: 34, color: COR.texto2, lineHeight: 1.45}}>
-              Você quis dizer{' '}
+              {T('Você quis dizer')}{' '}
               <span style={{position: 'relative', color: COR.texto3}}>
                 JASON
                 <span style={{position: 'absolute', left: -4, right: -4, top: '52%', height: 4, background: COR.erro, transform: `scaleX(${risco})`, transformOrigin: 'left'}} />
               </span>{' '}
-              <b style={{color: COR.texto}}>JSON</b>: um jeito de guardar informação em texto que os programas entendem.
+              <b style={{color: COR.texto}}>JSON</b>{T(': um jeito de guardar informação em texto que os programas entendem.')}
               <div style={{marginTop: 22, display: 'flex', alignItems: 'center', gap: 12, color: COR.acao, fontWeight: 500}}>
-                <Icone nome="livro" tamanho={32} cor={COR.acao} /> Glossário: JSON
+                <Icone nome="livro" tamanho={32} cor={COR.acao} /> {T('Glossário: JSON')}
               </div>
             </div>
           </Entra>
         </div>
         <div style={{flex: 1}}>
-          <Sobe texto="Lições em português, do zero." inicio={tTem} tamanho={78} cor={COR.texto} />
+          <Sobe texto={T('Lições em português, do zero.')} inicio={tTem} tamanho={78} cor={COR.texto} />
           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, marginTop: 44}}>
             {LICOES.map((l, i) => {
               const s = spring({frame: f - tLicoes - i * 4, fps, config: MOLA, durationInFrames: 16});
@@ -64,16 +66,16 @@ export const Aprender: React.FC = () => {
                     minHeight: 170,
                   }}
                 >
-                  <div style={{fontFamily: MONO, fontSize: 22, color: COR.acao}}>{l.n}</div>
-                  <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 32, color: COR.texto, marginTop: 10, lineHeight: 1.2}}>{l.titulo}</div>
-                  <div style={{fontFamily: MONO, fontSize: 20, color: COR.texto3, marginTop: 12}}>{l.dura}</div>
+                  <div style={{fontFamily: MONO, fontSize: 22, color: COR.acao}}>{T(l.n)}</div>
+                  <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 32, color: COR.texto, marginTop: 10, lineHeight: 1.2}}>{T(l.titulo)}</div>
+                  <div style={{fontFamily: MONO, fontSize: 20, color: COR.texto3, marginTop: 12}}>{T(l.dura)}</div>
                 </div>
               );
             })}
           </div>
           <Entra inicio={tZero} distancia={20} estilo={{marginTop: 28}}>
             <div style={{fontFamily: SANS, fontSize: 28, color: COR.texto3}}>
-              Com um ajudante que tira dúvida de cada lição por uma fração de centavo.
+              {T('Com um ajudante que tira dúvida de cada lição por uma fração de centavo.')}
             </div>
           </Entra>
         </div>

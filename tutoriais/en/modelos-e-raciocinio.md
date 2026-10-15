@@ -21,6 +21,12 @@ In the text box, the first button picks the [model](#/aprender/glossario/modelo)
 
 **Rule of thumb:** start on Haiku for simple things and on Opus for what matters. If Haiku gets it wrong, generate another answer and pick Opus (circular arrow menu).
 
+## The model advisor
+
+Clave starts on **Haiku**, the cheapest one. So you don't have to guess, Haiku itself reads the chat at the first message and then every 5 and says which model does that task for the lowest price: a note shows up like "For this task, Sonnet 5.5 should do better", with the reason and the **Use** and **Keep** buttons. Each check costs a fraction of a cent.
+
+If you prefer, let Clave **switch on its own** (Settings > Models > Let Clave switch the model on its own): it switches, tells you and shows a button to go back. In a chat where you go back, it stops switching. You can turn the advisor off there too.
+
 ## Reasoning
 
 Before answering, Claude can think. The levels are **Low**, **Medium**, **High**, **Extra high** and **Max**:

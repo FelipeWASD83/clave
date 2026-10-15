@@ -305,6 +305,47 @@ class Execucao:
                          "mudou_arquivos": self.mudou_arquivos, "pediu_ok": self.pediu_ok})
             _limpar_antigas()
 
+    # ---- conselheiro de modelo (conselheiro.py) ----
+    def _pode_aconselhar(self, cfg: dict, conv: dict, modo: str, op: dict) -> bool:
+        if not cfg.get("conselheiro_modelo", True) or modo not in ("chat", "code"):
+            return False
+        if op.get("etapa_de_fluxo") or op.get("rotina") or op.get("sem_conselheiro") or op.get("modelo_do_comando"):
+            return False
+        if (conv.get("ajustes") or {}).get("modelo_fixo"):
+            return False
+        import conselheiro
+        return conselheiro.deve_avaliar(conselheiro.contar_pedidos(banco.caminho(self.conversa_id)))
+
+    def _aconselhar(self, cfg: dict, conv: dict, modo: str, modelo: str) -> str:
+        """Pergunta ao Haiku e devolve o modelo desta resposta (troca só se quem usa deixou)."""
+        import conselheiro
+        try:
+            r = conselheiro.avaliar(self.conversa_id, modelo, modo)
+        except Exception:  # o conselho é extra: sem ele a resposta segue no modelo escolhido
+            traceback.print_exc()
+            return modelo
+        if not r or r["modelo"] == modelo:
+            return modelo
+        if not cfg.get("trocar_modelo_sozinho"):
+            self._conselho({"tipo": "modelo_sugerido", "atual": modelo, "modelo": r["modelo"], "motivo": r["motivo"]})
+            return modelo
+        self._conselho({"tipo": "modelo_trocado", "de": modelo, "para": r["modelo"], "motivo": r["motivo"]})
+        atual = (banco.conversa(self.conversa_id) or {}).get("ajustes") or {}
+        banco.atualizar_conversa(self.conversa_id, ajustes={**atual, "modelo": r["modelo"]})
+        if os.environ.get("CLAVE_FORCAR_MODELO"):  # nos testes com a API de verdade, o modelo forçado vale sempre
+            return modelo
+        self.op["modelo"] = r["modelo"]
+        return r["modelo"]
+
+    def _conselho(self, dados: dict) -> None:
+        """Avisa a tela e guarda o conselho na mensagem de quem usa: a resposta, ao terminar, redesenha a conversa a
+        partir do que está salvo, e o aviso (com os botões) precisa continuar lá."""
+        m = next((x for x in reversed(banco.caminho(self.conversa_id))
+                  if x["papel"] == "user" and x["tipo"] == "normal"), None)
+        if m:
+            banco.atualizar_meta(m["id"], {**(m.get("meta") or {}), "conselho": dados})
+        self.emitir({**dados, "mensagem": m["id"] if m else None})
+
     def _erro(self, mensagem: str, codigo: str) -> None:
         self.status = "erro"
         self.ultimo_erro = mensagem
@@ -328,6 +369,11 @@ class Execucao:
             op["modelo"] = os.environ["CLAVE_FORCAR_MODELO"]
         self.op = op
         modelo = op.get("modelo") or cfg.get("modelo_code" if modo == "code" else "modelo_chat")
+        if self._pode_aconselhar(cfg, conv, modo, op):
+            self.emitir({"tipo": "chamando", "modelo": "claude-haiku-5-5"})  # a tela mostra o "pensando" enquanto ele avalia
+            modelo = self._aconselhar(cfg, conv, modo, modelo)
+            if self.parar.is_set():
+                return
         cli = cliente()
 
         etapa = bool(op.get("etapa_de_fluxo"))

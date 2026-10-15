@@ -15,7 +15,7 @@ import { bannerModeloNovo } from './lancamentos.js';
 import { menuConversa } from './lateral.js';
 import { pegarRascunho } from './aprender.js';
 import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, cartaoPergunta, cartaoSugestao, FluxoVivo, notificar } from './fluxo-ui.js';
-import { t } from './i18n.js';
+import { t, emIngles } from './i18n.js';
 
 function saudacao() {
   const h = new Date().getHours();
@@ -290,10 +290,11 @@ class TelaConversa {
       const grupos = { app: t('Do Clave'), comando: t('Comandos'), skill: t('Skills'), fluxo: t('Fluxos') };
       janela({ titulo: t('Comandos de barra'), larga: true, corpo: el('div', { class: 'lista-comandos' },
         el('p', { class: 'ajuda', texto: t('Digite / na caixa de mensagem para ver e escolher. Comandos e skills seus ficam em .claude/commands e .claude/skills (formato do Claude Code).') }),
+        el('p', { class: 'ajuda', texto: t('Os comandos, skills e fluxos que vêm com o Clave funcionam com o nome em português e em inglês (/resumo ou /summary, /vendas:proposta ou /sales:proposal).') }),
         ...Object.entries(grupos).map(([tipo, titulo]) => {
           const itens = comandos.filter((c) => c.tipo === tipo);
           return itens.length ? el('div', {}, el('div', { class: 'secao-titulo', texto: titulo }),
-            ...itens.map((c) => el('div', { class: 'item-comando' }, el('code', { texto: '/' + c.nome + (c.argumentos ? ' ' + c.argumentos : '') }), el('span', { texto: c.descricao })))) : null;
+            ...itens.map((c) => el('div', { class: 'item-comando' }, el('code', { texto: '/' + (emIngles() ? c.nome_en || c.nome : c.nome) + (c.argumentos ? ' ' + c.argumentos : '') }), el('span', { texto: c.descricao })))) : null;
         })), botoes: [{ texto: t('Fechar'), classe: 'primario' }] });
       return true;
     }
@@ -377,8 +378,14 @@ class TelaConversa {
       else if (turnos.length) turnos[turnos.length - 1].respostas.push(m);
     }
     const filhos = [];
+    const visto = this.visao.conversa?.ajustes?.conselho_visto;
     turnos.forEach((turno, i) => {
       filhos.push(this.elementoUsuario(turno.usuario));
+      const conselho = (turno.usuario.meta || {}).conselho;
+      if (conselho) {  // o conselheiro de modelo falou antes desta resposta; botões só no último, se ainda não respondeu
+        filhos.push(notaConselheiro({ ...conselho, mensagem: turno.usuario.id }, this,
+          { comBotoes: i === turnos.length - 1 && visto !== turno.usuario.id }));
+      }
       if (turno.respostas.length) filhos.push(this.elementoTurno(turno, i === turnos.length - 1));
       const meta = turno.usuario.meta || {};
       if (meta.erro && !turno.respostas.some((r) => r.papel === 'assistant')) {
@@ -724,6 +731,16 @@ class Vivo {
       case 'alerta_orcamento':
         aviso(ev.porcentagem >= 100 ? t('Você chegou ao teto de gasto deste mês.') : t('Você já usou {pct}% do teto de gasto deste mês.', { pct: ev.porcentagem }), ev.porcentagem >= 95 ? 'erro' : '');
         break;
+      case 'modelo_sugerido':
+      case 'modelo_trocado':
+        // trocou sozinho: a caixa de texto passa para o modelo novo (senão a próxima mensagem voltaria para o antigo)
+        if (ev.tipo === 'modelo_trocado') tela.comp?.definirModelo(ev.para);
+        // o aviso também vem da mensagem salva quando a conversa é redesenhada: não desenhar duas vezes
+        if (!tela.mensagensEl.querySelector(`.conselheiro[data-mensagem="${CSS.escape(ev.mensagem || '')}"]`)) {
+          this.alvo.append(notaConselheiro(ev, tela));
+          this.rolar();
+        }
+        break;
       case 'aviso':
         this.tirarIndicador();
         this.alvo.append(nota(ev.mensagem));
@@ -770,6 +787,50 @@ class Vivo {
     card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     card.querySelector('button.primario')?.focus({ preventScroll: true });
   }
+}
+
+// O conselheiro de modelo (o Haiku, na 1ª mensagem e a cada 5): sugere outro modelo ou avisa que trocou.
+function notaConselheiro(ev, tela, { comBotoes = true } = {}) {
+  const sugeriu = ev.tipo === 'modelo_sugerido';
+  const novo = modeloInfo(sugeriu ? ev.modelo : ev.para).nome || ev.modelo || ev.para;
+  const antigo = modeloInfo(sugeriu ? ev.atual : ev.de).nome || ev.atual || ev.de;
+  const texto = el('span', { texto: sugeriu
+    ? t('Para esta tarefa, o {modelo} deve ir melhor: {motivo}', { modelo: novo, motivo: ev.motivo })
+    : t('Troquei para o {modelo}: {motivo}', { modelo: novo, motivo: ev.motivo }) });
+  const botoes = el('div', { class: 'aprovacao-botoes-mini' });
+  const caixa = el('div', { class: 'nota-conversa info conselheiro', dados: { mensagem: ev.mensagem || '' } }, el('span', { html: ic('faisca') }),
+    el('div', { class: 'conselheiro-corpo' }, texto, botoes));
+  // o que a pessoa decide fica nos ajustes da conversa: ao redesenhar, os botões não voltam
+  const guardar = async (extra = {}) => {
+    if (tela.id) {
+      await api(`/conversas/${tela.id}`, { metodo: 'PATCH', corpo: { ajustes_mesclar: { conselho_visto: ev.mensagem, ...extra } } }).catch(() => {});
+      if (tela.visao?.conversa) tela.visao.conversa.ajustes = { ...(tela.visao.conversa.ajustes || {}), conselho_visto: ev.mensagem, ...extra };
+    }
+  };
+  if (!comBotoes) {
+    botoes.remove();
+  } else if (sugeriu) {
+    botoes.append(
+      el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Usar o {modelo}', { modelo: novo }), onclick: async () => {
+        tela.comp?.definirModelo(ev.modelo);
+        texto.textContent = t('Combinado: o {modelo} responde a partir da próxima mensagem.', { modelo: novo });
+        botoes.remove();
+        await guardar({ modelo: ev.modelo });
+      } }),
+      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Manter o {modelo}', { modelo: antigo }), onclick: async () => {
+        botoes.remove();
+        await guardar();
+      } }),
+      el('a', { class: 'botao pequeno fantasma', href: '#/config/modelos', texto: t('Deixar ele trocar sozinho') }));
+  } else {
+    botoes.append(el('button', { class: 'botao pequeno', type: 'button', texto: t('Voltar para o {modelo}', { modelo: antigo }), onclick: async () => {
+      tela.comp?.definirModelo(ev.de);
+      texto.textContent = t('Voltei para o {modelo} e não troco mais o modelo nesta conversa.', { modelo: antigo });
+      botoes.remove();
+      await guardar({ modelo: ev.de, modelo_fixo: true });
+    } }));
+  }
+  return caixa;
 }
 
 export { renderizarBloco };

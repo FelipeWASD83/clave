@@ -43,7 +43,7 @@ This works in any mode. If you would rather it went straight ahead, turn it off 
 
 ## Undo
 
-Made a mistake? Below the reply you will see **Undo changes**: the files it created or changed in that reply go back to how they were. (Commands that delete things or touch anything outside the folder can't be undone, which is why they always ask for your OK.)
+Made a mistake? Below the reply you will see **Undo changes**: the files it created or edited in that reply go back to how they were. What a **command** did (moving, renaming, deleting, running a script) doesn't come back with the button: that's why the command card shows what will run first, and the ones that delete things or touch anything outside the folder always ask for your OK. For a big change made by a command, ask first for a list of what will be touched, or for a copy.
 
 ## Protected files
 

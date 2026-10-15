@@ -1,0 +1,21 @@
+{
+  "perguntas e conversas do dia a dia, textos curtos, resumos, traduções, e-mails, explicar algo, tarefas de rotina e arquivos pequenos": "everyday questions and chats, short texts, summaries, translations, e-mails, explaining something, routine tasks and small files",
+  "textos longos ou caprichados, documentos e planilhas grandes, código de tamanho médio, análises com vários passos, ou quando o Haiku já errou ou se perdeu": "long or polished texts, big documents and spreadsheets, medium-sized code, multi-step analysis, or when Haiku already got it wrong or got lost",
+  "tarefas difíceis e importantes: código grande ou com muitos arquivos, decisões com muito em jogo, raciocínio longo, revisar algo com olho crítico": "hard and important tasks: big code or many files, high-stakes decisions, long reasoning, reviewing something with a critical eye",
+  "só raciocínio muito longo ou escrita criativa longa, quando vale pagar bem mais": "only very long reasoning or long creative writing, when it is worth paying a lot more",
+  "(com {n} anexo(s))": "(with {n} attachment(s))",
+  "(usou {n} ferramenta(s))": "(used {n} tool(s))",
+  "Pessoa": "Person",
+  "Modelo atual: {nome} ({id}). Modo: {modo}.": "Current model: {nome} ({id}). Mode: {modo}.",
+  "Code (trabalha numa pasta do computador)": "Code (works in a folder on the computer)",
+  "chat": "chat",
+  "A conversa até agora (as últimas mensagens, cortadas; a última é o pedido novo):": "The chat so far (the last messages, cut short; the last one is the new request):",
+  "Você escolhe qual modelo do Claude responde a uma conversa no Clave. Quem usa paga cada token do próprio bolso, então escolha o modelo mais barato que faz a tarefa bem.": "You choose which Claude model answers a chat in Clave. The person pays for every token out of their own pocket, so choose the cheapest model that does the task well.",
+  "Modelos (preço por milhão de tokens, entrada e saída) e quando usar:": "Models (price per million tokens, input and output) and when to use them:",
+  "Na dúvida entre dois, fique com o mais barato. Só recomende um modelo diferente do atual quando a diferença for clara; senão, recomende o atual.": "When in doubt between two, stay with the cheaper one. Only recommend a model different from the current one when the difference is clear; otherwise, recommend the current one.",
+  "Responda chamando recomendar_modelo. O motivo é uma frase curta para quem usa, sem jargão, no idioma em que a pessoa escreve, dizendo o que na tarefa pede esse modelo.": "Answer by calling recomendar_modelo. The reason is one short sentence for the person, without jargon, in English, saying what in the task calls for that model.",
+  "Diz qual modelo deve responder esta conversa.": "Says which model should answer this chat.",
+  "O id do modelo": "The model id",
+  "Uma frase curta para quem usa": "One short sentence for the person",
+  "o modelo antigo que a pessoa escolheu": "the older model the person picked"
+}

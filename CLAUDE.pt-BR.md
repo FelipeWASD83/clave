@@ -68,6 +68,9 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 | `servidor/compactar.py` | `/compact`: compactação sob demanda (beta `compact-2026-09-04`); o bloco vira uma mensagem `compactacao` e o pedido começa nela |
 | `servidor/importar.py` | Importar do Claude ou do ChatGPT: o pedido para colar lá, a leitura da resposta (seções e uma entrada por linha) e a aplicação |
 | `servidor/tom.py` | O jeito de falar (tom básico e os controles de Menos, Padrão e Mais): a frase de cada escolha no prompt de sistema e o exemplo no Haiku |
+| `servidor/conselheiro.py` | O conselheiro de modelo: o Haiku lê a conversa na 1ª mensagem e a cada 5 e recomenda o modelo mais barato que faz a tarefa (`recomendar_modelo`, ferramenta forçada) |
+| `servidor/desinstalador.py` | Confere se esta pasta pode se desinstalar sozinha e lança o `desinstalar.ps1` fora da árvore de processos do servidor |
+| `ferramentas/desinstalar.ps1` | Desinstalar, rodando do `%TEMP%` depois que o app fecha: atalhos que apontam para esta pasta, `%APPDATA%\Clave` e a pasta do Clave, atrás de travas de segurança |
 | `servidor/videos.py` | Os vídeos das lições: o arquivo local na cópia de desenvolvimento (`video/saida/`), senão baixado uma vez da release `videos` para `dados/videos`, entregue com Range |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP e SMTP com senha de app, ou o Outlook clássico por COM) e Word (.docx com a biblioteca padrão, PDF pelo Word instalado) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Fichas de lançamento dos modelos: o cartão de apresentação (abre uma vez para modelo novo), o banner de modelo novo, os cartões "Modelos", a nota de inteligência e a fonte dela (`_inteligencia`) e os modelos que a conta tem e o Clave ainda não conhece (API de modelos, uma vez por dia) |
@@ -138,7 +141,40 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 - **Os vídeos nunca vão dentro do app.** Cada MP4 tem vários MB, e o botão Atualizar baixaria todos a cada versão.
   Eles ficam na release `videos`, criada como pré-lançamento para o `releases/latest` (o botão Atualizar) nunca
   pegá-la; vídeo renderizado de novo: `gh release upload videos <arquivo> --clobber`. As lições apontam com
-  `video: <id>` no cabeçalho (`<id>.<pt-BR|en>.mp4`).
+  `video: <id>` no cabeçalho (`<id>.<pt-BR|en>.mp4`), e o README aponta para lá também, com as capas de
+  `video/capas/`.
+- **O Haiku é o modelo padrão desde a 4.3** (só em instalação nova: a configuração salva de quem já usava mantém o
+  modelo). O **conselheiro de modelo** roda antes da resposta na 1ª mensagem de quem usa e a cada 5
+  (`(n - 1) % 5 == 0`), só no chat e no Code, nunca em rotina, etapa de fluxo, ajudante de lição, comando ou skill
+  com modelo fixo, "gerar outra resposta" ou conversa com `modelo_fixo`. Só sugere, a não ser com
+  `trocar_modelo_sozinho` ligado. O conselho fica gravado no `meta.conselho` da mensagem de quem usa (a tela
+  redesenha a conversa quando a resposta termina, e o aviso com os botões precisa continuar lá); o que a pessoa
+  decide vai para os `ajustes` da conversa (`conselho_visto`, `modelo`, `modelo_fixo`) pelo
+  `PATCH ... ajustes_mesclar`. O `r_enviar` grava os `ajustes` antes de começar a resposta, para a escrita do
+  conselheiro não se perder. Com `CLAVE_FORCAR_MODELO` (testes com a API de verdade) ele avisa a troca, mas o modelo
+  forçado continua respondendo. Testado no Haiku de verdade: mantém o Haiku em pergunta simples, sobe em tarefa
+  grande, desce do Opus numa tradução curta e escreve o motivo em inglês com o app em inglês.
+- **Comandos nos dois idiomas**: o nome em português (o do arquivo) é o de verdade; `comandos.NOMES_EN` dá o nome em
+  inglês de tudo que vem com o Clave (comandos do app, plugins, os comandos e as skills deles, fluxos prontos), cada
+  parte separada por `:` traduzida. A resolução tenta primeiro o nome exato digitado e depois o `canonico()`, então
+  uma skill da pessoa com o mesmo nome de uma tradução continua vencendo. Um teste falha quando plugin, comando,
+  skill ou fluxo que vem com o Clave fica sem nome em inglês.
+- **Sair da conta mantém os dados e tira as credenciais**: `segredos.apagar_tudo()`, `config.resetar()` (o idioma
+  volta a seguir o Windows, então a apresentação e os tours aparecem), o cache de modelos da conta e as rotinas
+  desligadas e fora do Agendador. Conversas, projetos, memória e anexos ficam. O `resetar()` mantém o que não é
+  preferência: `plugins` (zerar religaria um plugin de terceiro que a pessoa desligou), `ajudantes` (as conversas dos
+  ajudantes das lições ficariam órfãs) e `web_por_padrao_migrada` (a migração da 3.1.0 rodaria de novo e apagaria a
+  escolha de Web de cada conversa).
+- **Desinstalar nunca roda numa cópia de desenvolvimento, na demonstração nem fora do lançador**
+  (`servidor/desinstalador.py` recusa `.git`, `DEMO` e a falta do `CLAVE_LANCADOR`; os testes sobem o servidor de
+  verdade a partir da pasta do Clave, e é isso que impede a suíte de desinstalar uma instalação), só apaga uma pasta
+  com `versao.json` e `servidor\servidor.py`, nunca a raiz de um disco nem uma pasta do usuário, e só tira atalhos que
+  apontam para dentro dela. Duas armadilhas que a revisão achou e um teste cobre agora: **nada de
+  `DETACHED_PROCESS`** (o PowerShell 5.1 lançado assim sai com código 0 sem rodar o script), e o script tem de ficar
+  **fora da árvore de processos do servidor** (o Electron derruba a árvore com `taskkill /T` ao fechar): ele é
+  lançado por um PowerShell curto com `Start-Process`, antes de o servidor responder, com os parâmetros num `.json`
+  ao lado. Ele fecha os processos que moram na pasta e a janela do Edge do modo sem Electron (perfil em
+  `dados\janela-edge`), nunca um editor que só está com a pasta aberta.
 - **Toda release leva também o `clave.zip`** (o mesmo pacote, nome fixo, pasta `clave/`), então
   `releases/latest/download/clave.zip` é sempre a versão mais nova. O link curto `tinyurl.com/instalar-clave`
   aponta para lá; é ele que o dono do repositório manda no comando de instalação de uma linha do PowerShell. O

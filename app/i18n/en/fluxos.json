@@ -39,7 +39,7 @@
   "Fluxos desligados.": "Workflows turned off.",
   "Novo fluxo": "New workflow",
   "Planejar": "Plan",
-  "Para usar: escolha um fluxo e descreva a tarefa, ou digite <code>/fluxo</code> na caixa de mensagem. Você também pode só pedir (\"faça isso com um fluxo\") e o Claude monta as etapas.": "To use one: pick a workflow and describe the task, or type <code>/fluxo</code> in the message box. You can also just ask (\"do this with a workflow\") and Claude sets up the steps.",
+  "Para usar: escolha um fluxo e descreva a tarefa, ou digite <code>/fluxo</code> na caixa de mensagem. Você também pode só pedir (\"faça isso com um fluxo\") e o Claude monta as etapas.": "To use one: pick a workflow and describe the task, or type <code>/workflow</code> in the message box. You can also just ask (\"do this with a workflow\") and Claude sets up the steps.",
   "Ex.: Relatório do mês": "e.g. Monthly report",
   "Para que serve, em uma frase": "What it is for, in one sentence",
   "O que a pessoa precisa dizer ao usar (ex.: o mês e a planilha)": "What the user needs to say when using it (e.g. the month and the spreadsheet)",

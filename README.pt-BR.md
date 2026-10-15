@@ -11,10 +11,10 @@ uso e com um teto de gasto que você define.
 
 ## Por que você deveria usar o Clave
 
-[![Vídeo: por que usar o Clave (1 min 27 s, com narração)](video/capa.jpg)](https://github.com/FelipeWASD83/clave/releases/download/v2.0.0/por-que-o-clave.mp4)
+[![Vídeo: por que usar o Clave (1 min 27 s)](video/capas/por-que-o-clave.pt-BR.jpg)](https://github.com/FelipeWASD83/clave/releases/download/videos/por-que-o-clave.pt-BR.mp4)
 
-**[Assista ao vídeo: por que usar o Clave](https://github.com/FelipeWASD83/clave/releases/download/v2.0.0/por-que-o-clave.mp4)**
-(1 min 27 s, com narração em português)
+**[Assista ao vídeo: por que usar o Clave](https://github.com/FelipeWASD83/clave/releases/download/videos/por-que-o-clave.pt-BR.mp4)**
+(1 min 27 s; também [em inglês](https://github.com/FelipeWASD83/clave/releases/download/videos/por-que-o-clave.en.mp4))
 
 **Você paga pelo que usa, não por uma mensalidade.** A assinatura Pro do
 Claude custa US$ 20 por mês, use você muito ou pouco. Pela API, cada resposta
@@ -125,8 +125,14 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   e em centenas de apps por uma ligação guiada com o Zapier.
 - **Importar do Claude ou do ChatGPT**: traga as suas regras, projetos,
   preferências e rotinas com um copiar e colar.
-- **Economiza o seu crédito**: /compact, /economia, o Claude sugerindo modelo mais
-  barato e um programa sem IA no lugar de rotina para trabalho que sempre se repete.
+- **Economiza o seu crédito**: começa no Haiku, o modelo mais barato, e um
+  **conselheiro de modelo** (o próprio Haiku, na primeira mensagem e a cada 5)
+  sugere o modelo que faz a tarefa pelo menor preço, ou troca sozinho se você
+  deixar. Mais /compact, /economia e um programa sem IA no lugar de rotina para
+  trabalho que sempre se repete.
+- **Comandos em português e inglês**: todo comando, skill e fluxo que vem com o
+  Clave funciona com os dois nomes (/resumo ou /summary, /vendas:proposta ou
+  /sales:proposal), e o menu mostra o do seu idioma.
 
 - **Aprender**: lições para quem nunca usou IA, com glossário de termos (API,
   JSON, Git...) e um ajudante que tira dúvidas de cada lição.
@@ -174,6 +180,17 @@ Windows; para trocar, vá em Configurações > Aparência.
 
 A chave fica guardada só no seu computador, criptografada pelo Windows.
 
+## Vídeos
+
+Vídeos curtos e narrados, em português e em inglês. Eles também tocam dentro do Clave, nas lições
+(**Aprender**): a lição baixa o vídeo na primeira vez que você dá play.
+
+| Vídeo | O que mostra |
+|---|---|
+| <a href="https://github.com/FelipeWASD83/clave/releases/download/videos/primeiros-passos.pt-BR.mp4"><img src="video/capas/primeiros-passos.pt-BR.jpg" width="260" alt="Vídeo: Primeiros passos"></a> | **[Primeiros passos](https://github.com/FelipeWASD83/clave/releases/download/videos/primeiros-passos.pt-BR.mp4)** (1 min 10 s): instalar, a janela de boas-vindas, a primeira conversa, o botão do modelo e quanto custa uma resposta. [In English](https://github.com/FelipeWASD83/clave/releases/download/videos/primeiros-passos.en.mp4) (1 min 10 s). |
+| <a href="https://github.com/FelipeWASD83/clave/releases/download/videos/chave-da-api.pt-BR.mp4"><img src="video/capas/chave-da-api.pt-BR.jpg" width="260" alt="Vídeo: Sua chave da API"></a> | **[Sua chave da API](https://github.com/FelipeWASD83/clave/releases/download/videos/chave-da-api.pt-BR.mp4)** (1 min 22 s): criar a conta no Console da Anthropic, colocar crédito, criar a chave, colar no Clave e o teto do mês. [In English](https://github.com/FelipeWASD83/clave/releases/download/videos/chave-da-api.en.mp4) (1 min 24 s). |
+| <a href="https://github.com/FelipeWASD83/clave/releases/download/videos/primeira-automacao.pt-BR.mp4"><img src="video/capas/primeira-automacao.pt-BR.jpg" width="260" alt="Vídeo: Sua primeira automação"></a> | **[Sua primeira automação](https://github.com/FelipeWASD83/clave/releases/download/videos/primeira-automacao.pt-BR.mp4)** (1 min 17 s): o modo Code organizando a pasta Downloads: o plano primeiro, o cartão de aprovação e conferir o resultado. [In English](https://github.com/FelipeWASD83/clave/releases/download/videos/primeira-automacao.en.mp4) (1 min 16 s). |
+
 ## Quanto custa
 
 Você paga a Anthropic pelo que usar, por número de tokens. Exemplos aproximados:
@@ -218,8 +235,13 @@ ou abra uma issue aqui com o nome do arquivo bloqueado.
 
 ## Desinstalar
 
-Apague a pasta do Clave e os dois atalhos. Se quiser guardar as conversas antes,
-use Configurações > Dados e backup.
+Em **Configurações > Atualizações e sobre > Desinstalar**: o Clave fecha e apaga
+a pasta dele, os atalhos e as tarefas das rotinas no Agendador. As conversas
+moram dentro da pasta, então baixe o backup antes (Configurações > Dados e
+backup) se quiser guardar. À mão: apague a pasta do Clave e os dois atalhos.
+
+**Sair da conta** (no mesmo lugar) apaga a chave e as senhas salvas e volta todas
+as configurações ao padrão, mantendo as conversas.
 
 ## Para quem desenvolve
 

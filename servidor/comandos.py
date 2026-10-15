@@ -38,6 +38,57 @@ EMBUTIDOS_APP = [
 ]
 
 
+# O nome em inglês de cada comando, plugin, skill e fluxo que vem com o Clave (o português é o nome dos arquivos).
+# Os dois funcionam em qualquer idioma; o menu mostra o do idioma da interface. Comando e skill que a pessoa cria ou
+# instala de fora ficam só com o nome que têm. Num nome com prefixo ("vendas:proposta"), cada parte é traduzida.
+NOMES_EN = {
+    # do próprio app
+    "novo": "new", "modelo": "model", "esforco": "effort", "plano": "plan", "fluxo": "workflow", "custo": "cost",
+    "resumo": "summary", "exportar": "export", "economia": "savings", "importar": "import", "memoria": "memory",
+    "permissoes": "permissions", "ajuda": "help", "compactar": "compact",
+    # plugins que vêm com o Clave e os comandos deles
+    "automacao-windows": "windows-automation", "crie-o-seu": "make-your-own", "escrita": "writing",
+    "escritorio": "office", "pesquisa": "research", "programacao": "programming", "sites-e-apps": "sites-and-apps",
+    "vendas": "sales", "organizar": "organize", "nova-skill": "new-skill", "revisar": "review",
+    "resumir-planilha": "summarize-spreadsheet", "pesquisar": "search", "explicar": "explain", "pagina": "page",
+    "automatizar": "automate", "pedidos": "orders", "proposta": "proposal", "relatorio": "report",
+    # skills dos plugins
+    "agendar-tarefa": "schedule-task", "organizar-arquivos": "organize-files", "renomear-em-lote": "batch-rename",
+    "script-powershell-seguro": "safe-powershell-script", "criar-agente": "create-agent",
+    "criar-comando": "create-command", "criar-plugin": "create-plugin", "criar-skill": "create-skill",
+    "ata-de-reuniao": "meeting-minutes", "email-profissional": "professional-email",
+    "resumir-documento": "summarize-document", "revisar-texto": "proofread-text",
+    "comparar-planilhas": "compare-spreadsheets", "excel-avancado": "advanced-excel", "limpar-dados": "clean-data",
+    "relatorio-em-pdf": "pdf-report", "comparar-opcoes": "compare-options", "pesquisa-com-fontes": "sourced-research",
+    "depurar-erro": "debug-error", "escrever-testes": "write-tests", "explicar-codigo": "explain-code",
+    "revisar-codigo": "code-review", "checklist-web": "web-checklist", "pagina-simples": "simple-page",
+    "publicar-site": "publish-site", "automacao-sem-ia": "automation-without-ai",
+    "follow-up-de-cliente": "client-follow-up", "pedido-para-planilha": "orders-to-spreadsheet",
+    "proposta-comercial": "sales-proposal", "relatorio-de-vendas": "sales-report", "responder-cliente": "answer-client",
+    # fluxos prontos (/fluxo <id>)
+    "escrever-e-revisar": "write-and-review", "pesquisa-profunda": "deep-research",
+    "planejar-fazer-testar": "plan-build-test", "planilha-grande": "big-spreadsheet",
+    "revisao-em-paralelo": "parallel-review",
+    # skills que vêm na pasta skills/ do Clave
+    "ver-video": "watch-video",
+}
+_PT = {en: pt for pt, en in NOMES_EN.items() if en != pt and pt != "compactar"}
+
+
+def nome_en(nome: str) -> str:
+    """'vendas:proposta' -> 'sales:proposal'."""
+    return ":".join(NOMES_EN.get(p, p) for p in nome.split(":"))
+
+
+def canonico(nome: str) -> str:
+    """O nome em português (o dos arquivos), venha ele em português ou em inglês."""
+    return ":".join(_PT.get(p, p) for p in nome.split(":"))
+
+
+def nome_na_tela(nome: str) -> str:
+    return nome_en(nome) if i18n.idioma() == "en" else nome
+
+
 def _bases(pasta: str | Path | None) -> list[tuple[str, str, Path]]:
     bases = []
     if pasta:
@@ -73,6 +124,16 @@ def listar(pasta: str | Path | None = None, com_skills: bool = True) -> list[dic
             vistos[nome] = {"nome": nome, "descricao": pt.get("description") or str(fm.get("description") or "").strip(),
                             "origem": origem, "tipo": "comando",
                             "argumentos": pt.get("argument-hint") or str(fm.get("argument-hint") or ""), "caminho": str(arq)}
+    for c in vistos.values():  # o nome em inglês só para o que vem com o Clave (app, plugins e a pasta skills/)
+        origem = str(c.get("origem", ""))
+        traduz = c["tipo"] == "app" or origem.startswith("plugin:") or origem == "clave"
+        c["nome_en"] = nome_en(c["nome"]) if traduz else c["nome"]
+    # um comando ou skill da pessoa com o mesmo nome da tradução de um comando do app (ex.: plan.md do Claude Code)
+    # continua sendo dela: o comando do app fica só com o nome em português no menu
+    da_pessoa = {c["nome"] for c in vistos.values() if c["tipo"] != "app"}
+    for c in vistos.values():
+        if c["tipo"] == "app" and c["nome_en"] != c["nome"] and c["nome_en"] in da_pessoa:
+            c["nome_en"] = c["nome"]
     return sorted(vistos.values(), key=lambda c: ({"app": 0, "comando": 1, "skill": 2}[c["tipo"]], c["nome"]))
 
 
@@ -118,9 +179,20 @@ def expandir(texto: str, pasta: str | Path | None = None) -> dict | None:
     sep = separar(texto)
     if not sep:
         return None
-    nome, args = sep
-    if nome in dict(EMBUTIDOS_APP):
+    digitado, args = sep
+    if digitado in dict(EMBUTIDOS_APP):
         return None
+    # o nome exato primeiro: um comando ou skill da pessoa chamado "plan" ou "review" vence a tradução do Clave
+    exp = _expandir_nome(digitado, args, pasta)
+    if exp:
+        return exp
+    pt = canonico(digitado)
+    if pt in dict(EMBUTIDOS_APP) or pt == digitado:
+        return None
+    return _expandir_nome(pt, args, pasta)
+
+
+def _expandir_nome(nome: str, args: str, pasta: str | Path | None) -> dict | None:
     for s in contexto_pasta.skills(pasta):
         if s["nome"] == nome and s.get("invocavel", True):
             c = contexto_pasta.conteudo_skill([s], nome)

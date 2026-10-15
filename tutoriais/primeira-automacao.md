@@ -4,13 +4,14 @@ trilha: 3. Automação com o modo Code
 ordem: 21
 duracao: 6 min
 resumo: Um exemplo completo, do pedido à revisão, sem risco de perder nada.
+video: primeira-automacao
 ---
 
 Vamos fazer uma automação de verdade: separar a bagunça da pasta Downloads em subpastas por tipo (Documentos, Imagens, Planilhas, Instaladores, Outros).
 
 ## 1. Escolha a pasta
 
-**Novo trabalho no Code** > **Escolher pasta** > Downloads. Deixe a permissão em **Perguntar**.
+**Novo trabalho no Code** > **Escolher a pasta de trabalho** > **Outra pasta…** > Downloads (se você já usou outras pastas, o botão se chama **Escolher ambiente**). Deixe a permissão em **Perguntar**.
 
 ## 2. Peça o plano primeiro
 
@@ -26,7 +27,7 @@ Responda algo como "pode fazer". Ele vai pedir permissão para criar as subpasta
 
 ## 4. Confira
 
-Abra a pasta no Explorador (clique no nome da pasta, no topo da conversa) e veja se ficou como você queria. Não gostou? Peça ajustes ("os .zip vão para Outros") ou use **Desfazer mudanças**.
+Abra a pasta no Explorador (clique no nome da pasta, no topo da conversa) e veja se ficou como você queria. Não gostou? Peça ajustes na mesma conversa ("os .zip vão para Outros"). O botão **Desfazer mudanças** não serve aqui: ele volta os arquivos que o Claude escreveu ou editou, e quem moveu os arquivos foi um comando. Quer poder voltar atrás? Peça antes: "guarde uma lista do que foi movido e para onde".
 
 ## 5. Transforme em algo que se repete
 
@@ -46,5 +47,5 @@ Configure o Agendador de Tarefas do Windows para rodar o organizar-downloads.ps1
 
 - Pedir o plano antes evita surpresas.
 - Os cartões de permissão mostram exatamente o que vai acontecer.
-- Desfazer existe para arquivos que ele criou ou mudou.
+- Desfazer mudanças volta os arquivos que ele escreveu ou editou, não o que um comando fez (como mover arquivos).
 - Uma automação boa vira um script que você reusa.

@@ -66,3 +66,11 @@ export function aplicarAparencia() {
 export function modeloInfo(id) {
   return (estado.info?.modelos || []).find((m) => m.id === id) || { id, nome: id, esforco: true };
 }
+
+// O nome em inglês de um comando, plugin, skill ou fluxo que vem com o Clave (comandos.NOMES_EN no servidor), com a
+// interface em inglês; cada parte separada por ":" é traduzida. Os dois nomes funcionam ao digitar.
+export function nomeComando(nome) {
+  if (cfg()?.idioma !== 'en') return nome;
+  const mapa = estado.info?.nomes_en || {};
+  return String(nome).split(':').map((p) => mapa[p] || p).join(':');
+}

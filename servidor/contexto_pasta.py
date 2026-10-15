@@ -140,12 +140,13 @@ def skills(pasta: str | Path | None) -> list[dict]:
 
 
 def conteudo_skill(lista: list[dict], nome: str) -> dict | None:
-    for s in lista:
-        if s["nome"] == nome:
-            try:
-                texto = Path(s["caminho"]).read_text(encoding="utf-8", errors="replace")
-            except OSError:
-                return None
-            corpo = _FRONT.sub("", texto, count=1)
-            return {**s, "texto": corpo}
-    return None
+    import comandos  # aqui dentro: comandos importa este módulo
+    s = next((x for x in lista if x["nome"] == nome), None) or next(
+        (x for x in lista if x["nome"] == comandos.canonico(nome)), None)  # o nome em inglês de uma skill do Clave
+    if not s:
+        return None
+    try:
+        texto = Path(s["caminho"]).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return {**s, "texto": _FRONT.sub("", texto, count=1)}

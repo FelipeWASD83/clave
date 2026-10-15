@@ -1,0 +1,8 @@
+{
+  "O Clave não conseguiu confirmar que a pasta {pasta} é só dele. Apague à mão, se quiser.": "Clave couldn't confirm that the folder {pasta} is only its own. Delete it by hand if you want.",
+  "O Clave não foi desinstalado: não deu para confirmar que a pasta {pasta} é só dele. Apague à mão, se quiser.": "Clave was not uninstalled: it couldn't confirm that the folder {pasta} is only its own. Delete it by hand if you want.",
+  "Esta é uma cópia de desenvolvimento (tem a pasta .git): o Clave não se apaga sozinho aqui. Apague a pasta à mão, se quiser.": "This is a development copy (it has a .git folder): Clave doesn't delete itself here. Delete the folder by hand if you want.",
+  "Desinstalar pelo app só funciona no Windows. Apague a pasta do Clave à mão.": "Uninstalling from the app only works on Windows. Delete the Clave folder by hand.",
+  "O Clave foi desinstalado.": "Clave was uninstalled.",
+  "O Clave foi desinstalado, mas a pasta {pasta} não saiu inteira (algum arquivo estava em uso). Apague o que sobrou à mão.": "Clave was uninstalled, but the folder {pasta} wasn't fully removed (some file was in use). Delete what is left by hand."
+}

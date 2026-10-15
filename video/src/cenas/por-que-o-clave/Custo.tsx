@@ -3,9 +3,10 @@
 // O elemento da cena é a fita de recibo: cada coisa que você usa vira uma linha com o preço.
 // Números: página oficial de preços da Anthropic em 14/10/2026, mensagem curta (8 mil tokens de entrada, quase
 // tudo do cache, e 400 de saída) sem raciocínio.
+import {useLinha} from '../../linha';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Fundo, Nota, Rotulo, Sobe} from '../componentes/Base';
-import {COR, MOLA, MONO, SANS, quando} from '../tema';
+import {Fundo, Nota, Rotulo, Sobe} from '../../componentes/Base';
+import {COR, MOLA, MONO, SANS} from '../../tema';
 
 const C = 'custo';
 
@@ -13,6 +14,7 @@ type LinhaRecibo = {inicio: number; texto: string; sub: string; valor: string; d
 
 const Recibo: React.FC<{linhas: LinhaRecibo[]; total: {inicio: number; valor: string}}> = ({linhas, total}) => {
   const f = useCurrentFrame();
+  const {T} = useLinha();
   const {fps} = useVideoConfig();
   const altura = (inicio: number, h: number) => spring({frame: f - inicio, fps, config: MOLA, durationInFrames: 12}) * h;
   const zigue = Array.from({length: 29}, (_, i) => `${(i / 28) * 100}% ${i % 2 ? 100 : 'calc(100% - 14px)'}`).join(', ');
@@ -32,8 +34,8 @@ const Recibo: React.FC<{linhas: LinhaRecibo[]; total: {inicio: number; valor: st
         }}
       >
         <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 22, color: COR.texto3, letterSpacing: '0.08em'}}>
-          <span>CLAVE · USO</span>
-          <span>OUT/2026</span>
+          <span>{T('CLAVE · USO')}</span>
+          <span>{T('OUT/2026')}</span>
         </div>
         <div style={{borderBottom: `2px dashed ${COR.linha}`, margin: '18px 0 6px'}} />
         {linhas.map((l, i) => (
@@ -62,7 +64,7 @@ const Recibo: React.FC<{linhas: LinhaRecibo[]; total: {inicio: number; valor: st
         <div style={{height: altura(total.inicio, 84), overflow: 'hidden'}}>
           <div style={{borderBottom: `2px dashed ${COR.linha}`, margin: '20px 0 16px'}} />
           <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 34, fontWeight: 500}}>
-            <span>TOTAL</span>
+            <span>{T('TOTAL')}</span>
             <span>{total.valor}</span>
           </div>
         </div>
@@ -74,9 +76,10 @@ const Recibo: React.FC<{linhas: LinhaRecibo[]; total: {inicio: number; valor: st
 export const Custo: React.FC = () => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const tNa = quando(C, 'Na');
-  const tVoce = quando(C, 'você');
-  const tMil = quando(C, 'Mil');
+  const {quando, T} = useLinha();
+  const tNa = quando(C, 'na');
+  const tVoce = quando(C, 'voce');
+  const tMil = quando(C, 'mil');
   const tQuarenta = quando(C, 'quarenta');
   const tCusto = quando(C, 'custo');
   const tResposta = quando(C, 'resposta');
@@ -88,9 +91,9 @@ export const Custo: React.FC = () => {
     <Fundo tipo="tinta">
       <AbsoluteFill style={{flexDirection: 'row', alignItems: 'center', padding: '0 140px', gap: 110}}>
         <div style={{flex: 1}}>
-          <Rotulo texto="Pela API" inicio={tNa} cor={COR.tintaAcao} tamanho={28} />
+          <Rotulo texto={T('Pela API')} inicio={tNa} cor={COR.tintaAcao} tamanho={28} />
           <div style={{marginTop: 22}}>
-            <Sobe texto="Você paga só o que usa." inicio={tVoce} tamanho={104} cor={COR.tintaTexto} />
+            <Sobe texto={T('Você paga só o que usa.')} inicio={tVoce} tamanho={104} cor={COR.tintaTexto} />
           </div>
           <div
             style={{
@@ -105,16 +108,16 @@ export const Custo: React.FC = () => {
             }}
           >
             <div style={{display: 'flex', justifyContent: 'space-between', fontFamily: SANS, fontSize: 30, color: COR.tintaTexto2}}>
-              <span>Teto do mês</span>
+              <span>{T('Teto do mês')}</span>
               <span style={{fontFamily: MONO, color: COR.tintaTexto}}>
-                US$ 0,41 <span style={{color: COR.tintaTexto3}}>de US$ 20,00</span>
+                {T('US$ 0,41')} <span style={{color: COR.tintaTexto3}}>{T('de US$ 20,00')}</span>
               </span>
             </div>
             <div style={{marginTop: 20, height: 14, borderRadius: 7, background: COR.tinta3, overflow: 'hidden'}}>
               <div style={{width: `${barra * 2.05}%`, minWidth: barra > 0.02 ? 14 : 0, height: '100%', borderRadius: 7, background: COR.tintaAcao}} />
             </div>
             <div style={{marginTop: 16, fontFamily: SANS, fontSize: 24, color: COR.tintaTexto3, opacity: interpolate(f - tDefine, [0, 10], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
-              Chegou no teto, o Clave para. Sem susto na fatura.
+              {T('Chegou no teto, o Clave para. Sem susto na fatura.')}
             </div>
           </div>
         </div>
@@ -122,15 +125,15 @@ export const Custo: React.FC = () => {
         <div style={{height: 720, display: 'flex', alignItems: 'flex-start', paddingTop: 40}}>
         <Recibo
           linhas={[
-            {inicio: tMil, texto: '1.000 mensagens curtas', sub: 'Haiku 5.5', valor: '≈ US$ 0,40', destaque: tQuarenta},
-            {inicio: tCusto, texto: '1 resposta', sub: 'Haiku 5.5', valor: 'US$ 0,0004'},
-            {inicio: tResposta, texto: '1 resposta', sub: 'Sonnet 5.5', valor: 'US$ 0,0072'},
+            {inicio: tMil, texto: T('1.000 mensagens curtas'), sub: 'Haiku 5.5', valor: T('≈ US$ 0,40'), destaque: tQuarenta},
+            {inicio: tCusto, texto: T('1 resposta'), sub: 'Haiku 5.5', valor: T('US$ 0,0004')},
+            {inicio: tResposta, texto: T('1 resposta'), sub: 'Sonnet 5.5', valor: T('US$ 0,0072')},
           ]}
-          total={{inicio: tTeto, valor: 'US$ 0,41'}}
+          total={{inicio: tTeto, valor: T('US$ 0,41')}}
         />
         </div>
       </AbsoluteFill>
-      <Nota texto="Estimativas para mensagem curta, sem raciocínio longo, com os preços da Anthropic de 14/10/2026." inicio={tMil} claro={false} />
+      <Nota texto={T('Estimativas para mensagem curta, sem raciocínio longo, com os preços da Anthropic de 14/10/2026.')} inicio={tMil} claro={false} />
     </Fundo>
   );
 };

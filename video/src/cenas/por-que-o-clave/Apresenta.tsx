@@ -1,8 +1,9 @@
 // Cena 2: "Conheça o Clave. Um app para Windows que usa o Claude pela API, com a sua própria chave."
+import {useLinha} from '../../linha';
 import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
-import {Entra, Fundo, Logo, Sobe} from '../componentes/Base';
-import {Icone} from '../componentes/Icones';
-import {COR, MONO, SANS, SERIFA, quando} from '../tema';
+import {Entra, Fundo, Logo, Sobe} from '../../componentes/Base';
+import {Icone} from '../../componentes/Icones';
+import {COR, MONO, SANS, SERIFA} from '../../tema';
 
 const C = 'apresenta';
 
@@ -23,11 +24,12 @@ const Linha: React.FC<{inicio: number; icone: string; titulo: string; texto: str
 
 export const Apresenta: React.FC = () => {
   const f = useCurrentFrame();
-  const tClave = quando(C, 'Clave');
-  const tWindows = quando(C, 'Windows');
-  const tClaude = quando(C, 'Clód');
+  const {quando, T} = useLinha();
+  const tClave = quando(C, 'clave');
+  const tWindows = quando(C, 'windows');
+  const tClaude = quando(C, 'claude');
   const tChave = quando(C, 'chave');
-  const tConheca = quando(C, 'Conheça');
+  const tConheca = quando(C, 'conheca');
   const chaveVisivel = interpolate(f - tChave, [6, 26], [0, 8], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
     <Fundo tipo="papel">
@@ -38,17 +40,17 @@ export const Apresenta: React.FC = () => {
             <Sobe texto="Clave" inicio={tClave} tamanho={220} peso={500} cor={COR.texto} />
           </div>
           <div style={{marginTop: 18}}>
-            <Sobe texto="O Claude pela API, com a sua chave." inicio={tClaude} tamanho={52} peso={400} cor={COR.texto2} italico passo={2} />
+            <Sobe texto={T('O Claude pela API, com a sua chave.')} inicio={tClaude} tamanho={52} peso={400} cor={COR.texto2} italico passo={2} />
           </div>
         </div>
         <div style={{flex: 1}}>
-          <Linha inicio={tWindows} icone="janela" titulo="App para Windows" texto="Janela própria, instala com dois cliques" />
-          <Linha inicio={tClaude} icone="faisca" titulo="O Claude, pela API" texto="Opus, Sonnet, Haiku e Fable, os modelos da Anthropic" />
+          <Linha inicio={tWindows} icone="janela" titulo={T('App para Windows')} texto={T('Janela própria, instala com dois cliques')} />
+          <Linha inicio={tClaude} icone="faisca" titulo={T('O Claude, pela API')} texto={T('Opus, Sonnet, Haiku e Fable, os modelos da Anthropic')} />
           <Linha
             inicio={tChave}
             icone="chave"
-            titulo="Com a sua chave"
-            texto="Criptografada, só no seu PC"
+            titulo={T('Com a sua chave')}
+            texto={T('Criptografada, só no seu PC')}
             extra={
               <div style={{marginLeft: 'auto', flex: 'none', whiteSpace: 'nowrap', width: 290, fontFamily: MONO, fontSize: 28, color: COR.texto3, background: COR.papel2, border: `1.5px solid ${COR.linha}`, borderRadius: 10, padding: '10px 18px'}}>
                 sk-ant-{'•'.repeat(Math.round(chaveVisivel))}

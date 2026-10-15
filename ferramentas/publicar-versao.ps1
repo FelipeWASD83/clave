@@ -57,9 +57,15 @@ $zip = Join-Path $tmp "clave-$versao.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
 $r = Rodar git @('archive', '--format=zip', "--prefix=clave-$versao/", '-o', $zip, 'HEAD')
 if ($r.codigo -ne 0) { throw "Não deu para gerar o pacote: $($r.saida)" }
+# o mesmo pacote com nome fixo e a pasta "clave/": releases/latest/download/clave.zip aponta sempre para a versão
+# mais nova, e é para ele que o link curto do comando de instalação aponta
+$fixo = Join-Path $tmp 'clave.zip'
+if (Test-Path $fixo) { Remove-Item $fixo -Force }
+$r = Rodar git @('archive', '--format=zip', '--prefix=clave/', '-o', $fixo, 'HEAD')
+if ($r.codigo -ne 0) { throw "Não deu para gerar o pacote de nome fixo: $($r.saida)" }
 
-Write-Host "Publicando v$versao em $repo com $zip"
-$r = Rodar gh @('release', 'create', "v$versao", $zip, '--repo', $repo, '--title', "Clave $versao", '--notes-file', $arqNotas, '--target', $local)
+Write-Host "Publicando v$versao em $repo com $zip e $fixo"
+$r = Rodar gh @('release', 'create', "v$versao", $zip, $fixo, '--repo', $repo, '--title', "Clave $versao", '--notes-file', $arqNotas, '--target', $local)
 if ($r.codigo -ne 0) { throw "O gh não criou a release: $($r.saida)" }
 Write-Host $r.saida
 Write-Host 'Pronto. O botão Atualizar dos outros usuários já enxerga esta versão.'

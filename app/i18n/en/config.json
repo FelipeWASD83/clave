@@ -265,5 +265,16 @@
   "Chave (opcional)": "Key (optional)",
   "Ligar o Zapier": "Connect Zapier",
   "Cole o endereço https:// que o Zapier mostrou.": "Paste the https:// address Zapier showed.",
-  "Zapier ligado.": "Zapier connected."
+  "Zapier ligado.": "Zapier connected.",
+  "Jeito de falar": "Way of talking",
+  "Como o Claude conversa com você. Vale para as conversas novas, no chat e no Code.": "How Claude talks to you. Applies to new conversations, in chat and in Code.",
+  "Ver um exemplo": "See an example",
+  "Voltar tudo para o padrão": "Reset everything to default",
+  "O exemplo usa o Haiku 5.5 e custa menos de um centavo.": "The example uses Haiku 5.5 and costs less than a cent.",
+  "Me explica rapidinho o que é backup e se eu preciso me preocupar com isso.": "Quickly explain what a backup is and whether I need to worry about it.",
+  "O Claude está respondendo…": "Claude is answering…",
+  "(resposta vazia)": "(empty answer)",
+  "Custou {valor}.": "It cost {valor}.",
+  "Como o Claude vai falar": "How Claude will talk",
+  "Com o jeito de falar e o resto da sua personalização. Troque a pergunta se quiser.": "With the way of talking and the rest of your personalization. Change the question if you like."
 }

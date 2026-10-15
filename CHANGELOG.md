@@ -2,6 +2,21 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 4.1.0 (2026-10-15)
+
+**New**
+
+- **Way of talking** (Settings > Personalization), like ChatGPT's tone controls: base style and tone (Friendly,
+  Candid, Playful, Nerdy or Skeptical), warmth, enthusiasm, emoji, headers and lists, bold and tables, simple or
+  technical language, whether Claude asks first or assumes when something is missing, and whether it ends with a
+  "want me to...?". Everything on Default changes nothing. It applies to new chats, in chat and in Code.
+- **See an example**: Haiku answers a question with the tone you picked, so you can feel the difference before using
+  it (it costs a fraction of a cent).
+
+**Fixed**
+
+- The icon at the end of Pricing & plans showed up giant; it's back to text size.
+
 ## 4.0.0 (2026-10-15)
 
 Clave for the office: e-mail, Word, Zapier, bringing everything from Claude or ChatGPT, and a Claude that saves your

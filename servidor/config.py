@@ -73,6 +73,7 @@ PADRAO = {
     "como_responder": "",
     "estilo": "normal",
     "estilos_proprios": [],
+    "tom": {},  # o jeito de falar: {controle: valor}, ver tom.py (o que falta é "padrao")
     "memoria_ligada": False,
     "titulos_automaticos": True,
     # modelos

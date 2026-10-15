@@ -62,6 +62,7 @@ import precos  # noqa: E402
 import rotinas  # noqa: E402
 import segredos  # noqa: E402
 import sistema  # noqa: E402
+import tom  # noqa: E402
 import tutoriais  # noqa: E402
 from ferramentas import memoria  # noqa: E402
 from i18n import t  # noqa: E402
@@ -325,6 +326,7 @@ def r_estado(h: Manipulador):
         "chave": segredos.mascarar(chave) if chave else "",
         "cfg": _cfg_publica(cfg),
         "estilos": config.estilos(cfg),
+        "tom": tom.opcoes(),
         "orcamento": orcamento.situacao(),
         "modelos": modelos.lista_publica(cfg.get("modelos_antigos"), _modelos_cache["lista"]),
         "esforcos": [{"id": e, "nome": t(modelos.NOMES_ESFORCO[e])} for e in modelos.ESFORCOS],
@@ -388,6 +390,8 @@ def r_config(h: Manipulador):
                 v = int(v)
         if k == "idioma" and v not in config.IDIOMAS:
             raise Erro(400, t("Valor inválido em {campo}.", campo=k))
+        if k == "tom":
+            v = tom.limpar(v)
         limpo[k] = v
     cfg = config.salvar(limpo)
     h._json({"cfg": _cfg_publica(cfg), "estilos": config.estilos(cfg), "orcamento": orcamento.situacao()})
@@ -644,6 +648,20 @@ def _opcoes(d: dict) -> dict:
     o = d.get("opcoes") or {}
     permitido = {"modelo", "esforco", "pensar", "mostrar_raciocinio", "busca_web", "github", "rapido", "permissao"}
     return {k: v for k, v in o.items() if k in permitido}
+
+
+@rota("POST", "/api/tom/exemplo")
+def r_tom_exemplo(h: Manipulador):
+    """Uma resposta curta do Haiku com o jeito de falar escolhido, para ver antes de usar."""
+    d = h.corpo()
+    try:
+        h._json(tom.exemplo(tom.limpar(d.get("tom")), str(d.get("pergunta") or "")))
+    except ValueError as e:
+        raise Erro(400, str(e))
+    except execucao.anthropic.APIStatusError as e:
+        raise Erro(502, execucao._mensagem_api(e))
+    except execucao.anthropic.APIConnectionError:
+        raise Erro(502, t("Sem conexão com a Anthropic. Confira a internet."))
 
 
 @rota("POST", "/api/conversas/<cid>/compactar")

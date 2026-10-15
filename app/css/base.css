@@ -110,6 +110,10 @@ body {
 button, input, textarea, select { font: inherit; color: inherit; }
 a { color: var(--acao); text-underline-offset: 2px; }
 img { max-width: 100%; }
+/* ícone sem tamanho definido pelo lugar onde está fica do tamanho da letra (sem isso ele estica até a largura toda);
+   :where tem especificidade zero, então qualquer regra de tamanho dos componentes ganha desta */
+:where(svg[viewBox="0 0 24 24"]) { width: 1.1em; height: 1.1em; }
+:where(p, li, small) a svg { vertical-align: -0.2em; }
 [hidden] { display: none !important; }
 ::selection { background: var(--acao-suave); }
 :focus-visible { outline: 2px solid var(--acao); outline-offset: 2px; }

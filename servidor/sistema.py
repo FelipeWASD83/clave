@@ -16,6 +16,7 @@ from datetime import date
 
 import config
 import contexto_pasta
+import tom
 import tutoriais
 from ferramentas import memoria
 from i18n import t
@@ -43,6 +44,9 @@ def _personalizacao(cfg: dict) -> list[str]:
     est = config.estilos(cfg).get(cfg.get("estilo") or "normal")
     if est and est.get("instrucoes"):
         partes.append(t("<estilo nome=\"{nome}\">\n{conteudo}\n</estilo>", nome=est["nome"], conteudo=est["instrucoes"].strip()))
+    jeito = tom.bloco(cfg.get("tom"))
+    if jeito:
+        partes.append(jeito)
     return partes
 
 

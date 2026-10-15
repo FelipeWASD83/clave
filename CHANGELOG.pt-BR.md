@@ -2,6 +2,21 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 4.1.0 (15/10/2026)
+
+**Novo**
+
+- **Jeito de falar** (Configurações > Personalização), como o controle de tom do ChatGPT: estilo e tom básicos
+  (Amigável, Sincero, Divertido, Nerd ou Cético), cordialidade, entusiasmo, emoji, títulos e listas, negrito e
+  tabelas, linguagem simples ou técnica, se o Claude pergunta antes ou supõe quando falta informação e se ele termina
+  com um "quer que eu...?". Tudo em Padrão não muda nada. Vale para as conversas novas, no chat e no Code.
+- **Ver um exemplo**: o Haiku responde uma pergunta com o tom escolhido, para você sentir a diferença antes de usar
+  (custa uma fração de centavo).
+
+**Corrigido**
+
+- O ícone no fim de Preços e planos aparecia gigante; voltou ao tamanho da letra.
+
 ## 4.0.0 (15/10/2026)
 
 O Clave para o escritório: e-mail, Word, Zapier, trazer tudo do Claude ou do ChatGPT, e um Claude que economiza o

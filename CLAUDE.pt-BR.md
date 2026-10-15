@@ -67,6 +67,7 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 | `servidor/i18n.py`, `servidor/i18n/en/*.json` | Tradução do servidor: `t("texto em português", nome=valor)`, `traduzir_ferramentas()` para as descrições das ferramentas, `guardado_pt()` para o português guardado ao lado dos pacotes em inglês |
 | `servidor/compactar.py` | `/compact`: compactação sob demanda (beta `compact-2026-09-04`); o bloco vira uma mensagem `compactacao` e o pedido começa nela |
 | `servidor/importar.py` | Importar do Claude ou do ChatGPT: o pedido para colar lá, a leitura da resposta (seções e uma entrada por linha) e a aplicação |
+| `servidor/tom.py` | O jeito de falar (tom básico e os controles de Menos, Padrão e Mais): a frase de cada escolha no prompt de sistema e o exemplo no Haiku |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP e SMTP com senha de app, ou o Outlook clássico por COM) e Word (.docx com a biblioteca padrão, PDF pelo Word instalado) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Fichas de lançamento dos modelos: o cartão de apresentação (abre uma vez para modelo novo), o banner de modelo novo, os cartões "Modelos", a nota de inteligência e a fonte dela (`_inteligencia`) e os modelos que a conta tem e o Clave ainda não conhece (API de modelos, uma vez por dia) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Tradução da interface (`t()`); o servidor junta os catálogos em `/i18n/en.json` |
@@ -123,6 +124,10 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   `(id ...)`, que a tela usa para desenhar a prévia (como nas planilhas geradas). Vídeo e áudio saem com Range.
 - **O prompt de sistema economiza** (`sistema._economia`): resposta curta quando cabe, não reler, programa sem IA
   no lugar de rotina para trabalho repetitivo, modelo mais barato e recomendar ferramentas gratuitas uma vez.
+- **O jeito de falar só acrescenta, nunca troca.** Cada escolha diferente de Padrão vira uma frase dentro de
+  `<jeito_de_falar>`; tudo em Padrão manda exatamente o prompt de antes (um teste confere). O que a pessoa escreveu em
+  "Como você quer as respostas" vale mais que os controles. Não há tom Profissional nem Eficiente porque os estilos
+  Formal e Conciso já cobrem isso.
 - **SDK oficial `anthropic` em versão fixa** (`requirements.txt`). O Smart App
   Control do Windows pode barrar versão nova de pacote com parte nativa
   (`pydantic_core`, `jiter`). Atualizar só testando o import no Windows.

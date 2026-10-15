@@ -75,6 +75,24 @@
 .item-lista .textos { flex: 1; min-width: 0; display: grid; }
 .item-lista .textos small { color: var(--texto-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* jeito de falar: um cartão com uma linha por controle, nome à esquerda e a escolha à direita */
+.linhas-tom { border: 1px solid var(--linha); border-radius: var(--raio-g); padding: 0 var(--e4); }
+.linha-tom { display: flex; align-items: center; gap: var(--e4); padding: var(--e3) 0; cursor: pointer; }
+.linha-tom + .linha-tom { border-top: 1px solid var(--linha); }
+.linha-tom .textos { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.linha-tom .textos b { font-weight: 500; color: var(--texto); }
+.linha-tom .textos small { color: var(--texto-3); font-size: 12.5px; }
+.pilula {
+  flex: none; width: 11.5rem; max-width: 48%; padding: 6px 12px; border: 1px solid var(--linha); border-radius: 999px;
+  background: var(--papel-2); color: var(--texto); cursor: pointer; outline: none;
+  transition: border-color var(--rapido), background var(--rapido);
+}
+.pilula:hover { background: var(--papel-3); }
+.pilula:focus-visible { border-color: var(--acao); box-shadow: 0 0 0 3px var(--acao-suave); }
+.exemplo-tom { border: 1px solid var(--linha); border-radius: var(--raio-m); padding: var(--e3) var(--e4); max-height: 50vh; overflow: auto; }
+.exemplo-tom .resposta > :first-child { margin-top: 0; }
+.exemplo-tom .resposta > :last-child { margin-bottom: 0; }
+
 /* Boas-vindas */
 .boas-vindas { width: min(620px, 100%); }
 .passos { display: flex; gap: 6px; padding: 0 var(--e5); }

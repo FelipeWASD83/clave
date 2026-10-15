@@ -152,6 +152,17 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
         return blocos, "tool_use"
     if "título curto" in str(corpo.get("system", "")):
         return [{"type": "text", "text": "Conversa de demonstração"}], "end_turn"
+    sistema_txt = str(corpo.get("system", ""))
+    if not nomes and any(m in sistema_txt for m in ("<jeito_de_falar>", "<way_of_talking>")):
+        # o "Ver um exemplo" da personalização: mostra que as escolhas chegaram ao pedido
+        pt = "<jeito_de_falar>" in sistema_txt
+        trecho = sistema_txt.split("_falar>" if pt else "_talking>")[1]
+        escolhas = "; ".join(l[2:].split(".")[0] for l in trecho.splitlines() if l.startswith("- "))
+        texto = ("**Backup** é uma cópia dos seus arquivos guardada em outro lugar. (Demonstração: com a chave de "
+                 f"verdade, o Claude responderia seguindo isto: {escolhas}.)") if pt else (
+                 "A **backup** is a copy of your files kept somewhere else. (Demo: with a real key, Claude would "
+                 f"answer following this: {escolhas}.)")
+        return [{"type": "text", "text": texto}], "end_turn"
     blocos.append({"type": "text", "text": RESPOSTA_PADRAO.format(pergunta=_texto_usuario(ultima)[:200] or "...")})
     return blocos, "end_turn"
 

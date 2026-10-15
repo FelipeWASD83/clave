@@ -75,6 +75,7 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
 | `servidor/i18n.py`, `servidor/i18n/en/*.json` | Server translation: `t("Portuguese text", name=value)`, `traduzir_ferramentas()` for tool descriptions, `guardado_pt()` for the Portuguese texts kept next to English packages |
 | `servidor/compactar.py` | `/compact`: on-demand compaction (beta `compact-2026-09-04`); the block becomes a `compactacao` message and the request starts from it |
 | `servidor/importar.py` | Import from Claude or ChatGPT: the request to paste there, reading the reply (sections and one entry per line) and applying it |
+| `servidor/tom.py` | The way of talking (base tone and the Less, Default, More controls): the sentence for each choice in the system prompt and the example on Haiku |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP and SMTP with an app password, or the classic Outlook by COM) and Word (.docx with the standard library, PDF through the installed Word) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Model launch cards: the presentation card (opens once for a new model), the "new model" banner, the "Models" cards, the intelligence score and its source (`_inteligencia`) and models the account has that Clave doesn't know yet (Models API, once a day) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Interface translation (`t()`); the server merges the catalogs into `/i18n/en.json` |
@@ -131,6 +132,10 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
   served with Range.
 - **The system prompt saves money** (`sistema._economia`): short answers when they fit, no rereading, a program
   without AI instead of a routine for repetitive work, cheaper models, and recommending free tools once.
+- **The way of talking only adds, never changes.** Each choice other than Default becomes one sentence inside
+  `<jeito_de_falar>`; everything on Default sends exactly the old prompt (a test checks it). What the person wrote in
+  "How you want the answers" wins over the controls. There is no Professional or Efficient tone because the Formal
+  and Concise styles already cover them.
 - **Official `anthropic` SDK at a pinned version** (`requirements.txt`). Windows
   Smart App Control can block a new version of a package with a native part
   (`pydantic_core`, `jiter`). Only update after testing the import on Windows.

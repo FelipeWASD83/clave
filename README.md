@@ -115,7 +115,9 @@ you.
   what changed, its price next to the others and an intelligence score for all
   of them on the same scale, with the source.
 - **Personalization**: "about you", "how to respond", ready-made styles and your
-  own, projects with instructions and pinned files.
+  own, projects with instructions and pinned files, and the **way of talking**
+  (like ChatGPT's tone controls: base tone, warmth, enthusiasm, emoji, headers and
+  lists, simple or technical language), with an example before you use it.
 - **Memory** across conversations, in text files by topic that you can see, edit
   and delete, with a memory editor that changes whatever you ask.
 - **Monthly spending cap**, spend per reply, per day, per model and per

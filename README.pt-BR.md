@@ -108,7 +108,9 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   o que ele é, o que mudou, o preço ao lado dos outros e a nota de inteligência
   de todos na mesma régua, com a fonte.
 - **Personalização**: "sobre você", "como responder", estilos prontos e seus,
-  projetos com instruções e arquivos fixos.
+  projetos com instruções e arquivos fixos, e o **jeito de falar** (como o
+  controle de tom do ChatGPT: tom básico, cordialidade, entusiasmo, emoji,
+  títulos e listas, linguagem simples ou técnica), com um exemplo antes de usar.
 - **Memória** entre conversas, em arquivos de texto por assunto que você vê,
   edita e apaga, com um editor de memória que muda o que você pedir.
 - **Teto de gasto** mensal, gasto por resposta, por dia, por modelo e por

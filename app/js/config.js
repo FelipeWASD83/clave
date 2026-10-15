@@ -5,6 +5,7 @@ import { ic } from './icones.js';
 import { el, aviso, chaveLiga, confirmar, janela, escolherArquivos, usd } from './ui.js';
 import { checarAtualizacao, abrirAtualizacao } from './atualizar.js';
 import { criarMiniChat } from './minichat.js';
+import { markdownSeguro } from './markdown.js';
 import { t, localidade } from './i18n.js';
 
 const ABAS = () => [
@@ -51,6 +52,52 @@ function liga(chave, rotulo, ajuda) {
 function secao(titulo, descricao, ...filhos) {
   return el('section', { class: 'config-secao' }, el('h2', { texto: titulo }), descricao ? el('p', { texto: descricao }) : null, ...filhos);
 }
+// o jeito de falar (como o controle de tom do ChatGPT): cada linha é um controle, e "Padrão" não muda nada no prompt
+function secaoJeitoDeFalar(redesenhar) {
+  const controles = estado.info.tom || [];
+  const atual = () => ({ ...(cfg().tom || {}) });
+  const linhas = controles.map((c) => {
+    const s = el('select', { class: 'pilula', 'aria-label': c.nome }, ...c.opcoes.map((o) => el('option', { value: o.valor, texto: o.rotulo })));
+    s.value = atual()[c.id] || 'padrao';
+    s.addEventListener('change', () => salvar({ tom: { ...atual(), [c.id]: s.value } }, t('Salvo.')));
+    return el('label', { class: 'linha-tom' }, el('span', { class: 'textos' }, el('b', { texto: c.nome }), el('small', { texto: c.ajuda })), s);
+  });
+  const mudou = Object.keys(atual()).length > 0;
+  return secao(t('Jeito de falar'), t('Como o Claude conversa com você. Vale para as conversas novas, no chat e no Code.'),
+    el('div', { class: 'linhas-tom' }, ...linhas),
+    el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center' },
+      el('button', { class: 'botao', type: 'button', html: `${ic('faisca')}${t('Ver um exemplo')}`, onclick: () => verExemploTom() }),
+      mudou ? el('button', { class: 'botao fantasma', type: 'button', texto: t('Voltar tudo para o padrão'), onclick: async () => { await salvar({ tom: {} }, t('Salvo.')); redesenhar(); } }) : null,
+      el('small', { class: 'ajuda', texto: t('O exemplo usa o Haiku 5.5 e custa menos de um centavo.') })));
+}
+
+function verExemploTom() {
+  const pergunta = el('input', { class: 'entrada', value: t('Me explica rapidinho o que é backup e se eu preciso me preocupar com isso.') });
+  const saida = el('div', { class: 'exemplo-tom', hidden: true });
+  const custo = el('small', { class: 'ajuda' });
+  const perguntar = el('button', { class: 'botao primario', type: 'button', html: `${ic('enviar')}${t('Perguntar')}` });
+  perguntar.addEventListener('click', async () => {
+    perguntar.disabled = true;
+    saida.hidden = false;
+    saida.replaceChildren(el('p', { class: 'ajuda', texto: t('O Claude está respondendo…') }));
+    custo.textContent = '';
+    try {
+      const r = await api('/tom/exemplo', { metodo: 'POST', corpo: { tom: cfg().tom || {}, pergunta: pergunta.value } });
+      saida.replaceChildren(markdownSeguro(r.resposta || t('(resposta vazia)')));
+      saida.firstChild.classList.add('resposta');
+      if (r.custo_usd > 0) custo.textContent = t('Custou {valor}.', { valor: usd(r.custo_usd) });
+    } catch (e) {
+      saida.replaceChildren(el('p', { class: 'ajuda', texto: e.message }));
+    } finally { perguntar.disabled = false; }
+  });
+  janela({ titulo: t('Como o Claude vai falar'), larga: true,
+    corpo: el('div', { style: 'display:grid;gap:12px' },
+      el('p', { class: 'ajuda', texto: t('Com o jeito de falar e o resto da sua personalização. Troque a pergunta se quiser.') }),
+      el('div', { style: 'display:flex;gap:8px' }, pergunta, perguntar),
+      saida, custo),
+    botoes: [{ texto: t('Fechar') }] });
+}
+
 const preco = (v) => Number(v).toLocaleString(localidade(), { maximumFractionDigits: 4 });
 const modelosOpcoes = () => (estado.info?.modelos || []).map((m) => [m.id, t('{nome} (US$ {entrada} / {saida} por milhão)', { nome: m.nome, entrada: preco(m.entrada), saida: preco(m.saida) })]);
 const esforcoOpcoes = () => (estado.info?.esforcos || []).map((e) => [e.id, e.nome]);
@@ -114,6 +161,7 @@ const SECOES = {
         campo(t('Sobre você'), texto('sobre_voce', { area: true, placeholder: t('Ex.: Tenho 34 anos, sou confeiteira, tenho uma loja no Instagram. Não sei programar. Uso Windows e celular Android.') }),
           t('O que você faz, o que sabe, o que não sabe, que programas usa.')),
         campo(t('Como você quer as respostas'), texto('como_responder', { area: true, placeholder: t('Ex.: Respostas curtas e diretas, em português do Brasil, sem palavras difíceis. Quando der passo a passo, numere.') }))),
+      secaoJeitoDeFalar(() => SECOES.personalizacao(alvo)),
       secao(t('Estilo das respostas'), t('O jeito de escrever. Vale para as conversas novas.'),
         campo(t('Estilo padrão'), selecao('estilo', Object.entries(estilos).map(([id, s]) => [id, s.nome]))),
         el('div', { class: 'rotulo', texto: t('Seus estilos') }), listaEstilos,

@@ -165,7 +165,8 @@ class TestComandos(unittest.TestCase):
         try:
             plugins.instalar_de_pasta(criar_plugin(tmp, extra=False))
             e = comandos.expandir("/meu-plugin:limpar a b", None)
-            self.assertEqual(e["texto"], "Limpe a e depois b.")
+            # comando de plugin vem escrito em inglês: leva junto em que idioma responder
+            self.assertEqual(e["texto"], "Limpe a e depois b.\n\n(Responda em português do Brasil.)")
             self.assertEqual(e["ferramentas_permitidas"], ["Read"])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)

@@ -54,5 +54,9 @@
   "O Clave vai criar uma tarefa no Agendador de Tarefas do Windows (pasta \"Clave\") para rodar esta rotina. Para tirar, é só desmarcar esta opção ou apagar a rotina.": "Clave will create a task in Windows Task Scheduler (folder \"Clave\") to run this routine. To remove it, just uncheck this option or delete the routine.",
   "Agendador do Windows": "Windows Task Scheduler",
   "Criar a tarefa": "Create the task",
-  "Rotina salva.": "Routine saved."
+  "Rotina salva.": "Routine saved.",
+  "Precisa de IA toda vez? Uma rotina chama o Claude a cada rodada e gasta sempre. Se a tarefa é sempre igual (ler e-mails de pedido e passar para a planilha, renomear arquivos, mandar o mesmo relatório), peça uma vez ao modo Code um programa sem IA: ele roda sozinho pelo Windows e custa zero por rodada.": "Does it need AI every time? A routine calls Claude on every run and always costs money. If the task is always the same (reading order e-mails into the spreadsheet, renaming files, sending the same report), ask Code mode once for a program without AI: it runs on its own through Windows and costs nothing per run.",
+  "Quero automatizar uma tarefa que se repete, sem usar IA a cada vez. Antes de fazer, me pergunte o que preciso explicar (o que entra, o que sai, de quanto em quanto tempo) e me diga se dá para fazer sem IA. Depois monte um programa que roda sozinho, com modo de teste e registro do que fez, e agende no Windows.": "I want to automate a task that repeats, without using AI every time. Before you build it, ask me what I need to explain (what comes in, what goes out, how often) and tell me whether it can be done without AI. Then build a program that runs on its own, with a test mode and a log of what it did, and schedule it in Windows.",
+  "Montar no Code sem IA": "Build it in Code without AI",
+  "Ver a lição": "See the lesson"
 }

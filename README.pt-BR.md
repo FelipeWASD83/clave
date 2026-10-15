@@ -85,8 +85,8 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   decisão.
 - **Modo Plano**: ele só lê, apresenta o plano num cartão e você aprova
   escolhendo como ele executa.
-- **Plugins e comandos de barra**: sete plugins prontos com 25 skills
-  (Excel, e-mail, pesquisa com fontes, scripts do Windows, testes...),
+- **Plugins e comandos de barra**: oito plugins prontos com 31 skills
+  (Excel, e-mail, vendas, pesquisa com fontes, scripts do Windows, testes...),
   instalação de plugins do GitHub no formato do Claude Code, e atalhos como
   `/modelo haiku`, `/fluxo` e `/escrita:email`.
 - **Rotinas**: pedidos que o Claude faz sozinho no horário (todo dia, em
@@ -117,6 +117,15 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   código, issues e pull requests.
 - **Busca na web**, ligada por padrão (o Claude decide quando pesquisar e mostra
   as fontes), e **conectores MCP**.
+- **E-mail, Word e Zapier**: o Claude lê o seu e-mail (Gmail, outros provedores
+  ou o Outlook clássico) e escreve respostas que só saem com o seu OK, cria
+  documentos do Word e exporta PDF, e chega no Google, na Microsoft, no WhatsApp
+  e em centenas de apps por uma ligação guiada com o Zapier.
+- **Importar do Claude ou do ChatGPT**: traga as suas regras, projetos,
+  preferências e rotinas com um copiar e colar.
+- **Economiza o seu crédito**: /compact, /economia, o Claude sugerindo modelo mais
+  barato e um programa sem IA no lugar de rotina para trabalho que sempre se repete.
+
 - **Aprender**: lições para quem nunca usou IA, com glossário de termos (API,
   JSON, Git...) e um ajudante que tira dúvidas de cada lição.
 - **Tours com setinhas**: na primeira vez, setas apontam cada parte da tela e

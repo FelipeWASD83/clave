@@ -52,6 +52,13 @@ export async function telaRotinas(principal) {
       el('div', {}, el('h1', { texto: t('Rotinas') }),
         el('p', { texto: t('Um pedido que o Claude faz sozinho no horário que você escolher: resumir os arquivos novos da pasta toda manhã, montar o relatório da semana na sexta, conferir uma planilha a cada 3 horas.') })),
       el('button', { class: 'botao primario', type: 'button', html: `${ic('mais')}${t('Nova rotina')}`, onclick: () => editarRotina(null, windows, desenhar) })),
+    el('div', { class: 'nota-conversa economia' }, el('span', { html: ic('raio') }),
+      el('span', { texto: t("Precisa de IA toda vez? Uma rotina chama o Claude a cada rodada e gasta sempre. Se a tarefa é sempre igual (ler e-mails de pedido e passar para a planilha, renomear arquivos, mandar o mesmo relatório), peça uma vez ao modo Code um programa sem IA: ele roda sozinho pelo Windows e custa zero por rodada.") }),
+      el('button', { class: 'botao pequeno', type: 'button', html: `${ic('terminal')}${t('Montar no Code sem IA')}`, onclick: () => {
+        sessionStorage.setItem('clave:rascunho', t("Quero automatizar uma tarefa que se repete, sem usar IA a cada vez. Antes de fazer, me pergunte o que preciso explicar (o que entra, o que sai, de quanto em quanto tempo) e me diga se dá para fazer sem IA. Depois monte um programa que roda sozinho, com modo de teste e registro do que fez, e agende no Windows."));
+        location.hash = '#/code';
+      } }),
+      el('a', { href: '#/aprender/app-de-pedidos-sem-ia', texto: t('Ver a lição') })),
     el('div', { class: 'nota-conversa info' }, el('span', { html: ic('escudo') }),
       el('span', { html: t('Numa rotina ninguém está olhando, então ela só faz o que as suas <a href="#/permissoes">regras de permissão</a> já liberam (ler na pasta, e o que tiver regra de permitir). Se precisar de um OK, ela para e conta o que precisaria. Cada rodada tem teto de gasto.') })),
     rotinas.length ? el('div', { class: 'grade-cartoes' }, ...rotinas.map(cartao))

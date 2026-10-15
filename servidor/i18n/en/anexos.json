@@ -1,10 +1,11 @@
 {
- "Arquivo grande demais (o limite é 30 MB).": "File too large (the limit is 30 MB).",
- "Esse tipo de arquivo não dá para mandar ao Claude. Mande imagem (PNG, JPG, GIF, WebP), PDF, planilha do Excel (.xlsx) ou arquivo de texto e código.": "This type of file can't be sent to Claude. Send an image (PNG, JPG, GIF, WebP), a PDF, an Excel spreadsheet (.xlsx) or a text or code file.",
- "Planilha .xls (formato antigo): abra no Excel e salve como .xlsx antes de mandar.": ".xls spreadsheet (old format): open it in Excel and save it as .xlsx before sending it.",
- "Não deu para converter a planilha .xls: {erro}": "Couldn't convert the .xls spreadsheet: {erro}",
- "[O anexo \"{nome}\" não existe mais no computador.]": "[The attachment \"{nome}\" no longer exists on the computer.]",
- "(não deu para ler: {erro})": "(couldn't read it: {erro})",
- "<planilha anexada id=\"{id}\" nome=\"{nome}\">\n{conteudo}\n</planilha>": "<attached_spreadsheet id=\"{id}\" name=\"{nome}\">\n{conteudo}\n</attached_spreadsheet>",
- "(Para ver outras abas ou mais linhas, use planilha_ler com anexo_id \"{id}\". Para devolver uma versão alterada, use planilha_criar com base_anexo_id \"{id}\".)": "(To see other sheets or more rows, use planilha_ler with anexo_id \"{id}\". To return a changed version, use planilha_criar with base_anexo_id \"{id}\".)"
+  "Arquivo grande demais (o limite é 30 MB).": "File too large (the limit is 30 MB).",
+  "Esse tipo de arquivo não dá para mandar ao Claude. Mande imagem (PNG, JPG, GIF, WebP), PDF, planilha do Excel (.xlsx) ou arquivo de texto e código.": "This type of file can't be sent to Claude. Send an image (PNG, JPG, GIF, WebP), a PDF, an Excel spreadsheet (.xlsx) or a text or code file.",
+  "Planilha .xls (formato antigo): abra no Excel e salve como .xlsx antes de mandar.": ".xls spreadsheet (old format): open it in Excel and save it as .xlsx before sending it.",
+  "Não deu para converter a planilha .xls: {erro}": "Couldn't convert the .xls spreadsheet: {erro}",
+  "[O anexo \"{nome}\" não existe mais no computador.]": "[The attachment \"{nome}\" no longer exists on the computer.]",
+  "(não deu para ler: {erro})": "(couldn't read it: {erro})",
+  "<planilha anexada id=\"{id}\" nome=\"{nome}\">\n{conteudo}\n</planilha>": "<attached_spreadsheet id=\"{id}\" name=\"{nome}\">\n{conteudo}\n</attached_spreadsheet>",
+  "(Para ver outras abas ou mais linhas, use planilha_ler com anexo_id \"{id}\". Para devolver uma versão alterada, use planilha_criar com base_anexo_id \"{id}\".)": "(To see other sheets or more rows, use planilha_ler with anexo_id \"{id}\". To return a changed version, use planilha_criar with base_anexo_id \"{id}\".)",
+  "Arquivo grande demais para mostrar na conversa (o limite é 100 MB).": "File too large to show in the chat (the limit is 100 MB)."
 }

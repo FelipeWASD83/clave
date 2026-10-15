@@ -90,8 +90,8 @@ you.
   and a history of every decision.
 - **Plan mode**: it only reads, presents the plan on a card and you approve it,
   choosing how it executes.
-- **Plugins and slash commands**: seven ready-made plugins with 25 skills
-  (Excel, email, research with sources, Windows scripts, tests...), installing
+- **Plugins and slash commands**: eight ready-made plugins with 31 skills
+  (Excel, email, sales, research with sources, Windows scripts, tests...), installing
   plugins from GitHub in the Claude Code format, and shortcuts like
   `/modelo haiku`, `/fluxo` and `/escrita:email`.
 - **Routines**: requests that Claude carries out on its own on a schedule
@@ -125,6 +125,15 @@ you.
   issues and pull requests.
 - **Web search**, on by default (Claude decides when to search and shows the
   sources), and **MCP connectors**.
+- **E-mail, Word and Zapier**: Claude reads your e-mail (Gmail, other providers
+  or the classic Outlook) and writes replies that only go out with your OK,
+  creates Word documents and exports PDF, and reaches Google, Microsoft,
+  WhatsApp and hundreds of apps through a guided Zapier connection.
+- **Import from Claude or ChatGPT**: bring your rules, projects, preferences and
+  routines with one copy and paste.
+- **Saves your credit**: /compact, /economia, Claude suggesting cheaper models and
+  a program without AI instead of a routine for work that always repeats.
+
 - **Learn**: lessons for people who have never used AI, with a glossary of terms
   (API, JSON, Git...) and a helper that answers questions about each lesson.
 - **Guided tours**: the first time, arrows point to each part of the screen and

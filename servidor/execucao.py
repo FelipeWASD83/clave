@@ -27,6 +27,7 @@ import pedido
 import permissoes
 import segredos
 from ferramentas import code as fcode
+from ferramentas import email as femail
 from ferramentas import github as fgithub
 from ferramentas import memoria as fmemoria
 from ferramentas import excel as fexcel
@@ -34,11 +35,14 @@ from ferramentas import planilhas as fplanilhas
 from i18n import t
 
 MAX_VOLTAS = 60          # chamadas à API por envio (ferramentas incluídas)
-MUDAM_ARQUIVOS = ("escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app")
+MUDAM_ARQUIVOS = ("escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app", "word_criar", "word_alterar",
+                  "word_no_app", "email_salvar_anexo")
 # o que cada etapa de fluxo pode usar, conforme o "pode" dela
 POR_CAPACIDADE = {
-    "ler": {"listar_pasta", "ler_arquivo", "buscar_texto", "achar_arquivos", "excel_ler", "excel_abrir"},
-    "editar": {"escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app"},
+    "ler": {"listar_pasta", "ler_arquivo", "buscar_texto", "achar_arquivos", "excel_ler", "excel_abrir", "word_ler",
+            "mostrar_arquivo"},
+    "editar": {"escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app", "word_criar", "word_alterar",
+               "word_no_app"},
     "comandos": {"rodar_comando"},
 }
 SEMPRE = {"atualizar_tarefas", "usar_skill"}
@@ -288,6 +292,8 @@ class Execucao:
                 ferramentas_cliente.append(fcode.FERRAMENTAS["usar_skill"]["def"])
         if modo in ("chat", "code") and not etapa:
             ferramentas_cliente += fplanilhas.definicoes()
+        if modo in ("chat", "code") and not etapa and femail.ligado() and not permissoes.nega(self.regras, "Email"):
+            ferramentas_cliente += femail.definicoes()
         if modo in ("chat", "code") and op.get("github") and cfg.get("github_origem") and not etapa:
             ferramentas_cliente += fgithub.definicoes(escrita=bool(cfg.get("github_escrita")))
         if (modo in ("chat", "code") and not etapa and not op.get("rotina") and cfg.get("fluxos_ligados", True)
@@ -550,6 +556,9 @@ class Execucao:
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": s["nome"]})
             return _res(tid, t("Skill \"{nome}\" (aqui no chat não há pasta nem terminal: siga as partes que não dependem deles).\n\n{conteudo}", nome=s["nome"], conteudo=s["texto"]))
 
+        if nome in femail.NOMES:
+            return self._email(tid, nome, entrada or {})
+
         if nome in fgithub.FERRAMENTAS:
             risco = fgithub.FERRAMENTAS[nome]["risco"]
             if risco == "github_escrita":
@@ -613,6 +622,7 @@ class Execucao:
             self._log(nome, alvo, "auto", det["origem"], det.get("regra"))
 
         self.emitir({"tipo": "ferramenta_rodando", "id": tid, "nome": nome})
+        self.ctx.ferramenta_id = tid
         try:
             saida = fcode.executar(nome, entrada, self.ctx)
             erro_flag = False
@@ -774,6 +784,46 @@ class Execucao:
                      "resumo": t("sugeriu: {titulo}", titulo=titulo)})
         return _res(tid, t("A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra conversa. Não repita no texto a sugestão nem o que você já escreveu: se a resposta já foi dada, termine aqui."))
 
+    def _email(self, tid: str, nome: str, entrada: dict) -> dict:
+        """Ler é livre (a não ser regra de negar); enviar sempre mostra o e-mail e pede OK, menos com uma regra de
+        permitir escrita para isso: Email(enviar). Rotina para no envio sem essa regra."""
+        acao = "enviar" if nome == "email_enviar" else "ler"
+        decisao_regra, regra = permissoes.avaliar(self.regras, [("Email", acao)], None)
+        if decisao_regra == "deny":
+            self._log(nome, acao, "negar", "regra", regra)
+            return _res(tid, t("Bloqueado pelo Clave: {motivo}.", motivo=regra.descrever()), True)
+        anexos: list[Path] = []
+        if acao == "enviar":
+            for c in entrada.get("anexos") or []:
+                if self.ctx is None:
+                    return _res(tid, t("Anexo só dá para mandar no modo Code (no chat não há pasta)."), True)
+                p = self.ctx.resolver(str(c))
+                if not self.ctx.dentro(p) or not p.is_file():
+                    return _res(tid, t("Anexo fora da pasta de trabalho ou inexistente: {caminho}", caminho=c), True)
+                if self.ctx.protegido(p):
+                    return _res(tid, t("Anexo protegido não sai por e-mail: {caminho}", caminho=c), True)
+                anexos.append(p)
+            if decisao_regra != "allow" or permissoes.generica(regra):
+                motivo = t("envia um e-mail")
+                if self.op.get("rotina"):
+                    return self._rotina_parou(tid, nome, entrada.get("para", ""), motivo, "Email(enviar)")
+                d = self._pedir_aprovacao(tid, nome, entrada, motivo, femail.previa(entrada),
+                                          extra={"sugestao": "Email(enviar)", "pode_sempre": False})
+                if d not in ("permitir", "permitir_tarefa"):
+                    self._log(nome, entrada.get("para", ""), "recusar", "voce")
+                    return self._recusado(tid, nome)
+                self._log(nome, entrada.get("para", ""), "permitir", "voce")
+            else:
+                self._log(nome, entrada.get("para", ""), "auto", "regra", regra)
+        self.emitir({"tipo": "ferramenta_rodando", "id": tid, "nome": nome})
+        try:
+            saida = femail.enviar(entrada, anexos) if acao == "enviar" else femail.ler(entrada)
+        except femail.ErroEmail as e:
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": str(e)})
+            return _res(tid, str(e), True)
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": saida[:4000]})
+        return _res(tid, saida)
+
     def _recusado(self, tid, nome) -> dict:
         texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""
         msg = t("Quem usa recusou esta ação.") + (t(" Comentário: {comentario}", comentario=texto) if texto else "")
@@ -838,13 +888,20 @@ def _lidos_antes(conversa_id: str) -> set:
 
 
 def _para_api(conv: dict, caminho: list[dict]) -> list[dict]:
+    # depois de um /compact, o pedido começa no bloco do resumo: o que veio antes não vai mais (regra da API)
+    ultimo = max((i for i, m in enumerate(caminho) if m.get("tipo") == "compactacao"), default=None)
+    if ultimo is not None:
+        caminho = caminho[ultimo:]
     msgs = []
     contexto = conv.get("contexto") or []
-    for i, m in enumerate(caminho):
+    primeira_da_pessoa = True
+    for m in caminho:
         conteudo = m["conteudo"]
-        if i == 0 and contexto and m["papel"] == "user":
-            base = conteudo if isinstance(conteudo, list) else [{"type": "text", "text": conteudo}]
-            conteudo = list(contexto) + base
+        if m["papel"] == "user" and primeira_da_pessoa:
+            primeira_da_pessoa = False
+            if contexto:
+                base = conteudo if isinstance(conteudo, list) else [{"type": "text", "text": conteudo}]
+                conteudo = list(contexto) + base
         msgs.append({"role": m["papel"], "content": anexos.expandir_conteudo(conteudo)})
     return msgs
 

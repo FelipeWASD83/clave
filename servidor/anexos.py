@@ -18,6 +18,11 @@ from i18n import t
 IMAGENS = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 LIMITE_BYTES = 30 * 1024 * 1024
+LIMITE_MOSTRAR = 100 * 1024 * 1024  # o que o Claude mostra na conversa (vídeo pesa mais)
+MIDIA = {".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime", ".m4v": "video/mp4",
+         ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".m4a": "audio/mp4",
+         ".flac": "audio/flac", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
 EXT_TEXTO = {
     ".txt", ".md", ".markdown", ".csv", ".tsv", ".json", ".jsonl", ".xml", ".html", ".htm", ".css", ".js", ".mjs",
     ".ts", ".tsx", ".jsx", ".py", ".gml", ".java", ".c", ".h", ".cpp", ".hpp", ".cs", ".go", ".rs", ".rb", ".php",
@@ -97,6 +102,16 @@ def _converter_xls(nome: str, dados: bytes) -> tuple[str, bytes]:
         except excel.ErroExcel as e:
             raise ValueError(t("Não deu para converter a planilha .xls: {erro}", erro=e))
         return Path(nome).with_suffix(".xlsx").name, saida.read_bytes()
+
+
+def salvar_mostrado(nome: str, dados: bytes, origem: str = "mostrado") -> dict:
+    """Uma cópia do arquivo que o Claude mostrou na conversa. Não vai para o Claude: aceita qualquer tipo."""
+    if len(dados) > LIMITE_MOSTRAR:
+        raise ValueError(t("Arquivo grande demais para mostrar na conversa (o limite é 100 MB)."))
+    tipo = MIDIA.get(Path(nome).suffix.lower()) or tipo_de(nome, dados)
+    reg = banco.registrar_anexo(nome, tipo, len(dados), origem=origem)
+    caminho(reg["id"]).write_bytes(dados)
+    return reg
 
 
 def apagar(aid: str) -> None:

@@ -129,7 +129,11 @@ def montar(*, modelo: str, esforco: str, pensar: bool, mostrar_raciocinio: bool,
         kw["cache_control"] = {"type": "ephemeral"}
         usados.add("cache")
 
-    if (cfg.get("compactacao", True) and info.get("atual") and "compactacao" not in desl):
+    import compactar
+    resumida = compactar.comeca_com_resumo(mensagens)
+    if resumida:  # o bloco do /compact precisa do beta dele em todo pedido que o carrega
+        betas.append(compactar.BETA)
+    if (cfg.get("compactacao", True) and info.get("atual") and "compactacao" not in desl and not resumida):
         limite = max(50_000, min(900_000, int(cfg.get("compactar_em") or 150_000)))
         kw["context_management"] = {"edits": [{"type": "compact_20260112",
                                               "trigger": {"type": "input_tokens", "value": limite}}]}

@@ -1,0 +1,15 @@
+{
+  "Este arquivo não é um .docx válido (se for .doc antigo, abra no Word e salve como .docx).": "This file isn't a valid .docx (if it's an old .doc, open it in Word and save it as .docx).",
+  "[... cortado: o documento é longo ...]": "[... cut: the document is long ...]",
+  "(documento vazio)": "(empty document)",
+  "Documento do Word criado: {caminho}": "Word document created: {caminho}",
+  "Este arquivo não é um .docx válido.": "This file isn't a valid .docx.",
+  "Nenhum trecho encontrado. Leia o documento com word_ler e copie o trecho exato (o Word às vezes quebra uma frase em pedaços com formatação diferente).": "No piece found. Read the document with word_ler and copy the exact piece (Word sometimes splits a sentence into chunks with different formatting).",
+  " Não achados (copie o trecho exato do word_ler): {lista}": " Not found (copy the exact piece from word_ler): {lista}",
+  "{n} troca(s) feita(s) em {caminho}.": "{n} replacement(s) made in {caminho}.",
+  "O Microsoft Word não está instalado neste computador, então não dá para exportar PDF por ele.": "Microsoft Word isn't installed on this computer, so it can't export PDF through it.",
+  "O Word demorou demais para responder (ele pode estar esperando alguma janela aberta).": "Word took too long to respond (it may be waiting on an open window).",
+  "O Word não conseguiu: {erro}": "Word couldn't do it: {erro}",
+  "PDF exportado: {caminho}": "PDF exported: {caminho}",
+  "erro desconhecido": "unknown error"
+}

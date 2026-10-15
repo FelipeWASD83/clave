@@ -70,5 +70,12 @@
  "a web segue o botão de busca da conversa": "the web follows the conversation's search button",
  "Ferramenta inválida.": "Invalid tool.",
  "Fluxo não encontrado.": "Workflow not found.",
- "Escolha pelo menos um plugin.": "Choose at least one plugin."
+ "Escolha pelo menos um plugin.": "Choose at least one plugin.",
+ "Cole a resposta inteira do Claude ou do ChatGPT.": "Paste the whole reply from Claude or ChatGPT.",
+ "Não achei nenhuma categoria na resposta. Confira se colou o bloco inteiro (com os títulos das seções).": "I couldn't find any category in the reply. Check that you pasted the whole block (with the section titles).",
+ "Tipo de e-mail inválido.": "Invalid e-mail type.",
+ "Escreva o endereço de e-mail.": "Type the e-mail address.",
+ "Porta inválida.": "Invalid port.",
+ "Preencha os servidores IMAP e SMTP (o seu provedor informa na página de ajuda).": "Fill in the IMAP and SMTP servers (your provider lists them on its help page).",
+ "Cole a senha de app.": "Paste the app password."
 }

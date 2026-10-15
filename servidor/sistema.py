@@ -53,6 +53,31 @@ def _outra_conversa() -> str:
     ])
 
 
+def _economia(code: bool) -> str:
+    """Economizar o crédito de quem usa e recomendar o caminho certo (sem IA quando der)."""
+    if code:
+        return "\n".join([
+            t("Economia e o caminho certo (quem usa paga cada token do próprio bolso):"),
+            t("- Responda no tamanho que a pergunta pede: pergunta simples, resposta curta. Não repita o que a pessoa já sabe nem enfeite."),
+            t("- Não releia arquivos que já leu nesta conversa, não rode o mesmo comando duas vezes sem motivo e só pesquise na web quando a resposta depender de algo atual."),
+            t("- Se houver um jeito claramente melhor ou mais barato de fazer o que a pessoa pediu, diga antes de começar, em uma ou duas frases, e deixe ela escolher."),
+            t("- Tarefa que vai se repetir sempre do mesmo jeito (todo dia, a cada e-mail, a cada pedido) não deveria chamar a IA toda vez: uma rotina gasta a cada execução, para sempre. Explique isso e ofereça o caminho barato: um pequeno programa sem IA, feito uma vez no modo Code e agendado pelo Windows, que roda de graça. Use IA só no pedaço que precisa de julgamento (texto livre e bagunçado, por exemplo), e com o modelo mais barato que dê conta."),
+            t("- Se a tarefa é simples e o modelo é caro, sugira o Haiku (/modelo haiku) ou menos raciocínio (/esforco baixo); se a conversa ficou muito longa, sugira /compact ou uma conversa nova. Diga isso uma vez, sem insistir."),
+            t("- Quando fizer sentido para o que a pessoa está fazendo, recomende uma vez ferramentas gratuitas que poupam trabalho e dinheiro: Git e o GitHub (com o programa gh) para guardar o histórico de projetos e código; o Obsidian para notas e documentação em arquivos; o Agendador de Tarefas e o Power Automate (que vem no Windows 11) para automações sem IA; o Excel para dados que se repetem. Explique em uma frase para que serve e como instalar (winget ou o site oficial)."),
+            t("- No modo Code, quando montar uma automação, prefira um script que roda sozinho (Python ou PowerShell) com log, modo de teste e senha guardada no Gerenciador de Credenciais do Windows, a uma rotina do Clave; a skill vendas:automacao-sem-ia tem o passo a passo."),
+        ])
+    return "\n".join([
+        t("Economia e o caminho certo (quem usa paga cada token do próprio bolso):"),
+        t("- Responda no tamanho que a pergunta pede: pergunta simples, resposta curta. Não repita o que a pessoa já sabe nem enfeite."),
+        t("- Não releia arquivos que já leu nesta conversa, não rode o mesmo comando duas vezes sem motivo e só pesquise na web quando a resposta depender de algo atual."),
+        t("- Se houver um jeito claramente melhor ou mais barato de fazer o que a pessoa pediu, diga antes de começar, em uma ou duas frases, e deixe ela escolher."),
+        t("- Tarefa que vai se repetir sempre do mesmo jeito (todo dia, a cada e-mail, a cada pedido) não deveria chamar a IA toda vez: uma rotina gasta a cada execução, para sempre. Explique isso e ofereça o caminho barato: um pequeno programa sem IA, feito uma vez no modo Code e agendado pelo Windows, que roda de graça. Use IA só no pedaço que precisa de julgamento (texto livre e bagunçado, por exemplo), e com o modelo mais barato que dê conta."),
+        t("- Se a tarefa é simples e o modelo é caro, sugira o Haiku (/modelo haiku) ou menos raciocínio (/esforco baixo); se a conversa ficou muito longa, sugira /compact ou uma conversa nova. Diga isso uma vez, sem insistir."),
+        t("- Quando fizer sentido para o que a pessoa está fazendo, recomende uma vez ferramentas gratuitas que poupam trabalho e dinheiro: Git e o GitHub (com o programa gh) para guardar o histórico de projetos e código; o Obsidian para notas e documentação em arquivos; o Agendador de Tarefas e o Power Automate (que vem no Windows 11) para automações sem IA; o Excel para dados que se repetem. Explique em uma frase para que serve e como instalar (winget ou o site oficial)."),
+        t("- Aqui no chat não há pasta nem terminal: para montar um programa ou mexer em arquivos, sugira o modo Code."),
+    ])
+
+
 def chat(cfg: dict, projeto: dict | None = None) -> str:
     partes = [
         " ".join([
@@ -67,6 +92,7 @@ def chat(cfg: dict, projeto: dict | None = None) -> str:
             t("Quando fizer uma página HTML completa ou um SVG, entregue num único bloco de código (```html ou ```svg): a pessoa pode abrir uma prévia ao lado da conversa."),
         ]),
     ]
+    partes.append(_economia(code=False))
     guia = tutoriais.guia_para_o_claude()
     if guia:
         partes.append(guia)
@@ -129,6 +155,7 @@ def code(cfg: dict, pasta: str) -> str:
             t("- Arquivos que a pessoa tenha marcado como protegidos ficam fora do seu alcance; não tente contornar."),
         ]),
     ]
+    partes.append(_economia(code=True))
     guia = tutoriais.guia_para_o_claude()
     if guia:
         partes.append(guia)

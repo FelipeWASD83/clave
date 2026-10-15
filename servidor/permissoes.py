@@ -38,7 +38,7 @@ CONHECIDAS = {
     "Read": "Read", "Glob": "Read", "Grep": "Read", "LS": "Read",
     "Edit": "Edit", "Write": "Edit", "MultiEdit": "Edit", "NotebookEdit": "Edit",
     "WebFetch": "WebFetch", "WebSearch": "WebSearch",
-    "Agent": "Agent", "Task": "Agent", "Fluxo": "Fluxo", "GitHub": "GitHub",
+    "Agent": "Agent", "Task": "Agent", "Fluxo": "Fluxo", "GitHub": "GitHub", "Email": "Email",
 }
 
 # ferramenta do Clave -> (ferramenta do Claude Code, campos que dizem o alvo)
@@ -49,11 +49,17 @@ ALVOS = {
     "buscar_texto": ("Read", ("caminho",)),
     "achar_arquivos": ("Read", ("caminho",)),
     "excel_ler": ("Read", ("caminho",)),
+    "mostrar_arquivo": ("Read", ("caminho",)),
     "excel_abrir": ("Read", ("caminho",)),
     "escrever_arquivo": ("Edit", ("caminho",)),
     "editar_arquivo": ("Edit", ("caminho",)),
     "excel_alterar": ("Edit", ("caminho", "saida")),
     "excel_no_app": ("Edit", ("caminho", "saida")),
+    "word_ler": ("Read", ("caminho",)),
+    "word_criar": ("Edit", ("caminho",)),
+    "word_alterar": ("Edit", ("caminho", "saida")),
+    "word_no_app": ("Edit", ("caminho", "saida")),
+    "email_salvar_anexo": ("Edit", ("caminho",)),
 }
 
 _REGRA = re.compile(r"^\s*([A-Za-z_][\w-]*)\s*(?:\((.*)\))?\s*$", re.S)

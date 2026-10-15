@@ -1,0 +1,9 @@
+{
+  "name": "vendas",
+  "displayName": "Sales",
+  "version": "1.0.0",
+  "description": "For a sales office: proposals in Word and PDF, client follow-up, orders into a spreadsheet, sales reports, replies to clients and automations that run without AI.",
+  "author": {"name": "Clave"},
+  "license": "MIT",
+  "keywords": ["sales", "proposal", "quote", "orders", "follow-up", "report", "automation"]
+}

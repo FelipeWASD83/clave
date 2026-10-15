@@ -401,6 +401,48 @@ def r_compat(h: Manipulador):
     h._json({"ok": True})
 
 
+@rota("POST", "/api/email/salvar")
+def r_email_salvar(h: Manipulador):
+    """Liga o conector de e-mail, guarda a senha de app (criptografada) e testa na hora."""
+    from ferramentas import email as femail
+    d = h.corpo()
+    tipo = str(d.get("tipo") or "gmail")
+    if tipo not in (*femail.PROVEDORES, "imap", "outlook"):
+        raise Erro(400, t("Tipo de e-mail inválido."))
+    c = {"tipo": tipo, "ligado": True, "endereco": str(d.get("endereco") or "").strip()}
+    if tipo != "outlook":
+        if "@" not in c["endereco"]:
+            raise Erro(400, t("Escreva o endereço de e-mail."))
+        hosts = femail.PROVEDORES.get(tipo) or {}
+        try:
+            c.update({"imap": str(d.get("imap") or hosts.get("imap") or "").strip(),
+                      "imap_porta": int(d.get("imap_porta") or hosts.get("imap_porta") or 993),
+                      "smtp": str(d.get("smtp") or hosts.get("smtp") or "").strip(),
+                      "smtp_porta": int(d.get("smtp_porta") or hosts.get("smtp_porta") or 465)})
+        except (TypeError, ValueError):
+            raise Erro(400, t("Porta inválida."))
+        if not c["imap"] or not c["smtp"]:
+            raise Erro(400, t("Preencha os servidores IMAP e SMTP (o seu provedor informa na página de ajuda)."))
+        senha = str(d.get("senha") or "").strip()
+        if senha:
+            segredos.guardar(femail.SEGREDO, senha.replace(" ", ""))
+        elif not segredos.existe(femail.SEGREDO):
+            raise Erro(400, t("Cole a senha de app."))
+    config.salvar({"email": c})
+    try:
+        h._json({"ok": True, "mensagem": femail.testar()})
+    except femail.ErroEmail as e:
+        h._json({"ok": False, "mensagem": str(e)})
+
+
+@rota("POST", "/api/email/desligar")
+def r_email_desligar(h: Manipulador):
+    from ferramentas import email as femail
+    config.salvar({"email": {**(config.carregar().get("email") or {}), "ligado": False}})
+    segredos.apagar(femail.SEGREDO)
+    h._json({"ok": True})
+
+
 @rota("POST", "/api/conectores/token")
 def r_conector_token(h: Manipulador):
     d = h.corpo()
@@ -602,6 +644,18 @@ def _opcoes(d: dict) -> dict:
     o = d.get("opcoes") or {}
     permitido = {"modelo", "esforco", "pensar", "mostrar_raciocinio", "busca_web", "github", "rapido", "permissao"}
     return {k: v for k, v in o.items() if k in permitido}
+
+
+@rota("POST", "/api/conversas/<cid>/compactar")
+def r_compactar(h: Manipulador, cid):
+    """/compact: resume a conversa agora; as próximas mensagens partem do resumo."""
+    import compactar
+    try:
+        h._json(compactar.compactar(cid))
+    except ValueError as e:
+        raise Erro(400, str(e))
+    except execucao.anthropic.APIStatusError as e:
+        raise Erro(502, execucao._mensagem_api(e))
 
 
 @rota("POST", "/api/conversas/<cid>/enviar")
@@ -830,6 +884,20 @@ def r_anexo(h: Manipulador, aid):
     if h.query().get("baixar") == "1":
         cab["Content-Disposition"] = f"attachment; filename*=UTF-8''{urllib.parse.quote(reg['nome'])}"
         return h._bytes(dados, reg["tipo"], cab=cab)
+    if reg["tipo"].startswith(("video/", "audio/")):
+        cab["Accept-Ranges"] = "bytes"
+        m = re.match(r"bytes=(\d*)-(\d*)$", h.headers.get("Range") or "")
+        if m and (m.group(1) or m.group(2)):
+            total = len(dados)
+            if m.group(1):
+                ini, fim = int(m.group(1)), min(int(m.group(2) or total - 1), total - 1)
+            else:  # bytes=-N: os últimos N
+                ini, fim = max(0, total - int(m.group(2))), total - 1
+            if ini > fim or ini >= total:
+                return h._bytes(b"", reg["tipo"], status=416, cab={**cab, "Content-Range": f"bytes */{total}"})
+            return h._bytes(dados[ini:fim + 1], reg["tipo"], status=206,
+                            cab={**cab, "Content-Range": f"bytes {ini}-{fim}/{total}"})
+        return h._bytes(dados, reg["tipo"], cab=cab)
     tipo = reg["tipo"] if reg["tipo"].startswith("image/") else "text/plain; charset=utf-8"
     if reg["tipo"] == "application/pdf":
         tipo = "application/pdf"
@@ -844,7 +912,8 @@ def r_anexo_abrir(h: Manipulador, aid):
         raise Erro(404, t("Arquivo não encontrado."))
     # a extensão vem do tipo conferido, nunca do nome: um "texto" chamado x.bat não pode virar programa
     extensao = {anexos.MIME_XLSX: ".xlsx", "application/pdf": ".pdf", "image/png": ".png", "image/jpeg": ".jpg",
-                "image/gif": ".gif", "image/webp": ".webp", "text/plain": ".txt"}.get(reg["tipo"])
+                "image/gif": ".gif", "image/webp": ".webp", "text/plain": ".txt",
+                **{v: k for k, v in anexos.MIDIA.items() if k not in (".m4v",)}}.get(reg["tipo"])
     if not extensao:
         raise Erro(400, t("Esse tipo de arquivo não é aberto pelo Clave."))
     pasta = config.DADOS / "abertos" / aid
@@ -1033,6 +1102,31 @@ def r_precos_estimar(h: Manipulador):
 
 
 # ---------- memória ----------
+
+@rota("GET", "/api/importar/pedido")
+def r_importar_pedido(h: Manipulador):
+    import importar
+    h._json({"pedido": importar.pedido()})
+
+
+@rota("POST", "/api/importar/ler")
+def r_importar_ler(h: Manipulador):
+    import importar
+    texto = str(h.corpo().get("texto") or "")
+    if not texto.strip():
+        raise Erro(400, t("Cole a resposta inteira do Claude ou do ChatGPT."))
+    r = importar.ler(texto)
+    if not r["itens"]:
+        raise Erro(400, t("Não achei nenhuma categoria na resposta. Confira se colou o bloco inteiro (com os títulos das seções)."))
+    h._json(r)
+
+
+@rota("POST", "/api/importar/aplicar")
+def r_importar_aplicar(h: Manipulador):
+    import importar
+    itens = [i for i in (h.corpo().get("itens") or []) if isinstance(i, dict)]
+    h._json({"feito": importar.aplicar(itens)})
+
 
 @rota("GET", "/api/memoria")
 def r_memoria(h: Manipulador):

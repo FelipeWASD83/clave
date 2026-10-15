@@ -25,6 +25,12 @@ EMBUTIDOS_APP = [
     ("plano", "Modo Plano: o Claude investiga e propõe um plano antes de mudar qualquer coisa"),
     ("fluxo", "Roda um fluxo com vários modelos (pede o seu OK e mostra o custo antes)"),
     ("custo", "Mostra quanto esta conversa e o mês já gastaram"),
+    ("compact", "Resume a conversa agora para gastar menos nas próximas mensagens"),
+    ("web", "Liga ou desliga a busca na web nesta conversa (on ou off)"),
+    ("resumo", "Pede ao Claude um resumo do que foi decidido, feito e o que falta"),
+    ("exportar", "Baixa a conversa em Markdown"),
+    ("economia", "Dicas para esta conversa gastar menos"),
+    ("importar", "Traz memórias, projetos e rotinas do Claude ou do ChatGPT"),
     ("memoria", "Abre as memórias que o Claude guarda sobre você"),
     ("permissoes", "Abre as regras de permissão"),
     ("plugins", "Abre os plugins"),
@@ -123,7 +129,8 @@ def expandir(texto: str, pasta: str | Path | None = None) -> dict | None:
             corpo = substituir(c["texto"].replace("${CLAUDE_SKILL_DIR}", c["pasta"]), args)
             return {"texto": (t("<skill nome=\"{nome}\" pasta=\"{pasta}\">\n{corpo}\n</skill>", nome=nome, pasta=c["pasta"],
                                 corpo=corpo.strip()) + "\n\n"
-                              + (t("Pedido: {pedido}", pedido=args) if args else t("Siga a skill acima."))),
+                              + (t("Pedido: {pedido}", pedido=args) if args else t("Siga a skill acima."))
+                              + ("\n" + t("(Responda em português do Brasil.)") if str(s.get("origem", "")).startswith("plugin") else "")),
                     "nome": nome, "tipo": "skill", "modelo": c.get("modelo") or "", "ferramentas_permitidas": []}
     for cmd in listar(pasta, com_skills=False):
         if cmd["nome"] == nome and cmd["tipo"] == "comando":
@@ -135,7 +142,8 @@ def expandir(texto: str, pasta: str | Path | None = None) -> dict | None:
             if cmd["origem"].startswith("plugin:"):
                 # comando de plugin não libera terminal sozinho: só leitura e edição
                 permitidas = [f for f in permitidas if not f.startswith(("Bash", "PowerShell"))]
-            return {"texto": substituir(corpo.strip(), args), "nome": nome, "tipo": "comando",
+            idioma = "\n\n" + t("(Responda em português do Brasil.)") if cmd["origem"].startswith("plugin:") else ""
+            return {"texto": substituir(corpo.strip(), args) + idioma, "nome": nome, "tipo": "comando",
                     "modelo": str(fm.get("model") or ""), "ferramentas_permitidas": permitidas}
     return None
 

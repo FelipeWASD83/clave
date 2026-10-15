@@ -73,6 +73,9 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
 | `servidor/atualizador.py`, `iniciar.py` | Updating from the newest GitHub release, and the supervisor |
 | `servidor/api_falsa.py` | A fake Claude API (demo and tests) |
 | `servidor/i18n.py`, `servidor/i18n/en/*.json` | Server translation: `t("Portuguese text", name=value)`, `traduzir_ferramentas()` for tool descriptions, `guardado_pt()` for the Portuguese texts kept next to English packages |
+| `servidor/compactar.py` | `/compact`: on-demand compaction (beta `compact-2026-09-04`); the block becomes a `compactacao` message and the request starts from it |
+| `servidor/importar.py` | Import from Claude or ChatGPT: the request to paste there, reading the reply (sections and one entry per line) and applying it |
+| `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP and SMTP with an app password, or the classic Outlook by COM) and Word (.docx with the standard library, PDF through the installed Word) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Model launch cards: the presentation card (opens once for a new model), the "new model" banner, the "Models" cards, the intelligence score and its source (`_inteligencia`) and models the account has that Clave doesn't know yet (Models API, once a day) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Interface translation (`t()`); the server merges the catalogs into `/i18n/en.json` |
 | `app/js/tour.js` | Guided tours with arrows (spotlight, bubble, Back/Next/Skip), one per screen, shown once (`cfg.tours_vistos`) |
@@ -114,6 +117,20 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
   old chat/Code conversations saved (it was the old default, not a choice). Without the option in a request, chat
   and Code follow the setting; workflow steps, routines and helpers always send their own. A `WebSearch` deny rule
   still wins.
+- **Sending e-mail always asks.** `email_enviar` shows the whole e-mail and waits for an OK in any mode; only a
+  specific allow rule `Email(enviar)` skips it, and a routine stops without it. Reading is free. Microsoft
+  (Outlook.com, Microsoft 365) doesn't take passwords over IMAP anymore: the path is the classic Outlook (COM) or
+  Zapier. The new Outlook has no COM.
+- **Word without python-docx.** It needs lxml (native code that Smart App Control may block), so `word.py` reads
+  and writes the .docx XML with the standard library. Text replacement works when the piece is inside one run.
+- **`/compact` is on-demand compaction.** Once a conversation starts with the block, threshold compaction is not
+  sent with it (the API rejects the pair), and `_para_api` cuts everything before the last `compactacao` message.
+  Project files go into the first user message after the cut.
+- **`mostrar_arquivo` copies the file** into `dados/anexos` (up to 100 MB, any type) and the result carries
+  `(id ...)`, which the screen uses to draw the preview (as the generated spreadsheets do). Video and audio are
+  served with Range.
+- **The system prompt saves money** (`sistema._economia`): short answers when they fit, no rereading, a program
+  without AI instead of a routine for repetitive work, cheaper models, and recommending free tools once.
 - **Official `anthropic` SDK at a pinned version** (`requirements.txt`). Windows
   Smart App Control can block a new version of a package with a native part
   (`pydantic_core`, `jiter`). Only update after testing the import on Windows.
@@ -185,7 +202,8 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
   and says so on the screen. The plan prices are editable because the Max 20x one
   only appears in third-party guides.
 - **Lessons teach what the app really does.** Do not promise a feature that does
-  not exist (e.g. the app does not generate Word files).
+  not exist (e.g. the Word tools create .docx from simple Markdown and replace text; they don't do tracked
+  changes or edit images).
 - **The demo does not charge**: with `CLAVE_API_FALSA`, the recorded cost is zero.
 
 ## 4. Run, test, publish

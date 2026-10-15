@@ -2,6 +2,48 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 4.0.0 (2026-10-15)
+
+Clave for the office: e-mail, Word, Zapier, bringing everything from Claude or ChatGPT, and a Claude that saves your
+money.
+
+**New**
+
+- **E-mail connector** (Settings > Connectors): Gmail, Yahoo, Zoho and hosting providers with an app password, or
+  the classic Outlook installed on the computer (for Outlook.com and Microsoft 365). Claude reads and searches your
+  e-mail and writes replies; sending always shows you the whole e-mail and waits for your OK. In Code mode it also
+  saves attachments to the folder.
+- **Word**: in Code mode Claude creates documents (proposals, contracts, letters) with headings and tables, fills
+  in templates and exports to PDF with the installed Word.
+- **Zapier shortcut**: a guided way to connect Gmail, Google Sheets and Calendar, Outlook, WhatsApp Business and
+  hundreds of apps.
+- **Import from Claude or ChatGPT** (Settings > Import from Claude): copy a request, paste it into the other
+  assistant and paste the answer back. Your rules, who you are, projects, preferences and automations come in, with
+  a preview to uncheck what you don't want. Routines come in off and on Haiku, for you to check.
+- **Files in the chat**: when Claude takes a screenshot, makes a chart or finds a file you need to see, it shows it
+  right in the chat (images, video and audio play there; other files get a card to open or download).
+- **/compact** summarizes the chat on the spot so the next messages cost less, and the summary appears in the chat.
+- More commands: **/web on|off**, **/resumo**, **/exportar**, **/economia** (tips to spend less) and **/importar**.
+- **Sales plugin**: commercial proposal, client follow-up, orders into a spreadsheet, sales report, answering
+  clients, and "automation without AI".
+- New lesson: **An order app without AI**, step by step: e-mail, Excel spreadsheet and sending orders to the
+  company website, scheduled by Windows, at zero cost per run.
+
+**Changed**
+
+- **Claude saves your credit on its own**: answers at the size the question needs, doesn't reread what it already
+  read, and before turning something repetitive into a routine it explains that a program without AI, built once in
+  Code, costs nothing per run. It also suggests Haiku for simple things, /compact for long chats, and free tools like
+  Git, GitHub, Obsidian and Power Automate when they fit.
+- The Routines page asks "does it need AI every time?" and opens Code ready to build the program without AI.
+- Plugin commands and skills, written in English, now tell Claude which language to answer in.
+- `excel_alterar` can save to a copy (the `saida` field), as the Excel skill already asked for.
+
+**Fixed**
+
+- The step list in Code no longer looks like it's still working after the reply ends: the step stops spinning and
+  the list says which steps were left open.
+
 ## 3.1.0 (2026-10-15)
 
 **Changed**

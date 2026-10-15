@@ -2,6 +2,48 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 4.0.0 (15/10/2026)
+
+O Clave para o escritório: e-mail, Word, Zapier, trazer tudo do Claude ou do ChatGPT, e um Claude que economiza o
+seu dinheiro.
+
+**Novo**
+
+- **Conector de e-mail** (Configurações > Conectores): Gmail, Yahoo, Zoho e provedores de hospedagem com senha de
+  app, ou o Outlook clássico instalado no computador (para Outlook.com e Microsoft 365). O Claude lê e procura os
+  seus e-mails e escreve respostas; enviar sempre mostra o e-mail inteiro e espera o seu OK. No modo Code ele também
+  salva anexos na pasta.
+- **Word**: no modo Code o Claude cria documentos (propostas, contratos, cartas) com títulos e tabelas, preenche
+  modelos e exporta para PDF pelo Word instalado.
+- **Atalho do Zapier**: um jeito guiado de ligar Gmail, Planilhas e Agenda do Google, Outlook, WhatsApp Business e
+  centenas de apps.
+- **Importar do Claude ou do ChatGPT** (Configurações > Importar do Claude): você copia um pedido, cola no outro
+  assistente e cola a resposta de volta. Vêm as suas regras, quem você é, projetos, preferências e automações, com
+  uma prévia para desmarcar o que não quiser. As rotinas chegam desligadas e no Haiku, para você conferir.
+- **Arquivos na conversa**: quando o Claude tira um print, faz um gráfico ou acha um arquivo que você precisa ver,
+  ele mostra ali mesmo (imagem, vídeo e áudio tocam na conversa; o resto vira um cartão para abrir ou baixar).
+- **/compact** resume a conversa na hora para as próximas mensagens gastarem menos, e o resumo aparece na conversa.
+- Mais comandos: **/web on|off**, **/resumo**, **/exportar**, **/economia** (dicas para gastar menos) e **/importar**.
+- **Plugin de vendas**: proposta comercial, follow-up de cliente, pedidos para planilha, relatório de vendas,
+  responder cliente e "automação sem IA".
+- Lição nova: **Um app de pedidos sem IA**, passo a passo: e-mail, planilha do Excel e envio dos pedidos para o
+  site da empresa, agendado pelo Windows, com custo zero por rodada.
+
+**Mudou**
+
+- **O Claude economiza o seu crédito sozinho**: responde no tamanho que a pergunta pede, não relê o que já leu e,
+  antes de transformar algo repetitivo em rotina, explica que um programa sem IA, feito uma vez no Code, custa zero
+  por rodada. Também sugere o Haiku para o simples, o /compact para conversa longa e ferramentas gratuitas como Git,
+  GitHub, Obsidian e Power Automate quando servirem.
+- A página de Rotinas pergunta "precisa de IA toda vez?" e abre o Code pronto para montar o programa sem IA.
+- Comandos e skills de plugin, escritos em inglês, agora dizem ao Claude em que idioma responder.
+- O `excel_alterar` pode salvar numa cópia (o campo `saida`), como a skill de Excel já pedia.
+
+**Corrigido**
+
+- A lista de passos do Code não fica mais parecendo que ainda está trabalhando depois que a resposta acaba: o passo
+  para de girar e a lista diz quais passos ficaram abertos.
+
 ## 3.1.0 (15/10/2026)
 
 **Mudou**

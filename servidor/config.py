@@ -110,6 +110,7 @@ PADRAO = {
     "github_escrita": False,
     # conectores MCP remotos: [{nome, url, ligado}] (o token, se houver, fica nos segredos)
     "conectores_mcp": [],
+    "email": {},  # o conector de e-mail (a senha fica no segredos)
     # interface
     "tema": "sistema",
     "tamanho_letra": 16,

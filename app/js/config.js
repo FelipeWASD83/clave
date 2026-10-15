@@ -8,7 +8,7 @@ import { criarMiniChat } from './minichat.js';
 import { t, localidade } from './i18n.js';
 
 const ABAS = () => [
-  ['conta', t('Conta e chave')], ['personalizacao', t('Personalização')], ['memoria', t('Memória')], ['modelos', t('Modelos')],
+  ['conta', t('Conta e chave')], ['personalizacao', t('Personalização')], ['importar', t('Importar do Claude')], ['memoria', t('Memória')], ['modelos', t('Modelos')],
   ['recursos', t('Recursos')], ['limite', t('Limite de gasto')], ['code', t('Modo Code')], ['github', t('GitHub')],
   ['conectores', t('Conectores')], ['aparencia', t('Aparência')], ['dados', t('Dados e backup')], ['sobre', t('Atualizações e sobre')],
 ];
@@ -119,6 +119,58 @@ const SECOES = {
         el('div', { class: 'rotulo', texto: t('Seus estilos') }), listaEstilos,
         el('button', { class: 'botao', type: 'button', html: `${ic('mais')}${t('Criar estilo')}`, onclick: () => editarEstilo() })),
       secao(t('Outros'), null, liga('titulos_automaticos', t('Dar título às conversas sozinho'), t('Usa o Haiku 5.5 uma vez por conversa (custa uma fração de centavo).'))));
+  },
+
+  async importar(alvo) {
+    const NOMES = {
+      instrucoes: t('Instruções → Como você quer as respostas'), estilo: t('Estilo de resposta → Como você quer as respostas'),
+      identidade: t('Identidade → Sobre você'), carreira: t('Carreira → Sobre você'),
+      preferencias: t('Preferências → Memória'), ferramentas: t('Ferramentas e conectores → Memória'),
+      projetos: t('Projetos → Projetos do Clave'), rotinas: t('Automações → Rotinas (desligadas, para você conferir)'),
+    };
+    const { pedido } = await api('/importar/pedido');
+    const caixaPedido = el('textarea', { class: 'area mono', readonly: true, style: 'min-height:160px;font-size:12.5px' });
+    caixaPedido.value = pedido;
+    const resposta = el('textarea', { class: 'area', placeholder: t('Cole aqui a resposta inteira (o bloco de código).'), style: 'min-height:160px' });
+    const previa = el('div', { class: 'importar-previa' });
+    const ler = async () => {
+      try {
+        const { itens } = await api('/importar/ler', { metodo: 'POST', corpo: { texto: resposta.value } });
+        const marcados = new Set(itens.map((i) => i.id));
+        const grupos = Object.keys(NOMES).map((cat) => [cat, itens.filter((i) => i.categoria === cat)]).filter(([, l]) => l.length);
+        const botao = el('button', { class: 'botao primario', type: 'button', texto: t('Importar os marcados'), onclick: async () => {
+          const escolhidos = itens.filter((i) => marcados.has(i.id));
+          if (!escolhidos.length) { aviso(t('Marque pelo menos um item.'), 'erro'); return; }
+          const { feito } = await api('/importar/aplicar', { metodo: 'POST', corpo: { itens: escolhidos } });
+          await carregarEstado();
+          aviso(t('Importado: {r} regras de resposta, {s} sobre você, {m} memórias, {p} projetos e {o} rotinas (desligadas).', { r: feito.respostas, s: feito.sobre_voce, m: feito.memoria, p: feito.projetos, o: feito.rotinas }));
+          previa.replaceChildren(el('p', { class: 'ajuda', texto: t('Pronto. Confira em Personalização, Memória, Projetos e Rotinas. As rotinas ficaram desligadas e no Haiku: ligue só as que precisam mesmo de IA toda vez.') }));
+        } });
+        previa.replaceChildren(
+          el('p', { class: 'ajuda', texto: t('Desmarque o que não quiser trazer.') }),
+          ...grupos.map(([cat, lista]) => el('div', { class: 'importar-grupo' },
+            el('div', { class: 'rotulo', texto: NOMES[cat] }),
+            ...lista.map((i) => {
+              const caixa = el('input', { type: 'checkbox', checked: true });
+              caixa.addEventListener('change', () => (caixa.checked ? marcados.add(i.id) : marcados.delete(i.id)));
+              const extra = cat === 'rotinas'
+                ? `${i.nome}: ${i.quando_texto || t('horário não informado')}${i.horario_certo ? '' : ' ' + t('(confira o horário)')}`
+                : cat === 'projetos' ? i.nome : '';
+              return el('label', { class: 'importar-item' }, caixa,
+                el('span', {}, extra ? el('b', { texto: extra }) : null, el('span', { texto: cat === 'rotinas' ? (i.prompt || '') : cat === 'projetos' ? (i.detalhes || '') : i.texto })));
+            }))),
+          botao);
+      } catch (e) { aviso(e.message, 'erro'); }
+    };
+    alvo.replaceChildren(
+      secao(t('Importar do Claude ou do ChatGPT'), t('Traga o que o outro assistente já sabe de você: regras, quem você é, projetos, preferências e automações. Nada é enviado a lugar nenhum: você copia, cola lá e cola a resposta aqui.'),
+        el('div', { class: 'rotulo', texto: t('1. Copie este pedido') }), caixaPedido,
+        el('div', { class: 'linha-botoes' },
+          el('button', { class: 'botao', type: 'button', html: `${ic('copiar')}${t('Copiar o pedido')}`, onclick: async () => { await navigator.clipboard.writeText(pedido); aviso(t('Pedido copiado.')); } })),
+        el('p', { class: 'ajuda', texto: t('2. Cole numa conversa nova do claude.ai (ou do ChatGPT) e mande. 3. Copie o bloco que ele devolver e cole abaixo.') }),
+        resposta,
+        el('div', { class: 'linha-botoes' }, el('button', { class: 'botao primario', type: 'button', texto: t('Ler a resposta'), onclick: ler })),
+        previa));
   },
 
   async memoria(alvo) {
@@ -247,11 +299,81 @@ const SECOES = {
   },
 
   async conectores(alvo) {
+    // ---- e-mail ----
+    const em = cfg().email || {};
+    const TIPOS = [['gmail', 'Gmail'], ['outlook', t('Outlook do computador')], ['yahoo', 'Yahoo'], ['zoho', 'Zoho'], ['imap', t('Outro provedor')]];
+    let tipo = em.tipo || 'gmail';
+    const endereco = el('input', { class: 'entrada', type: 'email', placeholder: t('voce@empresa.com.br'), autocomplete: 'off' });
+    endereco.value = em.endereco || '';
+    const senha = el('input', { class: 'entrada mono', type: 'password', placeholder: em.ligado && em.tipo !== 'outlook' ? t('(guardada; cole de novo só para trocar)') : t('16 letras, sem espaços'), autocomplete: 'off' });
+    const imap = el('input', { class: 'entrada mono', placeholder: 'imap.seuprovedor.com.br' }); imap.value = em.tipo === 'imap' ? em.imap || '' : '';
+    const imapPorta = el('input', { class: 'entrada mono', type: 'number', placeholder: '993' }); imapPorta.value = em.tipo === 'imap' ? em.imap_porta || '' : '';
+    const smtp = el('input', { class: 'entrada mono', placeholder: 'smtp.seuprovedor.com.br' }); smtp.value = em.tipo === 'imap' ? em.smtp || '' : '';
+    const smtpPorta = el('input', { class: 'entrada mono', type: 'number', placeholder: '465' }); smtpPorta.value = em.tipo === 'imap' ? em.smtp_porta || '' : '';
+    const camposSenha = el('div', { style: 'display:grid;gap:12px' });
+    const camposServidor = el('div', { class: 'linha-campos' }, campo(t('Servidor IMAP'), imap), campo(t('Porta IMAP'), imapPorta), campo(t('Servidor SMTP'), smtp), campo(t('Porta SMTP'), smtpPorta));
+    const ajudaTipo = el('p', { class: 'ajuda' });
+    const resultado = el('p', { class: 'ajuda' });
+    const desenharTipo = () => {
+      seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === tipo)));
+      const outlook = tipo === 'outlook';
+      camposSenha.hidden = outlook;
+      camposServidor.hidden = tipo !== 'imap';
+      ajudaTipo.textContent = {
+        gmail: t('No Gmail: ligue a verificação em duas etapas na sua Conta Google e crie uma "senha de app" em myaccount.google.com/apppasswords. Cole aqui as 16 letras (não é a sua senha normal).'),
+        outlook: t('Para Outlook.com e Microsoft 365, que não aceitam mais senha por fora: o Clave usa o Outlook clássico instalado neste computador, já com a sua conta. O Outlook novo não deixa outros programas usarem o e-mail; nesse caso, use o Zapier abaixo.'),
+        yahoo: t('No Yahoo: em Segurança da conta, gere uma "senha de app" e cole aqui.'),
+        zoho: t('No Zoho Mail: ative o IMAP nas configurações e gere uma "senha específica de aplicativo".'),
+        imap: t('Provedor de hospedagem (o e-mail do site da empresa): o endereço dos servidores IMAP e SMTP e as portas estão na página de ajuda do provedor. Use a senha da caixa ou uma senha de app, se ele tiver.'),
+      }[tipo];
+    };
+    const seg = el('div', { class: 'segmentado', role: 'group', 'aria-label': t('Tipo de e-mail') },
+      ...TIPOS.map(([v, rot]) => el('button', { type: 'button', texto: rot, dados: { v }, onclick: () => { tipo = v; desenharTipo(); } })));
+    camposSenha.append(campo(t('Endereço de e-mail'), endereco), campo(t('Senha de app'), senha, t('Fica guardada criptografada neste computador, só para o e-mail.')));
+    desenharTipo();
+    const blocoEmail = secao(t('E-mail'),
+      t('Deixa o Claude ler os seus e-mails e escrever respostas. Ler é livre; enviar sempre mostra o e-mail inteiro e espera o seu OK. No modo Code ele também salva anexos na pasta.'),
+      em.ligado ? el('p', { class: 'etiqueta acao', texto: t('Ligado: {conta}', { conta: em.tipo === 'outlook' ? t('Outlook do computador') : em.endereco }) }) : null,
+      seg, ajudaTipo, camposSenha, camposServidor,
+      el('div', { class: 'linha-botoes' },
+        el('button', { class: 'botao primario', type: 'button', texto: t('Salvar e testar'), onclick: async () => {
+          resultado.textContent = t('Testando…');
+          try {
+            const r = await api('/email/salvar', { metodo: 'POST', corpo: { tipo, endereco: endereco.value, senha: senha.value, imap: imap.value, imap_porta: imapPorta.value, smtp: smtp.value, smtp_porta: smtpPorta.value } });
+            await carregarEstado();
+            resultado.textContent = r.mensagem;
+            aviso(r.ok ? t('E-mail ligado.') : t('Salvo, mas o teste falhou: confira os dados.'), r.ok ? '' : 'erro');
+          } catch (e) { resultado.textContent = e.message; aviso(e.message, 'erro'); }
+        } }),
+        em.ligado ? el('button', { class: 'botao', type: 'button', texto: t('Desligar o e-mail'), onclick: async () => {
+          await api('/email/desligar', { metodo: 'POST' }); await carregarEstado(); SECOES.conectores(alvo);
+        } }) : null),
+      resultado);
+
+    // ---- Zapier: Gmail, Planilhas e Agenda do Google, Outlook, WhatsApp e centenas de apps ----
+    const urlZapier = el('input', { class: 'entrada mono', placeholder: 'https://mcp.zapier.com/...' });
+    const chaveZapier = el('input', { class: 'entrada mono', type: 'password', placeholder: t('só se o Zapier mostrar uma chave'), autocomplete: 'off' });
+    const blocoZapier = secao(t('Zapier (Google, Microsoft, WhatsApp e mais)'),
+      t('O Zapier liga o Claude a centenas de apps (Gmail, Planilhas e Agenda do Google, Outlook, WhatsApp Business, CRMs) sem você programar nada. É um serviço de fora, com plano grátis limitado: cada ação que o Claude faz por ele conta no seu plano do Zapier.'),
+      el('ol', { class: 'passos-ajuda' },
+        el('li', { texto: t('Crie uma conta em zapier.com e abra mcp.zapier.com.') }),
+        el('li', { texto: t('Clique em "+ New MCP Server", escolha o cliente "Anthropic API" e crie.') }),
+        el('li', { texto: t('Na aba Configure, adicione as ações que quer liberar (ex.: Gmail: procurar e-mail; Google Sheets: adicionar linha). Libere só o que precisa.') }),
+        el('li', { texto: t('Copie o endereço do servidor (e a chave, se aparecer) e cole abaixo.') })),
+      el('div', { class: 'linha-campos' }, campo(t('Endereço do servidor'), urlZapier), campo(t('Chave (opcional)'), chaveZapier)),
+      el('button', { class: 'botao', type: 'button', html: `${ic('conector')}${t('Ligar o Zapier')}`, onclick: async () => {
+        if (!/^https:\/\//.test(urlZapier.value.trim())) { aviso(t('Cole o endereço https:// que o Zapier mostrou.'), 'erro'); return; }
+        if (chaveZapier.value.trim()) await api('/conectores/token', { metodo: 'POST', corpo: { nome: 'zapier', token: chaveZapier.value.trim() } });
+        const outros = (cfg().conectores_mcp || []).filter((m) => m.nome !== 'zapier');
+        await salvar({ conectores_mcp: [...outros, { nome: 'zapier', url: urlZapier.value.trim(), ligado: true }] }, t('Zapier ligado.'));
+        SECOES.conectores(alvo);
+      } }));
+
     const lista = cfg().conectores_mcp || [];
     const nome = el('input', { class: 'entrada', placeholder: t('ex.: deepwiki') });
     const url = el('input', { class: 'entrada mono', placeholder: t('https://mcp.exemplo.com/mcp') });
     const token = el('input', { class: 'entrada mono', type: 'password', placeholder: t('só se o serviço pedir'), autocomplete: 'off' });
-    alvo.replaceChildren(secao(t('Conectores (MCP)'),
+    alvo.replaceChildren(blocoEmail, blocoZapier, secao(t('Conectores (MCP)'),
       t('Conectores ligam o Claude a outros serviços (documentação, ferramentas, bancos de dados) que falam o padrão MCP. A Anthropic se conecta direto ao endereço, então só funciona com servidores MCP públicos na internet (não com os do seu computador). Use só serviços em que você confia.'),
       lista.length ? el('div', { class: 'lista-itens' }, ...lista.map((m, i) => el('div', { class: 'item-lista' },
         el('span', { html: ic('conector') }), el('span', { class: 'textos' }, el('b', { texto: m.nome }), el('small', { class: 'mono', texto: m.url })),

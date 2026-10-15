@@ -1,0 +1,46 @@
+{
+  "displayName": "Vendas",
+  "description": "Para o escritório de vendas: propostas em Word e PDF, follow-up de clientes, pedidos para a planilha, relatório de vendas, respostas a clientes e automações que rodam sem IA.",
+  "skills": {
+    "automacao-sem-ia": {
+      "description": "Use quando a pessoa quiser que algo se repita (todo dia, a cada e-mail que chega, a cada pedido novo, de tantos em tantos minutos) e os passos forem sempre os mesmos. Cria um programinha em Python que roda SEM IA pelo Agendador de Tarefas do Windows, sem gastar nada por rodada, em vez de uma rotina que chama o Claude toda vez."
+    },
+    "follow-up-de-cliente": {
+      "description": "Use para escrever e-mails ou mensagens de follow-up: proposta que ficou sem resposta, orçamento perto de vencer ou pós-venda (agradecimento, entrega, satisfação, recompra). Curtos e educados, com um pedido claro, no ritmo de 2, 5 e 10 dias."
+    },
+    "pedido-para-planilha": {
+      "description": "Use quando pedidos de clientes chegam por e-mail, texto colado do WhatsApp ou PDF e precisam virar linhas na planilha de pedidos do Excel (data, cliente, CNPJ/CPF, itens, quantidades, preços, total, entrega, status). Nunca sobrescreve a original sem cópia e marca o que está em dúvida em vez de chutar."
+    },
+    "proposta-comercial": {
+      "description": "Use quando a pessoa precisar de uma proposta comercial ou orçamento para um cliente: dados do cliente, itens com quantidade e preço, desconto, forma de pagamento (Pix, boleto, cartão), validade e entrega. Entrega o arquivo do Word e o PDF, com todas as contas conferidas."
+    },
+    "relatorio-de-vendas": {
+      "description": "Use quando a pessoa quiser entender as vendas a partir de uma planilha: totais por período, vendedor, produto e cliente, ticket médio, maiores clientes e comparação com o período anterior, com um resumo em linguagem simples e, se pedir, um relatório em PDF."
+    },
+    "responder-cliente": {
+      "description": "Use para responder a mensagem de um cliente (dúvida, reclamação, atraso, negociação de preço ou pedido de desconto) no tom da empresa. Usa só os fatos que a pessoa passar, nunca inventa preço, prazo ou política, e entrega uma versão curta e uma completa."
+    }
+  },
+  "commands": {
+    "automatizar": {
+      "description": "Automatiza uma tarefa que você repete, com um programinha que roda sem IA e não custa nada por rodada",
+      "argument-hint": "[o que repetir]"
+    },
+    "follow-up": {
+      "description": "Escreve as mensagens de follow-up para um cliente que recebeu proposta ou acabou de comprar",
+      "argument-hint": "[cliente]"
+    },
+    "pedidos": {
+      "description": "Transforma pedidos de clientes (e-mail, texto do WhatsApp ou PDF) em linhas da planilha de pedidos",
+      "argument-hint": "[arquivo ou texto]"
+    },
+    "proposta": {
+      "description": "Monta uma proposta comercial (orçamento) em Word e PDF, com as contas conferidas",
+      "argument-hint": "[cliente e itens]"
+    },
+    "relatorio": {
+      "description": "Relatório de vendas a partir de uma planilha: totais, ticket médio, maiores clientes e comparação com o período anterior",
+      "argument-hint": "[planilha.xlsx]"
+    }
+  }
+}

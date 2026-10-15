@@ -138,6 +138,16 @@ body[data-letra="sans"] .msg-claude .resposta { font-family: var(--sans); line-h
 .nota-conversa .botao { margin-left: auto; }
 .compactacao { display: flex; align-items: center; gap: 12px; color: var(--texto-3); font-size: 13px; }
 .compactacao::before, .compactacao::after { content: ""; flex: 1; height: 1px; background: var(--linha); }
+/* o /compact: o divisor abre e mostra o resumo de onde a conversa continua */
+.compactacao.com-resumo { display: block; }
+.compactacao.com-resumo::before, .compactacao.com-resumo::after { content: none; }
+.compactacao.com-resumo summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; }
+.compactacao.com-resumo summary::-webkit-details-marker { display: none; }
+.compactacao.com-resumo summary::before, .compactacao.com-resumo summary::after { content: ""; flex: 1; height: 1px; background: var(--linha); }
+.compactacao-resumo { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel-2); color: var(--texto-2); white-space: pre-wrap; font-size: 13.5px; line-height: 1.5; }
+.nota-conversa.economia { flex-wrap: wrap; align-items: center; }
+.nota-conversa.economia > span:nth-child(2) { flex: 1 1 320px; }
+.lista-economia { margin: 0; padding-left: 18px; display: grid; gap: 10px; }
 
 /* ---------- caixa de texto (compositor) ---------- */
 .compositor-area { padding: 0 0 16px; background: linear-gradient(to bottom, transparent, var(--papel) 24px); }
@@ -193,6 +203,19 @@ body[data-letra="sans"] .msg-claude .resposta { font-family: var(--sans); line-h
 .tarefas .t.fazendo svg { color: var(--acao); }
 .tarefas .t.feito { color: var(--texto-3); text-decoration: line-through; }
 .tarefas .t.feito svg { color: var(--sucesso); }
+/* arquivo que o Claude mostrou: a mídia em cima, o nome e os botões embaixo */
+.arquivo-mostrado { margin: 0; border: 1px solid var(--linha); border-radius: var(--raio-m); overflow: hidden; background: var(--papel); max-width: 720px; }
+.arquivo-mostrado img, .arquivo-mostrado video { display: block; width: 100%; max-height: 520px; object-fit: contain; background: var(--papel-2); }
+.arquivo-mostrado audio { display: block; width: calc(100% - 24px); margin: 12px; }
+.arquivo-imagem { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.arquivo-mostrado-barra { display: flex; align-items: center; gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+.arquivo-mostrado.com-midia .arquivo-mostrado-barra { border-top: 1px solid var(--linha); }
+.arquivo-mostrado .icone-arq { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 6px; background: var(--acao-suave); color: var(--acao-forte); font-family: var(--mono); font-size: 10.5px; font-weight: 600; text-transform: uppercase; }
+.arquivo-mostrado-nome { flex: 1; min-width: 140px; display: grid; gap: 2px; overflow-wrap: anywhere; }
+.arquivo-mostrado-nome b { font-weight: 500; }
+.arquivo-mostrado-nome small { color: var(--texto-3); font-size: 12.5px; }
+.tarefas-fim { margin-top: 4px; font-size: 12.5px; color: var(--texto-3); }
+.tarefas.encerrada { opacity: .85; }
 
 /* ---------- conversa vazia ---------- */
 /* "safe": quando o início fica mais alto que a janela (banner e painéis), o conteúdo cola no topo em vez de

@@ -1,0 +1,23 @@
+{
+  "A senha do e-mail não está salva. Vá em Configurações > Conectores > E-mail.": "The e-mail password isn't saved. Go to Settings > Connectors > E-mail.",
+  "O servidor de e-mail recusou o login ({erro}). Confira o endereço e a senha de app.": "The e-mail server refused the login ({erro}). Check the address and the app password.",
+  "Não deu para falar com o servidor de e-mail ({erro}).": "Couldn't reach the e-mail server ({erro}).",
+  "Data inválida em desde (use AAAA-MM-DD).": "Invalid date in desde (use YYYY-MM-DD).",
+  "Mensagem não encontrada: {id}": "Message not found: {id}",
+  "O servidor recusou o login para enviar ({erro}). Confira a senha de app.": "The server refused the login to send ({erro}). Check the app password.",
+  "Não deu para enviar ({erro}).": "Couldn't send it ({erro}).",
+  "E-mail enviado para {para}.": "E-mail sent to {para}.",
+  "O Outlook clássico não está instalado neste computador (o Outlook novo não deixa outros programas usarem o e-mail).": "Classic Outlook isn't installed on this computer (the new Outlook doesn't let other programs use the e-mail).",
+  "O Outlook demorou demais para responder (ele pode estar esperando alguma janela aberta).": "Outlook took too long to respond (it may be waiting on an open window).",
+  "O Outlook não conseguiu: {erro}": "Outlook couldn't do it: {erro}",
+  "erro desconhecido": "unknown error",
+  "Falta o campo {campo}.": "The {campo} field is missing.",
+  "Anexo salvo em {caminho}.": "Attachment saved to {caminho}.",
+  "Anexo não encontrado nessa mensagem: {nome}": "Attachment not found in that message: {nome}",
+  "Funcionou: o Outlook respondeu e a caixa de entrada tem {n} itens.": "It worked: Outlook answered and the inbox has {n} items.",
+  "Funcionou: a caixa de entrada tem {n} mensagens.": "It worked: the inbox has {n} messages.",
+  "Para: {para}": "To: {para}",
+  "Cc: {cc}": "Cc: {cc}",
+  "Assunto: {assunto}": "Subject: {assunto}",
+  "Anexos: {lista}": "Attachments: {lista}"
+}

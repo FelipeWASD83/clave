@@ -1,0 +1,7 @@
+{
+  "Resuma esta conversa para ela continuar a partir do resumo. Guarde: o que a pessoa pediu e como gosta das coisas, as decisões tomadas, os arquivos e pastas mexidos (com o caminho), números e nomes que importam, o que foi feito, o que deu errado e o que ficou pendente, e o último pedido em aberto. Escreva no idioma da conversa. Não chame ferramentas: responda só com o resumo.": "Summarize this conversation so it can continue from the summary. Keep: what the person asked for and how they like things, the decisions made, the files and folders touched (with their paths), numbers and names that matter, what was done, what went wrong and what is still pending, and the last open request. Write in the conversation's language. Don't call tools: reply with the summary only.",
+  "Conversa não encontrada.": "Chat not found.",
+  "Espere a resposta terminar para compactar.": "Wait for the reply to finish before compacting.",
+  "A conversa ainda é curta demais para compactar.": "The chat is still too short to compact.",
+  "O resumo não veio ({motivo}). A conversa ficou como estava.": "The summary didn't come back ({motivo}). The chat is unchanged."
+}

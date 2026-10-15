@@ -199,7 +199,7 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     const m = /^\/([\w-]+)(?:\s+(.*))?$/s.exec(texto);
     if (!m) return false;
     const [, nome, args = ''] = m;
-    const limpar = () => { area.value = ''; ajustarAltura(); };
+    const limpar = () => { area.value = ''; ajustarAltura(); sugerirComandos(); };  // fecha o menu de comandos também
     if (nome === 'novo') { location.hash = modo === 'code' ? '#/code' : '#/novo'; limpar(); return true; }
     if (nome === 'modelo') {
       const alvo = ALIAS_MODELO[args.trim().toLowerCase()] || (estado.info?.modelos || []).find((x) => x.nome.toLowerCase() === args.trim().toLowerCase())?.id;
@@ -217,9 +217,21 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
       aviso(t('Modo Plano: o Claude investiga e mostra o plano antes de mudar qualquer coisa.'));
       return true;
     }
-    const paginas = { memoria: '#/config/memoria', permissoes: '#/permissoes', plugins: '#/plugins' };
+    if (nome === 'web') {
+      const a = args.trim().toLowerCase();
+      op.busca_web = a === 'on' || a === 'ligar' ? true : a === 'off' || a === 'desligar' ? false : !op.busca_web;
+      desenharChips(); limpar();
+      aviso(op.busca_web ? t('Busca na web ligada nesta conversa.') : t('Busca na web desligada nesta conversa.'));
+      return true;
+    }
+    if (nome === 'resumo') {  // vira um pedido normal ao Claude
+      area.value = t('Resuma esta conversa em tópicos curtos: o que foi decidido, o que foi feito (com os arquivos) e o que ainda falta.') + (args ? ` ${args}` : '');
+      ajustarAltura();
+      return false;
+    }
+    const paginas = { memoria: '#/config/memoria', permissoes: '#/permissoes', plugins: '#/plugins', importar: '#/config/importar' };
     if (paginas[nome]) { location.hash = paginas[nome]; limpar(); return true; }
-    if (['custo', 'ajuda'].includes(nome) && aoComandoApp) { limpar(); return aoComandoApp(nome, args); }
+    if (['custo', 'ajuda', 'compact', 'compactar', 'exportar', 'economia'].includes(nome) && aoComandoApp) { limpar(); return aoComandoApp(nome, args); }
     return false;
   }
 
@@ -228,8 +240,9 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     const texto = area.value.trim();
     if (!texto && !anexos.length) return;
     if (!anexos.length && await comandoDoApp(texto)) return;
+    const final = area.value.trim() || texto;  // o /resumo troca o texto antes de mandar
     const lista = anexos.slice();
-    const ok = await aoEnviar?.(texto, lista, { ...op });
+    const ok = await aoEnviar?.(final, lista, { ...op });
     if (ok !== false) {
       area.value = '';
       anexos = [];
@@ -289,11 +302,13 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
       ajustarAltura();
     },
     definirContexto(usado, limite = 1_000_000) {
+      reguaNivel.dataset.usado = String(usado || 0);
       const pct = limite ? Math.min(100, (usado / limite) * 100) : 0;
       reguaNivel.style.width = `${Math.max(pct, usado ? 0.6 : 0)}%`;
       reguaNivel.classList.toggle('alto', pct > 60);
       reguaTexto.textContent = usado ? t('{usado} de {limite} tokens', { usado: tokens(usado), limite: tokens(limite) }) : t('conversa nova');
     },
+    contextoAtual() { return Number(reguaNivel.dataset.usado || 0); },
     definirCusto(v) { custoTexto.textContent = v ? usd(v) : ''; if (!cfg().mostrar_custo) custoTexto.textContent = ''; },
     definirSkills(lista) { skills = lista || []; comandos = null; },
     definirPermissao(p) { op.permissao = p; desenharChips(); },

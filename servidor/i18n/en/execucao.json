@@ -82,5 +82,9 @@
   "Conversa": "Conversation",
   "Crie um título curto (no máximo 6 palavras, sem aspas e sem ponto final) para uma conversa que começa com a mensagem abaixo, no mesmo idioma dela. Responda só com o título.": "Create a short title (at most 6 words, no quotes and no final period) for a conversation that starts with the message below, in the same language as the message. Reply with the title only.",
   "{caminho} (falhou: {erro})": "{caminho} (failed: {erro})",
-  "A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra conversa. Não repita no texto a sugestão nem o que você já escreveu: se a resposta já foi dada, termine aqui.": "The suggestion appeared to the user as a card; they decide whether to open the other conversation. Don't repeat the suggestion or what you already wrote: if the answer has already been given, end here."
+  "A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra conversa. Não repita no texto a sugestão nem o que você já escreveu: se a resposta já foi dada, termine aqui.": "The suggestion appeared to the user as a card; they decide whether to open the other conversation. Don't repeat the suggestion or what you already wrote: if the answer has already been given, end here.",
+  "Anexo só dá para mandar no modo Code (no chat não há pasta).": "Attachments can only be sent in Code mode (the chat has no folder).",
+  "Anexo fora da pasta de trabalho ou inexistente: {caminho}": "Attachment outside the working folder or missing: {caminho}",
+  "Anexo protegido não sai por e-mail: {caminho}": "A protected file doesn't go out by e-mail: {caminho}",
+  "envia um e-mail": "sends an e-mail"
 }

@@ -65,6 +65,9 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 | `servidor/atualizador.py`, `iniciar.py` | Atualização pela release mais nova do GitHub e supervisor |
 | `servidor/api_falsa.py` | API do Claude de mentira (demonstração e testes) |
 | `servidor/i18n.py`, `servidor/i18n/en/*.json` | Tradução do servidor: `t("texto em português", nome=valor)`, `traduzir_ferramentas()` para as descrições das ferramentas, `guardado_pt()` para o português guardado ao lado dos pacotes em inglês |
+| `servidor/compactar.py` | `/compact`: compactação sob demanda (beta `compact-2026-09-04`); o bloco vira uma mensagem `compactacao` e o pedido começa nela |
+| `servidor/importar.py` | Importar do Claude ou do ChatGPT: o pedido para colar lá, a leitura da resposta (seções e uma entrada por linha) e a aplicação |
+| `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP e SMTP com senha de app, ou o Outlook clássico por COM) e Word (.docx com a biblioteca padrão, PDF pelo Word instalado) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Fichas de lançamento dos modelos: o cartão de apresentação (abre uma vez para modelo novo), o banner de modelo novo, os cartões "Modelos", a nota de inteligência e a fonte dela (`_inteligencia`) e os modelos que a conta tem e o Clave ainda não conhece (API de modelos, uma vez por dia) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Tradução da interface (`t()`); o servidor junta os catálogos em `/i18n/en.json` |
 | `app/js/tour.js` | Tours com setinhas (destaque, balão, Voltar/Próximo/Pular), um por tela, mostrado uma vez (`cfg.tours_vistos`) |
@@ -106,6 +109,20 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   conversas antigas de chat e Code gravaram (era o padrão de antes, não uma escolha). Sem a opção no pedido, chat
   e Code seguem a configuração; etapa de fluxo, rotina e ajudante sempre mandam a deles. Regra que nega
   `WebSearch` continua valendo.
+- **Enviar e-mail sempre pergunta.** O `email_enviar` mostra o e-mail inteiro e espera OK em qualquer modo; só
+  uma regra de permitir específica `Email(enviar)` dispensa, e rotina para sem ela. Ler é livre. A Microsoft
+  (Outlook.com, Microsoft 365) não aceita mais senha por IMAP: o caminho é o Outlook clássico (COM) ou o Zapier. O
+  Outlook novo não tem COM.
+- **Word sem python-docx.** Ele precisa do lxml (parte nativa que o Smart App Control pode barrar), então o
+  `word.py` lê e escreve o XML do .docx com a biblioteca padrão. A troca de texto funciona quando o trecho está
+  num pedaço (run) só.
+- **`/compact` é a compactação sob demanda.** Com a conversa começando no bloco, a compactação automática por
+  limite não vai junto (a API recusa os dois), e o `_para_api` corta tudo antes da última mensagem `compactacao`.
+  Os arquivos do projeto vão na primeira mensagem da pessoa depois do corte.
+- **`mostrar_arquivo` copia o arquivo** para `dados/anexos` (até 100 MB, qualquer tipo) e o resultado leva
+  `(id ...)`, que a tela usa para desenhar a prévia (como nas planilhas geradas). Vídeo e áudio saem com Range.
+- **O prompt de sistema economiza** (`sistema._economia`): resposta curta quando cabe, não reler, programa sem IA
+  no lugar de rotina para trabalho repetitivo, modelo mais barato e recomendar ferramentas gratuitas uma vez.
 - **SDK oficial `anthropic` em versão fixa** (`requirements.txt`). O Smart App
   Control do Windows pode barrar versão nova de pacote com parte nativa
   (`pydantic_core`, `jiter`). Atualizar só testando o import no Windows.
@@ -167,7 +184,8 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 - **Sugestão de outra conversa nunca abre sozinha.** A ferramenta `sugerir_conversa` só mostra um cartão; `POST /api/sugestoes/<id>/abrir` (o clique) cria a conversa com o pedido gravado no `tool_use` (não com o que a tela mandar) e a tabela `sugestoes` impede abrir duas vezes.
 - **Estimativa pela assinatura é piso declarado.** A Anthropic não publica o limite das assinaturas em tokens; a conta usa o único número oficial (pelo menos 45 mensagens curtas por janela de 5 h no Pro, 5x e 20x no Max) e diz isso na tela. Os preços dos planos ficam editáveis porque o do Max 20x só aparece em guias de terceiros.
 - **Lições ensinam o que o app faz de verdade.** Não prometer recurso que não
-  existe (ex.: o app não gera Word).
+  existe (ex.: as ferramentas de Word criam .docx a partir de Markdown simples e trocam texto; não fazem
+  controle de alterações nem mexem em imagens).
 - **Demonstração não cobra**: com `CLAVE_API_FALSA`, o custo registrado é zero.
 
 ## 4. Rodar, testar, publicar

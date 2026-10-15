@@ -15,6 +15,14 @@ const NOMES_FERRAMENTA = {
   rodar_comando: (e) => ['terminal', e.descricao || t('Rodou um comando'), e.comando],
   atualizar_tarefas: () => ['feito', t('Atualizou a lista de passos'), ''],
   usar_skill: (e) => ['faisca', t('Usou a skill'), e.nome],
+  mostrar_arquivo: (e) => ['imagem', t('Mostrou'), e.caminho],
+  word_ler: (e) => ['arquivo', t('Leu o documento'), e.caminho],
+  word_criar: (e) => ['lapis', t('Criou o documento'), e.caminho],
+  word_alterar: (e) => ['lapis', t('Mexeu no documento'), e.caminho],
+  word_no_app: (e) => ['arquivo', t('Exportou o documento para PDF'), e.caminho],
+  email_ler: (e) => ['chat', e.id ? t('Leu um e-mail') : t('Olhou a caixa de entrada'), e.buscar || e.remetente || ''],
+  email_enviar: (e) => ['enviar', t('Enviou um e-mail para'), e.para],
+  email_salvar_anexo: (e) => ['baixar', t('Salvou o anexo'), e.anexo],
   memory: (e) => ['memoria', { view: t('Consultou a memória'), create: t('Anotou na memória'), str_replace: t('Atualizou a memória'), insert: t('Atualizou a memória'), delete: t('Apagou da memória'), rename: t('Reorganizou a memória') }[e.command] || t('Memória'), e.path || e.old_path || ''],
   excel_ler: (e) => ['grafico', t('Leu a planilha'), e.caminho + (e.aba ? ` (${e.aba})` : '')],
   excel_alterar: (e) => ['grafico', t('Mexeu na planilha'), e.caminho],
@@ -104,7 +112,10 @@ export function blocoFerramenta(bloco) {
     el('summary', {}, el('span', { class: 'ic', html: ic(icone) }), desc, el('span', { class: 'meta estado-ferramenta' })),
     detalhe);
   det._detalhe = detalhe;
+  // o arquivo que o Claude mostrou fica fora do bloco recolhido, sempre à vista
+  if (bloco.name === 'mostrar_arquivo') det.companheiro = el('div', { class: 'arquivo-mostrado-vaga' });
   det.definirEntrada = (entrada) => {
+    bloco.input = entrada || bloco.input;
     detalhe.querySelector('.bloco-entrada')?.remove();
     const pre = entradaLegivel(bloco.name, entrada || {});
     if (pre) detalhe.prepend(el('div', { class: 'bloco-entrada' }, el('div', { class: 'rotulo-detalhe', texto: t('O que ele pediu') }), pre));
@@ -117,6 +128,10 @@ export function blocoFerramenta(bloco) {
     det.classList.remove('rodando');
     if (texto) detalhe.append(el('div', { class: 'bloco-resultado' }, el('div', { class: 'rotulo-detalhe', texto: erro ? t('Erro') : t('Resultado') }), el('pre', { texto: String(texto).slice(0, 6000) })));
     det.querySelector('.arquivo-gerado')?.remove();
+    if (det.companheiro) {
+      const m = !erro && /\(id ([0-9a-f]{16})\)/.exec(String(texto || ''));
+      det.companheiro.replaceChildren(m ? previaArquivo(m[1], String(bloco.input?.caminho || '').split(/[\\/]/).pop() || 'arquivo', bloco.input?.legenda) : '');
+    }
     const gerado = !erro && /^planilha_(criar|pdf)$/.test(bloco.name) && /:\s*([^\n]+?)\s*\(id ([0-9a-f]{16})\)/.exec(String(texto || ''));
     if (gerado) det.append(cartaoGerado(gerado[2], gerado[1]));
   };
@@ -126,6 +141,31 @@ export function blocoFerramenta(bloco) {
   };
   if (bloco.input && Object.keys(bloco.input).length) det.definirEntrada(bloco.input);
   return det;
+}
+
+// Arquivo que o Claude mostrou com mostrar_arquivo: imagem, vídeo e áudio na própria conversa; o resto num cartão.
+const IMAGENS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg']);
+const VIDEOS = new Set(['mp4', 'webm', 'mov', 'm4v']);
+const AUDIOS = new Set(['mp3', 'wav', 'ogg', 'm4a', 'flac']);
+async function abrirNoPrograma(id) {
+  const r = await fetch(`/api/anexos/${id}/abrir`, { method: 'POST', credentials: 'same-origin' });
+  if (!r.ok) { const d = await r.json().catch(() => ({})); alert(d.erro || t('Não deu para abrir.')); }
+}
+export function previaArquivo(id, nome, legenda) {
+  const ext = (nome.split('.').pop() || '').toLowerCase();
+  const url = `/api/anexos/${id}`;
+  let midia = null;
+  if (IMAGENS.has(ext) && ext !== 'svg') {
+    midia = el('button', { class: 'arquivo-imagem', type: 'button', title: t('Abrir no programa de imagens'), onclick: () => abrirNoPrograma(id) },
+      el('img', { src: url, alt: legenda || nome, loading: 'lazy' }));
+  } else if (VIDEOS.has(ext)) midia = el('video', { src: url, controls: true, preload: 'metadata' });
+  else if (AUDIOS.has(ext)) midia = el('audio', { src: url, controls: true, preload: 'metadata' });
+  const barra = el('div', { class: 'arquivo-mostrado-barra' },
+    el('span', { class: 'icone-arq', texto: ext.slice(0, 4) }),
+    el('span', { class: 'arquivo-mostrado-nome' }, el('b', { texto: nome }), legenda ? el('small', { texto: legenda }) : null),
+    el('a', { class: 'botao pequeno', href: `${url}?baixar=1`, download: nome, html: `${ic('baixar')}${esc(t('Baixar'))}` }),
+    el('button', { class: 'botao pequeno', type: 'button', html: `${ic('externo')}${esc(t('Abrir'))}`, title: t('Abre uma cópia no programa do computador'), onclick: () => abrirNoPrograma(id) }));
+  return el('figure', { class: `arquivo-mostrado ${midia ? 'com-midia' : ''}` }, midia, barra);
 }
 
 // Planilha ou PDF que o Claude gerou: baixar ou abrir no programa do computador.
@@ -192,8 +232,12 @@ export function nota(texto, tipo = '', botao) {
   return el('div', { class: `nota-conversa ${tipo}` }, el('span', { html: ic(icone) }), el('span', { texto }), botao || null);
 }
 
-export function divisorCompactacao() {
-  return el('div', { class: 'compactacao', texto: t('A conversa foi resumida aqui para caber na memória do modelo') });
+export function divisorCompactacao(bloco) {
+  const resumo = String(bloco?.content || '').trim();
+  if (!resumo) return el('div', { class: 'compactacao', texto: t('A conversa foi resumida aqui para caber na memória do modelo') });
+  return el('details', { class: 'compactacao com-resumo' },
+    el('summary', { texto: t('Conversa compactada aqui: daqui para frente o Claude parte deste resumo') }),
+    el('div', { class: 'compactacao-resumo', texto: resumo }));
 }
 
 // ---------- uma resposta inteira (histórico) ----------
@@ -242,6 +286,7 @@ export function renderizarBloco(b, porId, resultados) {
       const r = resultados?.get(b.id);
       if (r) det.definirResultado(textoResultado(r.content), r.is_error);
       porId.set(b.id, det);
+      if (det.companheiro) { const f = document.createDocumentFragment(); f.append(det, det.companheiro); return f; }
       return det;
     }
     case 'server_tool_use':
@@ -258,7 +303,7 @@ export function renderizarBloco(b, porId, resultados) {
       return null;
     }
     case 'compaction':
-      return divisorCompactacao();
+      return divisorCompactacao(b);
     default:
       return null;
   }

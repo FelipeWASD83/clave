@@ -57,5 +57,8 @@
   "{usado} de {limite} tokens": "{usado} of {limite} tokens",
   "conversa nova": "new chat",
   "arq": "file",
-  "Tirar {nome}": "Remove {nome}"
+  "Tirar {nome}": "Remove {nome}",
+  "Busca na web ligada nesta conversa.": "Web search on in this chat.",
+  "Busca na web desligada nesta conversa.": "Web search off in this chat.",
+  "Resuma esta conversa em tópicos curtos: o que foi decidido, o que foi feito (com os arquivos) e o que ainda falta.": "Summarize this chat in short bullet points: what was decided, what was done (with the files) and what's still left."
 }

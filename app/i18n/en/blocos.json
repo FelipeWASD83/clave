@@ -56,5 +56,17 @@
   "erro": "error",
   "Não deu para ler: {codigo}": "Couldn't read it: {codigo}",
   "Página lida: {titulo}": "Page read: {titulo}",
-  "A conversa foi resumida aqui para caber na memória do modelo": "The conversation was summarized here to fit in the model's memory"
+  "A conversa foi resumida aqui para caber na memória do modelo": "The conversation was summarized here to fit in the model's memory",
+  "Mostrou": "Showed",
+  "Abrir no programa de imagens": "Open in the image viewer",
+  "Abre uma cópia no programa do computador": "Opens a copy in the computer's program",
+  "Conversa compactada aqui: daqui para frente o Claude parte deste resumo": "Chat compacted here: from now on Claude works from this summary",
+  "Leu o documento": "Read the document",
+  "Criou o documento": "Created the document",
+  "Mexeu no documento": "Edited the document",
+  "Exportou o documento para PDF": "Exported the document to PDF",
+  "Leu um e-mail": "Read an e-mail",
+  "Olhou a caixa de entrada": "Checked the inbox",
+  "Enviou um e-mail para": "Sent an e-mail to",
+  "Salvou o anexo": "Saved the attachment"
 }

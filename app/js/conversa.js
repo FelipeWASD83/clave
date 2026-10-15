@@ -251,6 +251,38 @@ class TelaConversa {
       } catch (e) { aviso(e.message, 'erro'); }
       return true;
     }
+    if (nome === 'compact' || nome === 'compactar') {
+      if (!this.id) { aviso(t('Ainda não tem conversa para compactar.')); return true; }
+      if (this.execucaoId && estado.rodando.get(this.id)) { aviso(t('Espere a resposta terminar para compactar.'), 'erro'); return true; }
+      aviso(t('Compactando a conversa…'));
+      try {
+        const r = await api(`/conversas/${this.id}/compactar`, { metodo: 'POST' });
+        await this.recarregar();
+        this.rolarParaBaixo();
+        aviso(t('Conversa compactada ({valor}). As próximas mensagens partem do resumo e gastam menos.', { valor: usd(r.custo_usd || 0) }));
+      } catch (e) { aviso(e.message, 'erro'); }
+      return true;
+    }
+    if (nome === 'exportar') {
+      if (!this.id) { aviso(t('Ainda não tem conversa para exportar.')); return true; }
+      const a = el('a', { href: `/api/conversas/${this.id}/exportar`, download: '' });
+      document.body.append(a); a.click(); a.remove();
+      return true;
+    }
+    if (nome === 'economia') {
+      const { janela } = await import('./ui.js');
+      const tokens = this.comp?.contextoAtual?.() || 0;
+      const itens = [
+        tokens > 60_000 ? t('Esta conversa já tem uns {n} mil tokens, e cada mensagem nova relê tudo. Use /compact para resumir, ou comece uma conversa nova para assunto novo.', { n: Math.round(tokens / 1000) }) : null,
+        t('Para coisa simples (texto curto, pergunta rápida, conferir algo), use o Haiku: /modelo haiku. Ele custa uma fração do Opus.'),
+        t('Raciocínio alto pensa mais e gasta mais. Para tarefa fácil, /esforco baixo.'),
+        t('Tarefa que se repete sempre do mesmo jeito não precisa de IA toda vez: peça ao modo Code um programa que faça sozinho (veja a lição "Um app de pedidos sem IA").'),
+        t('A busca na web custa US$ 0,01 por busca. Se a resposta não depende de nada atual, /web off.'),
+      ].filter(Boolean);
+      janela({ titulo: t('Como gastar menos'), corpo: el('ul', { class: 'lista-economia' }, ...itens.map((x) => el('li', { texto: x }))),
+        botoes: [{ texto: t('Fechar'), classe: 'primario' }] });
+      return true;
+    }
     if (nome === 'ajuda') {
       const { janela } = await import('./ui.js');
       const q = this.pasta ? `?pasta=${encodeURIComponent(this.pasta)}` : '';
@@ -289,6 +321,7 @@ class TelaConversa {
     this.comp.definirRodando(true);
     const grupo = this.grupoParaContinuar();
     this.vivo = new Vivo(this, grupo, execucaoId, desde);
+    this.desenharTarefas([]);  // a lista da resposta anterior sai; a desta aparece quando o Claude criar
     // as das etapas de fluxo voltam junto com os eventos do fluxo
     for (const ev of this.visao?.aprovacoes_pendentes || []) if (!ev.de_etapa) this.vivo.pedido(ev);
     if (this.visao?.tarefas?.length) this.desenharTarefas(this.visao.tarefas);
@@ -304,6 +337,7 @@ class TelaConversa {
   }
 
   async terminou(ev) {
+    if (this.tarefas?.length) this.desenharTarefas(this.tarefas, true);
     estado.rodando.delete(this.id);
     avisar('rodando');
     this.comp.definirRodando(false);
@@ -317,12 +351,21 @@ class TelaConversa {
     if (ev.status === 'concluida') notificar('Clave', t('O Claude terminou de responder.'));
   }
 
-  desenharTarefas(lista) {
+  // encerrada: a resposta acabou. O passo que ficou "fazendo" para de girar e a lista diz se sobrou passo aberto,
+  // em vez de parecer que o Claude ainda está trabalhando
+  desenharTarefas(lista, encerrada = false) {
     if (!this.tarefasEl) return;
-    this.tarefasEl.hidden = !lista?.length;
-    const icone = { pendente: 'circulo', fazendo: 'progresso', feito: 'feito' };
-    this.tarefasEl.replaceChildren(...(lista || []).map((tarefa) =>
-      el('div', { class: `t ${tarefa.estado}` }, el('span', { html: ic(icone[tarefa.estado] || 'circulo') }), el('span', { texto: tarefa.texto }))));
+    this.tarefas = lista || [];
+    this.tarefasEl.hidden = !this.tarefas.length;
+    this.tarefasEl.classList.toggle('encerrada', encerrada);
+    const icone = { pendente: 'circulo', fazendo: encerrada ? 'circulo' : 'progresso', feito: 'feito' };
+    const abertos = this.tarefas.filter((x) => x.estado !== 'feito').length;
+    this.tarefasEl.replaceChildren(...this.tarefas.map((tarefa) =>
+      el('div', { class: `t ${encerrada && tarefa.estado === 'fazendo' ? 'pendente' : tarefa.estado}` },
+        el('span', { html: ic(icone[tarefa.estado] || 'circulo') }), el('span', { texto: tarefa.texto }))),
+      encerrada ? el('div', { class: 'tarefas-fim', texto: abertos
+        ? t('A resposta terminou com {n} passo(s) sem marcar como feito.', { n: abertos })
+        : t('Tudo feito.') }) : null);
   }
 
   // ---------- histórico ----------
@@ -539,7 +582,7 @@ class Vivo {
           this.tirarIndicador();
           const det = blocoFerramenta({ id: ev.bloco.id, name: ev.bloco.name, input: {} });
           det.classList.add('rodando');
-          if (ev.bloco.name !== 'atualizar_tarefas') this.alvo.append(det);
+          if (ev.bloco.name !== 'atualizar_tarefas') this.alvo.append(det, ...(det.companheiro ? [det.companheiro] : []));
           this.blocos.set(k, { tipo, el: det, texto: '' });
           this.ferramentas.set(ev.bloco.id, det);
         } else if (tipo === 'server_tool_use' || tipo === 'mcp_tool_use') {

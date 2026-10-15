@@ -19,10 +19,11 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import anexos
 import banco
 import contexto_pasta
 import permissoes
-from ferramentas import excel
+from ferramentas import email as femail, excel, word
 from i18n import t
 
 IGNORAR_PASTAS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".mypy_cache", ".pytest_cache",
@@ -86,6 +87,7 @@ class Contexto:
     lidos: set = field(default_factory=set)
     criados: set = field(default_factory=set)
     tarefas: list = field(default_factory=list)
+    ferramenta_id: str = ""  # o tool_use que está rodando agora
     skills: list = field(default_factory=list)
     regras: list = field(default_factory=list)
     processo: subprocess.Popen | None = None
@@ -195,10 +197,50 @@ FERRAMENTAS = {
          "descricao": {"type": "string", "description": "Uma frase curta, em português simples, do que o comando faz."},
          "tempo_limite_s": {"type": "integer", "description": "Segundos até desistir (padrão 120, máximo 600)."}},
         ["comando", "descricao"], "comando"),
+    "mostrar_arquivo": _ferramenta(
+        "mostrar_arquivo",
+        "Mostra um arquivo da pasta para a pessoa, dentro da conversa: imagens (prints, gráficos, fotos), víd"
+        "eos e áudios aparecem ali mesmo; PDF, planilha, documento e outros viram um cartão para abrir ou bai"
+        "xar. Use sempre que gerar ou achar algo que a pessoa precisa ver (por exemplo: tirou um print de um "
+        "site, mostre o print; gerou um gráfico, mostre o gráfico). Até 100 MB por arquivo.",
+        {"caminho": {"type": "string"},
+         "legenda": {"type": "string", "description": "Uma frase sobre o que é o arquivo, no idioma da pessoa."}},
+        ["caminho"], "leitura"),
+    "word_ler": _ferramenta(
+        "word_ler",
+        "Lê um documento do Word (.docx): o texto com os títulos marcados (#) e as tabelas. Use antes de mudar um documento.",
+        {"caminho": {"type": "string"}},
+        ["caminho"], "leitura"),
+    "word_criar": _ferramenta(
+        "word_criar",
+        "Cria um documento do Word (.docx) a partir de um texto em Markdown simples: títulos (#, ##, ###), parágrafos, listas (- ou 1.), tabelas (| a | b |), **negrito** e *itálico*; uma linha só com --- vira quebra de página. Bom para propostas, contratos, relatórios e cartas.",
+        {"caminho": {"type": "string", "description": "Arquivo .docx a criar (substitui se existir)."},
+         "conteudo": {"type": "string", "description": "O documento em Markdown simples."}},
+        ["caminho", "conteudo"], "escrita"),
+    "word_alterar": _ferramenta(
+        "word_alterar",
+        "Troca trechos de texto num documento do Word existente, mantendo a formatação (bom para preencher modelos: nome do cliente, valores, datas). Leia antes com word_ler e copie o trecho exato. Para salvar numa cópia, use saida.",
+        {"caminho": {"type": "string"},
+         "trocas": {"type": "array", "description": "Lista de trocas: cada uma com de (o trecho exato) e para (o texto novo).", "items": {"type": "object", "properties": {
+             "de": {"type": "string"}, "para": {"type": "string"}}, "required": ["de", "para"]}},
+         "saida": {"type": "string", "description": "Salvar o resultado em outro arquivo, deixando o original intacto."}},
+        ["caminho", "trocas"], "escrita"),
+    "word_no_app": _ferramenta(
+        "word_no_app",
+        "Exporta um documento do Word para PDF usando o Microsoft Word instalado no computador.",
+        {"caminho": {"type": "string"}, "saida": {"type": "string", "description": "Arquivo PDF de saída (opcional)."}},
+        ["caminho"], "escrita"),
+    "email_salvar_anexo": _ferramenta(
+        "email_salvar_anexo",
+        "Salva na pasta de trabalho um anexo de um e-mail (use o id e o nome do anexo que o email_ler mostrou).",
+        {"id": {"type": "string"}, "anexo": {"type": "string"}, "caminho": {"type": "string", "description": "Onde salvar (padrão: o nome do anexo na pasta de trabalho)."}},
+        ["id", "anexo"], "escrita"),
     "atualizar_tarefas": _ferramenta(
         "atualizar_tarefas",
         "Mostra ao usuário a sua lista de passos da tarefa atual. Use em tarefas com 3 passos ou mais: crie a "
-        "lista no começo e atualize conforme avança (só um passo 'fazendo' por vez).",
+        "lista no começo e atualize conforme avança (só um passo 'fazendo' por vez). Antes de terminar a resposta, "
+        "chame de novo com todos os passos 'feito' (ou tire os que você não fez e diga por quê no texto): a lista "
+        "fica na tela de quem usa.",
         {"tarefas": {"type": "array", "items": {"type": "object", "properties": {
             "texto": {"type": "string"},
             "estado": {"type": "string", "enum": ["pendente", "fazendo", "feito"]}},
@@ -220,6 +262,7 @@ FERRAMENTAS = {
         "planilha tiver isso, crie uma cópia com outro nome em vez de alterar o original. "
         "Para conferir o resultado das fórmulas, use excel_no_app com acao recalcular e leia de novo.",
         {"caminho": {"type": "string", "description": "Arquivo .xlsx (é criado se não existir)."},
+         "saida": {"type": "string", "description": "Salvar o resultado em outro arquivo, deixando o original intacto (recomendado quando a planilha é da pessoa)."},
          "operacoes": excel.ESQUEMA_OPERACOES},
         ["caminho", "operacoes"], "escrita"),
     "excel_no_app": _ferramenta(
@@ -245,7 +288,8 @@ FERRAMENTAS = {
 
 
 def definicoes(com_skills: bool) -> list[dict]:
-    defs = [f["def"] for nome, f in FERRAMENTAS.items() if nome != "usar_skill"]
+    defs = [f["def"] for nome, f in FERRAMENTAS.items() if nome != "usar_skill"
+            and (nome != "email_salvar_anexo" or femail.ligado())]
     if com_skills:
         defs.append(FERRAMENTAS["usar_skill"]["def"])
     return defs
@@ -687,6 +731,14 @@ def _f_excel_ler(e, ctx: Contexto):
 
 def _f_excel_alterar(e, ctx: Contexto):
     p = ctx.resolver(e["caminho"])
+    if e.get("saida"):  # trabalha numa cópia: a original fica intacta
+        saida = ctx.resolver(e["saida"])
+        if ctx.protegido(saida):
+            raise ErroFerramenta(t("O arquivo de saída está na lista de protegidos."))
+        _checkpoint(ctx, saida)
+        if p.is_file():
+            shutil.copy2(p, saida)
+        p = saida
     existia = p.exists()
     _checkpoint(ctx, p)
     try:
@@ -721,6 +773,92 @@ def _f_excel_abrir(e, ctx: Contexto):
     try:
         return excel.abrir_no_excel(ctx.resolver(e["caminho"]))
     except (excel.ErroExcel, OSError) as erro:
+        raise ErroFerramenta(str(erro))
+
+
+def _f_mostrar_arquivo(e, ctx: Contexto):
+    p = ctx.resolver(e.get("caminho", ""))
+    if not p.is_file():
+        raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=ctx.relativo(p)))
+    if p.stat().st_size > anexos.LIMITE_MOSTRAR:
+        raise ErroFerramenta(t("Arquivo grande demais para mostrar na conversa (o limite é 100 MB)."))
+    reg = anexos.salvar_mostrado(p.name, p.read_bytes(), origem=f"mostrado:{ctx.ferramenta_id}")
+    # a tela acha o arquivo pelo id no resultado (como nas planilhas geradas)
+    return t("Mostrei {nome} para a pessoa na conversa (id {id}).", nome=p.name, id=reg["id"])
+
+
+def _f_word_ler(e, ctx: Contexto):
+    p = ctx.resolver(e["caminho"])
+    if not p.is_file():
+        raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=ctx.relativo(p)))
+    try:
+        texto = word.ler(p)
+    except word.ErroWord as erro:
+        raise ErroFerramenta(str(erro))
+    ctx.lidos.add(str(p))
+    return texto
+
+
+def _f_word_criar(e, ctx: Contexto):
+    p = ctx.resolver(e["caminho"])
+    if p.suffix.lower() != ".docx":
+        raise ErroFerramenta(t("Use um nome terminado em .docx."))
+    existia = p.exists()
+    _checkpoint(ctx, p)
+    resumo = word.criar(p, str(e.get("conteudo") or ""))
+    ctx.criados.add(str(p))
+    ctx.lidos.add(str(p))
+    ctx.emitir({"tipo": "arquivo_mudou", "caminho": ctx.relativo(p), "acao": "editou" if existia else "criou", "diff": ""})
+    return resumo
+
+
+def _f_word_alterar(e, ctx: Contexto):
+    p = ctx.resolver(e["caminho"])
+    if not p.is_file():
+        raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=ctx.relativo(p)))
+    if e.get("saida"):
+        saida = ctx.resolver(e["saida"])
+        if ctx.protegido(saida):
+            raise ErroFerramenta(t("O arquivo de saída está na lista de protegidos."))
+        _checkpoint(ctx, saida)
+        shutil.copy2(p, saida)
+        p = saida
+    else:
+        _checkpoint(ctx, p)
+    try:
+        resumo = word.trocar(p, [x for x in (e.get("trocas") or []) if isinstance(x, dict)])
+    except word.ErroWord as erro:
+        raise ErroFerramenta(str(erro))
+    ctx.emitir({"tipo": "arquivo_mudou", "caminho": ctx.relativo(p), "acao": "editou",
+                "diff": "\n".join(f"- {x.get('de', '')}\n+ {x.get('para', '')}" for x in (e.get("trocas") or []) if isinstance(x, dict))})
+    return resumo
+
+
+def _f_word_no_app(e, ctx: Contexto):
+    p = ctx.resolver(e["caminho"])
+    if not p.is_file():
+        raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=ctx.relativo(p)))
+    saida = ctx.resolver(e["saida"]) if e.get("saida") else p.with_suffix(".pdf")
+    if ctx.protegido(saida):
+        raise ErroFerramenta(t("O arquivo de saída está na lista de protegidos."))
+    _checkpoint(ctx, saida)
+    try:
+        return word.para_pdf(p, saida)
+    except word.ErroWord as erro:
+        raise ErroFerramenta(str(erro))
+
+
+def _f_email_salvar_anexo(e, ctx: Contexto):
+    nome = Path(str(e.get("anexo") or "")).name
+    if not nome:
+        raise ErroFerramenta(t("Diga o nome do anexo."))
+    destino = ctx.resolver(e.get("caminho") or nome)
+    if destino.is_dir():
+        destino = destino / nome
+    _checkpoint(ctx, destino)
+    try:
+        return femail.salvar_anexo(str(e.get("id") or ""), nome, destino)
+    except femail.ErroEmail as erro:
         raise ErroFerramenta(str(erro))
 
 

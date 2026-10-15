@@ -80,5 +80,18 @@
   "Abrir permissões": "Open permissions",
   "Você chegou ao teto de gasto deste mês.": "You've reached your monthly cap.",
   "Você já usou {pct}% do teto de gasto deste mês.": "You've already used {pct}% of your monthly cap.",
-  "Ver o teto": "See the monthly cap"
+  "Ver o teto": "See the monthly cap",
+  "A resposta terminou com {n} passo(s) sem marcar como feito.": "The reply ended with {n} step(s) not marked as done.",
+  "Tudo feito.": "All done.",
+  "Ainda não tem conversa para compactar.": "There's no chat to compact yet.",
+  "Espere a resposta terminar para compactar.": "Wait for the reply to finish before compacting.",
+  "Compactando a conversa…": "Compacting the chat…",
+  "Conversa compactada ({valor}). As próximas mensagens partem do resumo e gastam menos.": "Chat compacted ({valor}). The next messages start from the summary and cost less.",
+  "Ainda não tem conversa para exportar.": "There's no chat to export yet.",
+  "Esta conversa já tem uns {n} mil tokens, e cada mensagem nova relê tudo. Use /compact para resumir, ou comece uma conversa nova para assunto novo.": "This chat already has about {n}k tokens, and every new message rereads all of it. Use /compact to summarize, or start a new chat for a new subject.",
+  "Para coisa simples (texto curto, pergunta rápida, conferir algo), use o Haiku: /modelo haiku. Ele custa uma fração do Opus.": "For simple things (short text, a quick question, checking something), use Haiku: /modelo haiku. It costs a fraction of Opus.",
+  "Raciocínio alto pensa mais e gasta mais. Para tarefa fácil, /esforco baixo.": "High reasoning thinks more and costs more. For an easy task, /esforco baixo.",
+  "Tarefa que se repete sempre do mesmo jeito não precisa de IA toda vez: peça ao modo Code um programa que faça sozinho (veja a lição \"Um app de pedidos sem IA\").": "A task that always repeats the same way doesn't need AI every time: ask Code mode for a program that does it on its own (see the lesson \"An order app without AI\").",
+  "A busca na web custa US$ 0,01 por busca. Se a resposta não depende de nada atual, /web off.": "Web search costs $0.01 per search. If the answer doesn't depend on anything current, /web off.",
+  "Como gastar menos": "How to spend less"
 }

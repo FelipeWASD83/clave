@@ -128,6 +128,18 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     if pensa:
         blocos.append({"type": "thinking", "thinking": "Vou entender o pedido e montar uma resposta curta e "
                        "organizada, com um exemplo de cada formato."})
+    if "mostrar_arquivo" in nomes and any(p in texto for p in ("mostre", "show")):
+        blocos.append({"type": "text", "text": "Aqui está o print."})
+        blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "mostrar_arquivo",
+                       "input": {"caminho": "print-de-exemplo.png", "legenda": "O print da página de teste."}})
+        return blocos, "tool_use"
+    if "atualizar_tarefas" in nomes and any(p in texto for p in ("passos", "steps")):
+        # de propósito, a lista fica aberta: a tela tem de mostrar que a resposta terminou mesmo assim
+        blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "atualizar_tarefas",
+                       "input": {"tarefas": [{"texto": "Ler a pasta", "estado": "feito"},
+                                             {"texto": "Montar o relatório", "estado": "fazendo"},
+                                             {"texto": "Conferir os totais", "estado": "pendente"}]}})
+        return blocos, "tool_use"
     if "escrever_arquivo" in nomes and any(p in texto for p in ("crie", "criar", "create")):
         blocos.append({"type": "text", "text": "Vou criar um arquivo de exemplo na pasta."})
         blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "escrever_arquivo",
@@ -181,10 +193,19 @@ class _Manip(BaseHTTPRequestHandler):
             return self._json({"input_tokens": max(10, len(json.dumps(corpo)) // 4)})
         if not self.path.startswith("/v1/messages"):
             return self._json({"type": "error", "error": {"type": "not_found_error", "message": "não existe"}}, 404)
-        blocos, stop = planejar(corpo)
-        uso = _uso(corpo, blocos)
         modelo = corpo.get("model", "claude-haiku-5-5")
         mid = "msg_" + uuid.uuid4().hex[:20]
+        if corpo.get("compaction"):  # o /compact: só o bloco do resumo, sem resposta
+            pedidos = [_texto_usuario(m)[:80] for m in corpo.get("messages", []) if m.get("role") == "user"]
+            resumo = ("Resumo de demonstração: a conversa teve " + str(len(pedidos)) + " pedidos. O último foi: "
+                      + (pedidos[-1] if pedidos else "nenhum") + ".")
+            return self._json({"id": mid, "type": "message", "role": "assistant", "model": modelo,
+                               "content": [{"type": "compaction", "content": resumo, "signature": "assinatura-falsa"}],
+                               "stop_reason": "compaction", "stop_sequence": None,
+                               "usage": {"input_tokens": 0, "output_tokens": 0, "iterations": [
+                                   {"type": "compaction", "input_tokens": 500, "output_tokens": 60}]}})
+        blocos, stop = planejar(corpo)
+        uso = _uso(corpo, blocos)
         if not corpo.get("stream"):
             conteudo = []
             for b in blocos:

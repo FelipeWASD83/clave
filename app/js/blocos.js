@@ -33,6 +33,7 @@ const NOMES_FERRAMENTA = {
   github_criar_pr: (e) => ['ramo', 'Abrir pull request', `${e.repo}: ${e.titulo}`],
   executar_fluxo: (e) => ['fluxo', 'Propôs um fluxo', e.titulo || ''],
   apresentar_plano: () => ['lista', 'Apresentou o plano', ''],
+  sugerir_conversa: (e) => ['mais_tarefa', 'Sugeriu outra conversa', e.titulo || ''],
 };
 
 export function descreverFerramenta(nome, entrada = {}) {
@@ -220,6 +221,11 @@ export function renderizarBloco(b, porId, resultados) {
       return (b.thinking || '').trim() ? blocoPensamento(b.thinking) : null;
     case 'tool_use': {
       if (b.name === 'atualizar_tarefas') return null;
+      if (b.name === 'sugerir_conversa' && b.input?.titulo) {
+        const caixa = el('div', { class: 'cartao-carregando', dados: { toolId: b.id } });
+        import('./fluxo-ui.js').then((m) => caixa.replaceWith(m.cartaoSugestao({ id: b.id, ...b.input })));
+        return caixa;
+      }
       if (b.name === 'executar_fluxo' || b.name === 'apresentar_plano') {
         // o cartão do fluxo (ou do plano) no lugar do bloco de ferramenta; carregado sob demanda
         const caixa = el('div', { class: 'cartao-carregando', dados: { toolId: b.id } });

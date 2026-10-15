@@ -300,6 +300,49 @@ class TestFluxo(unittest.TestCase):
         finally:
             shutil.rmtree(pasta, ignore_errors=True)
 
+    def test_sugestao_de_outra_conversa_so_abre_com_clique(self):
+        s = self.s
+        _, r = s.pedir("POST", "/api/conversas", {"modo": "chat"})
+        cid = r["conversa"]["id"]
+        _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "responda e sugira outra conversa"})
+        evs = s.eventos(r["execucao"])
+        sug = [e for e in evs if e["tipo"] == "sugestao_conversa"]
+        self.assertEqual(len(sug), 1, "a API falsa sugere uma conversa quando o pedido fala nisso")
+        sid = sug[0]["id"]
+        _, est = s.pedir("GET", f"/api/sugestoes/{sid}")
+        self.assertEqual(est["estado"], "nova", "sugerir não abre nada sozinho")
+        status, ab = s.pedir("POST", f"/api/sugestoes/{sid}/abrir", {"conversa_id": cid})
+        self.assertEqual(status, 200)
+        nova = ab["conversa"]
+        self.assertEqual(nova["titulo"], sug[0]["titulo"])
+        self.assertEqual(nova["modo"], "chat")
+        s.eventos(ab["execucao"])
+        _, v = s.pedir("GET", f"/api/conversas/{nova['id']}")
+        primeira = next(m for m in v["mensagens"] if m["papel"] == "user")
+        self.assertEqual(primeira["conteudo"][0]["text"], sug[0]["pedido"])
+        self.assertTrue(any(m["papel"] == "assistant" for m in v["mensagens"]), "a conversa nova já roda o pedido")
+        _, est = s.pedir("GET", f"/api/sugestoes/{sid}")
+        self.assertEqual((est["estado"], est["conversa"]["id"]), ("aberta", nova["id"]))
+        _, de_novo = s.pedir("POST", f"/api/sugestoes/{sid}/abrir", {"conversa_id": cid})
+        self.assertTrue(de_novo.get("ja_aberta"), "abrir duas vezes não cria outra conversa")
+        status, _ = s.pedir("POST", "/api/sugestoes/toolu_que_nao_existe/abrir", {"conversa_id": cid})
+        self.assertEqual(status, 404)
+
+    def test_painel_de_uso_e_precos_pela_api(self):
+        s = self.s
+        status, d = s.pedir("GET", "/api/uso/painel")
+        self.assertEqual(status, 200)
+        for chave in ("tokens_total", "dias_seguidos", "recorde", "mapa", "ultimos7", "favorito", "projecao"):
+            self.assertIn(chave, d["painel"])
+        status, d = s.pedir("GET", "/api/precos")
+        self.assertEqual(status, 200)
+        self.assertEqual([p["id"] for p in d["planos"]], ["pro", "max5", "max20"])
+        self.assertTrue(any(m["id"] == "claude-haiku-5-5" for m in d["modelos"]))
+        status, d = s.pedir("POST", "/api/precos/estimar", {"plano": "max5", "janelas": 5, "porcentagem": 100})
+        self.assertEqual((status, d["mensagens_mes"]), (200, round(5 * 45 * 5 * 52 / 12)))
+        status, _ = s.pedir("POST", "/api/precos/estimar", {"plano": "pro", "janelas": "muitas"})
+        self.assertEqual(status, 400)
+
     def test_permissoes_pela_api(self):
         s = self.s
         st, r = s.pedir("POST", "/api/permissoes", {"escopo": "app", "acao": "deny", "regra": "Bash(git push *)"})

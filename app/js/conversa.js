@@ -1,6 +1,6 @@
 // A tela de uma conversa (chat ou Code): histórico, resposta chegando ao vivo, aprovações e versões.
 import { api, acompanhar } from './api.js';
-import { estado, cfg, avisar, atualizarOrcamento, modeloInfo, ouvir } from './estado.js';
+import { estado, cfg, avisar, atualizarOrcamento, modeloInfo, ouvir, carregarEstado } from './estado.js';
 import { ic } from './icones.js';
 import { el, aviso, copiarTexto, menu, usd, confirmar } from './ui.js';
 import { criarCompositor, opcoesPadrao, cartaoAnexo } from './compositor.js';
@@ -10,10 +10,10 @@ import {
   preencherResultadoServidor, nota, divisorCompactacao, descreverFerramenta, htmlDiff,
 } from './blocos.js';
 import { abrirPrevia } from './previa.js';
-import { escolherPasta, criarPastaComModelo } from './pastas.js';
+import { painelUso, painelAmbientes } from './painel-uso.js';
 import { menuConversa } from './lateral.js';
 import { pegarRascunho } from './aprender.js';
-import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, FluxoVivo, notificar } from './fluxo-ui.js';
+import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, cartaoSugestao, FluxoVivo, notificar } from './fluxo-ui.js';
 
 function saudacao() {
   const h = new Date().getHours();
@@ -72,61 +72,73 @@ class TelaConversa {
     this.principal.replaceChildren(el('section', { class: 'conversa' }, this.topo, this.centro));
     const projeto = this.projetoId ? await api(`/projetos/${this.projetoId}`).then((r) => r.projeto).catch(() => null) : null;
     this.desenharTopo(this.modo === 'code' ? 'Novo trabalho no Code' : (projeto ? `Nova conversa em ${projeto.nome}` : 'Nova conversa'));
-    if (this.modo === 'code') this.desenharEscolhaDePasta();
-    else this.desenharInicio(projeto);
+    if (this.modo === 'code') {
+      // como no app oficial: começa no último ambiente usado (dá para trocar no painel de ambientes);
+      // a lista de pastas recentes muda no servidor a cada trabalho novo, então vem atualizada
+      await carregarEstado().catch(() => {});
+      const ultima = (cfg().pastas_recentes || [])[0];
+      if (ultima && await this.carregarPasta(ultima, { silencioso: true })) return this.desenharInicio();
+    }
+    this.desenharInicio(projeto);
+  }
+
+  async carregarPasta(caminho, { silencioso = false } = {}) {
+    if (!caminho) return false;
+    try {
+      const info = await api(`/pasta-info?caminho=${encodeURIComponent(caminho)}`);
+      this.pasta = caminho;
+      this.infoPasta = info;
+      this.skills = info.skills || [];
+      return true;
+    } catch (e) {
+      if (!silencioso) aviso(e.message, 'erro');
+      return false;
+    }
   }
 
   desenharInicio(projeto = null) {
     const nome = cfg().nome ? `, ${cfg().nome.split(' ')[0]}` : '';
+    const anterior = this.comp;
+    const textoAntes = anterior ? this.centro.querySelector('textarea')?.value : '';
+    const permAntes = anterior?.opcoes().permissao;
     const comp = this.criarCompositor();
+    if (permAntes) comp.definirPermissao(permAntes);
     const sugestoes = el('div', { class: 'sugestoes' }, ...(this.modo === 'code' ? SUGESTOES_CODE : SUGESTOES_CHAT).map((s) =>
       el('button', { class: 'sugestao', type: 'button', texto: s, onclick: () => comp.definirTexto(s) })));
     const frase = this.modo === 'code' ? 'O que vamos construir?' : (projeto ? `Projeto: ${projeto.nome}` : 'Em que posso ajudar?');
+    const ambientes = this.modo === 'code' ? painelAmbientes({
+      atual: this.pasta,
+      aoEscolher: async (c) => { if (await this.carregarPasta(c)) this.desenharInicio(); },
+      auto: comp.opcoes().permissao === 'livre',
+      aoAuto: (ligado) => {
+        if (ligado) this.permSemAuto = comp.opcoes().permissao;
+        comp.definirPermissao(ligado ? 'livre' : (this.permSemAuto && this.permSemAuto !== 'livre' ? this.permSemAuto : 'perguntar'));
+        this.desenharInicio();
+      },
+    }) : null;
     this.centro.replaceChildren(el('div', { class: 'coluna' },
       el('h1', { class: 'saudacao' }, `${saudacao()}${nome}.`, el('br'), el('em', { texto: frase })),
       this.modo === 'code' ? this.chipsDaPasta() : null,
       comp.elemento,
       sugestoes,
       !estado.info.tem_chave ? nota('Falta colar a sua chave da API para o Claude responder.', 'info',
-        el('a', { class: 'botao pequeno', href: '#/config/conta', texto: 'Colar a chave' })) : null));
+        el('a', { class: 'botao pequeno', href: '#/config/conta', texto: 'Colar a chave' })) : null,
+      el('div', { class: 'paineis-inicio' }, painelUso(), ambientes),
+      this.modo === 'code' && !(cfg().pastas_recentes || []).length ? el('p', { class: 'ajuda', style: 'text-align:center' }, 'Primeira vez? Veja ',
+        el('a', { href: '#/aprender/modo-code', texto: 'como o modo Code funciona' }), '.') : null));
     comp.definirContexto(0);
-    const rascunho = pegarRascunho();
+    const rascunho = textoAntes || pegarRascunho();
     if (rascunho) comp.definirTexto(rascunho);
     comp.focar();
   }
 
-  desenharEscolhaDePasta() {
-    const recentes = (cfg().pastas_recentes || []).slice(0, 6);
-    const escolher = async (caminho) => {
-      if (!caminho) return;
-      try {
-        const info = await api(`/pasta-info?caminho=${encodeURIComponent(caminho)}`);
-        this.pasta = caminho;
-        this.infoPasta = info;
-        this.skills = info.skills || [];
-        this.desenharInicio();
-      } catch (e) { aviso(e.message, 'erro'); }
-    };
-    this.centro.replaceChildren(el('div', { class: 'coluna' },
-      el('h1', { class: 'saudacao' }, 'Em qual pasta', el('br'), el('em', { texto: 'o Claude vai trabalhar?' })),
-      el('div', { style: 'display:grid;gap:14px;max-width:560px;margin:0 auto' },
-        el('p', { class: 'ajuda', style: 'text-align:center;margin:0', texto: 'No modo Code o Claude lê e cria arquivos e roda comandos dentro da pasta que você escolher. Ele pede o seu OK antes de mudar algo (dá para ajustar isso).' }),
-        el('div', { style: 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap' },
-          el('button', { class: 'botao primario', type: 'button', html: `${ic('pasta')}Escolher pasta`, onclick: async () => escolher(await escolherPasta()) }),
-          estado.info.modelo_de_pasta ? el('button', { class: 'botao', type: 'button', html: `${ic('mais')}Criar pasta com o modelo`, onclick: async () => escolher(await criarPastaComModelo()) }) : null),
-        recentes.length ? el('div', { class: 'recentes' }, el('div', { class: 'rotulo', texto: 'Usadas recentemente' }),
-          ...recentes.map((p) => el('button', { type: 'button', title: p, onclick: () => escolher(p) }, el('span', { html: ic('pasta') }), el('span', { texto: p })))) : null,
-        el('p', { class: 'ajuda', style: 'text-align:center' }, 'Primeira vez? Veja ', el('a', { href: '#/aprender/modo-code', texto: 'como o modo Code funciona' }), '.'))));
-  }
-
   chipsDaPasta() {
-    if (!this.pasta) return null;
+    if (!this.pasta) return el('div', { class: 'contexto-code' }, el('span', { class: 'etiqueta', html: `${ic('pasta')}` }, 'nenhum ambiente escolhido: escolha embaixo'));
     const inst = this.infoPasta?.instrucoes || [];
     return el('div', { class: 'contexto-code' },
       el('span', { class: 'etiqueta', title: this.pasta, html: `${ic('pasta')}` }, this.pasta.length > 48 ? '…' + this.pasta.slice(-46) : this.pasta),
       inst.length ? el('span', { class: 'etiqueta acao', title: inst.map((i) => i.caminho).join('\n'), texto: `${inst.length} arquivo(s) de regras (CLAUDE.md)` }) : el('span', { class: 'etiqueta', texto: 'sem CLAUDE.md' }),
-      el('span', { class: 'etiqueta', title: this.skills.map((s) => s.nome).join(', '), texto: `${this.skills.length} skill(s)` }),
-      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Trocar pasta', onclick: () => this.desenharEscolhaDePasta() }));
+      el('span', { class: 'etiqueta', title: this.skills.map((s) => s.nome).join(', '), texto: `${this.skills.length} skill(s)` }));
   }
 
   // ---------- conversa existente ----------
@@ -201,7 +213,7 @@ class TelaConversa {
     try {
       if (!this.id) {
         const corpo = { modo: this.modo, projeto_id: this.projetoId, pasta: this.pasta };
-        if (this.modo === 'code' && !this.pasta) { aviso('Escolha uma pasta primeiro.', 'erro'); return false; }
+        if (this.modo === 'code' && !this.pasta) { aviso('Escolha o ambiente (a pasta de trabalho) no painel embaixo primeiro.', 'erro'); return false; }
         const { conversa } = await api('/conversas', { metodo: 'POST', corpo });
         await api(`/conversas/${conversa.id}/enviar`, { metodo: 'POST', corpo: { texto, anexos: anexos.map((a) => a.id), opcoes: op } });
         avisar('conversas-mudaram');
@@ -580,6 +592,14 @@ class Vivo {
         this.tirarIndicador();
         this.pedido(ev);
         break;
+      case 'sugestao_conversa': {
+        this.tirarIndicador();
+        const card = cartaoSugestao(ev, { conversaId: this.tela.id });
+        const det = this.achar(ev.id);
+        if (det) det.replaceWith(card); else this.alvo.append(card);
+        this.rolar();
+        break;
+      }
       case 'aprovacao_decidida':
         this.tela.mensagensEl.querySelector(`[data-id="${CSS.escape(ev.id)}"]:is(.aprovacao, .fluxo)`)?.remove();
         break;

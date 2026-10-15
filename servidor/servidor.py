@@ -49,6 +49,7 @@ import comandos  # noqa: E402
 import config  # noqa: E402
 import contexto_pasta  # noqa: E402
 import execucao  # noqa: E402
+import estatisticas  # noqa: E402
 import fluxos  # noqa: E402
 import github_api  # noqa: E402
 import modelo_pasta  # noqa: E402
@@ -56,6 +57,7 @@ import modelos  # noqa: E402
 import orcamento  # noqa: E402
 import permissoes  # noqa: E402
 import plugins  # noqa: E402
+import precos  # noqa: E402
 import rotinas  # noqa: E402
 import segredos  # noqa: E402
 import sistema  # noqa: E402
@@ -923,6 +925,87 @@ def r_uso_ajuste(h: Manipulador):
     ajustes[orcamento.situacao()["chave"]] = max(0.0, valor)
     config.salvar({"ajustes": ajustes})
     h._json({"orcamento": orcamento.situacao()})
+
+
+@rota("GET", "/api/uso/painel")
+def r_uso_painel(h: Manipulador):
+    h._json({"painel": estatisticas.painel(), "orcamento": orcamento.situacao()})
+
+
+# ---------- sugestões de outra conversa ----------
+
+@rota("GET", "/api/sugestoes/<sid>")
+def r_sugestao(h: Manipulador, sid):
+    s = banco.sugestao(sid) or {"estado": "nova", "nova_conversa_id": None}
+    nova = banco.conversa(s.get("nova_conversa_id") or "") if s.get("nova_conversa_id") else None
+    h._json({"estado": s["estado"], "conversa": {"id": nova["id"], "titulo": nova.get("titulo") or ""} if nova else None})
+
+
+@rota("POST", "/api/sugestoes/<sid>/dispensar")
+def r_sugestao_dispensar(h: Manipulador, sid):
+    origem = banco.conversa(str(h.corpo().get("conversa_id") or ""))
+    if not origem:
+        raise Erro(404, "Conversa não encontrada.")
+    banco.marcar_sugestao(sid, origem["id"], "dispensada")
+    h._json({"ok": True})
+
+
+@rota("POST", "/api/sugestoes/<sid>/abrir")
+def r_sugestao_abrir(h: Manipulador, sid):
+    """Abre a conversa que o Claude sugeriu e já manda o pedido dela. Só acontece com o clique de quem usa."""
+    origem = banco.conversa(str(h.corpo().get("conversa_id") or ""))
+    if not origem:
+        raise Erro(404, "Conversa não encontrada.")
+    ja = banco.sugestao(sid)
+    if ja and ja["estado"] == "aberta" and ja.get("nova_conversa_id") and banco.conversa(ja["nova_conversa_id"]):
+        h._json({"conversa": banco.conversa(ja["nova_conversa_id"]), "ja_aberta": True})
+        return
+    b = banco.bloco_ferramenta(origem["id"], sid)
+    if not b or b.get("name") != "sugerir_conversa":
+        raise Erro(404, "Sugestão não encontrada.")
+    entrada = b.get("input") or {}
+    titulo = " ".join(str(entrada.get("titulo") or "").split())[:80]
+    pedido = str(entrada.get("pedido") or "").strip()
+    if not titulo or not pedido:
+        raise Erro(400, "A sugestão veio sem título ou sem pedido.")
+    ok, motivo = orcamento.pode_gastar()
+    if not ok:
+        raise Erro(402, motivo)
+    if not segredos.existe("anthropic") and not DEMO:
+        raise Erro(400, "Falta a chave da API. Cole a sua em Configurações > Conta e chave.")
+    modo = origem["modo"] if origem["modo"] in ("chat", "code") else "chat"
+    pasta = origem.get("pasta") if modo == "code" else None
+    if modo == "code" and not (pasta and Path(pasta).is_dir()):
+        raise Erro(400, "A pasta desta conversa não existe mais.")
+    ajustes = _opcoes({"opcoes": origem.get("ajustes") or {}})
+    conv = banco.criar_conversa(modo=modo, projeto_id=origem.get("projeto_id"), pasta=pasta, titulo=titulo, ajustes=ajustes)
+    _preparar_sistema(conv)
+    conv = banco.conversa(conv["id"])
+    conteudo, meta, extras = _conteudo_usuario(conv, pedido, [])
+    nota = _nota_de_modo(conv, ajustes)
+    if nota:
+        conteudo.append({"type": "text", "text": nota})
+    banco.adicionar_mensagem(conv["id"], None, "user", conteudo, meta={**meta, "sugestao_de": origem["id"]})
+    ex = execucao.iniciar(conv["id"], {**ajustes, **extras})
+    banco.marcar_sugestao(sid, origem["id"], "aberta", conv["id"])
+    h._json({"conversa": banco.conversa(conv["id"]), "execucao": ex.id})
+
+
+# ---------- preços e planos ----------
+
+@rota("GET", "/api/precos")
+def r_precos(h: Manipulador):
+    h._json({"modelos": precos.tabela_modelos(), "planos": precos.PLANOS, "perfis": precos.PERFIS,
+             "reais": precos.medias_reais(), "projecao": precos.projecao(),
+             "mensagens_por_janela": precos.MENSAGENS_POR_JANELA_PRO})
+
+
+@rota("POST", "/api/precos/estimar")
+def r_precos_estimar(h: Manipulador):
+    try:
+        h._json(precos.estimar(h.corpo()))
+    except (TypeError, ValueError):
+        raise Erro(400, "Algum número da estimativa está inválido.")
 
 
 # ---------- memória ----------

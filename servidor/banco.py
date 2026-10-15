@@ -131,6 +131,13 @@ CREATE TABLE IF NOT EXISTS rotinas (
     criado_em REAL NOT NULL,
     atualizado_em REAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS sugestoes (
+    id TEXT PRIMARY KEY,
+    conversa_id TEXT,
+    estado TEXT NOT NULL,
+    nova_conversa_id TEXT,
+    criado_em REAL NOT NULL
+);
 """
 
 
@@ -355,6 +362,76 @@ def uso_detalhado(inicio: float, fim: float) -> dict:
 def gasto_conversa(cid: str) -> float:
     r = conexao().execute("SELECT COALESCE(SUM(custo_usd),0) AS s FROM uso WHERE conversa_id=?", (cid,)).fetchone()
     return float(r["s"])
+
+
+# ---------- sugestões de outra conversa ----------
+
+def sugestao(sid: str) -> dict | None:
+    r = conexao().execute("SELECT * FROM sugestoes WHERE id=?", (sid,)).fetchone()
+    return dict(r) if r else None
+
+
+def marcar_sugestao(sid: str, conversa_id: str, estado: str, nova_conversa_id: str | None = None) -> None:
+    with _trava_escrita:
+        con = conexao()
+        con.execute("INSERT INTO sugestoes (id, conversa_id, estado, nova_conversa_id, criado_em) VALUES (?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET estado=excluded.estado, nova_conversa_id=excluded.nova_conversa_id",
+                    (sid, conversa_id, estado, nova_conversa_id, agora()))
+        con.commit()
+
+
+def bloco_ferramenta(conversa_id: str, tool_id: str) -> dict | None:
+    """O bloco tool_use com esse id numa conversa (o que o Claude pediu, como ficou gravado)."""
+    for r in conexao().execute("SELECT conteudo_json FROM mensagens WHERE conversa_id=? AND papel='assistant'", (conversa_id,)):
+        try:
+            blocos = json.loads(r["conteudo_json"])
+        except (TypeError, ValueError):
+            continue
+        for b in blocos if isinstance(blocos, list) else []:
+            if isinstance(b, dict) and b.get("type") == "tool_use" and b.get("id") == tool_id:
+                return b
+    return None
+
+
+# ---------- painel de uso ----------
+
+# origens em que o modelo foi escolha de quem usa (títulos e ajudantes têm modelo fixo)
+ORIGENS_ESCOLHIDAS = ("chat", "code", "fluxo", "rotina")
+_TOKENS = "entrada+cache_escrita+cache_leitura+saida"
+
+
+def totais_uso() -> dict:
+    r = conexao().execute(
+        f"SELECT COALESCE(SUM({_TOKENS}),0) AS tokens, COALESCE(SUM(saida),0) AS saida, COALESCE(SUM(custo_usd),0) AS usd, "
+        "COUNT(*) AS pedidos, MIN(criado_em) AS primeiro FROM uso").fetchone()
+    return dict(r)
+
+
+def dias_com_uso() -> list[str]:
+    return [r["dia"] for r in conexao().execute(
+        "SELECT DISTINCT date(criado_em,'unixepoch','localtime') AS dia FROM uso ORDER BY dia")]
+
+
+def uso_por_dia(desde: float) -> list[dict]:
+    return [dict(r) for r in conexao().execute(
+        f"SELECT date(criado_em,'unixepoch','localtime') AS dia, SUM({_TOKENS}) AS tokens, SUM(custo_usd) AS usd, "
+        "COUNT(*) AS pedidos FROM uso WHERE criado_em>=? GROUP BY dia ORDER BY dia", (desde,))]
+
+
+def uso_por_modelo_e_dia(desde: float, origens: tuple = ORIGENS_ESCOLHIDAS) -> list[dict]:
+    marcas = ",".join("?" * len(origens))
+    return [dict(r) for r in conexao().execute(
+        f"SELECT date(criado_em,'unixepoch','localtime') AS dia, modelo, SUM({_TOKENS}) AS tokens, SUM(custo_usd) AS usd, "
+        f"COUNT(*) AS pedidos FROM uso WHERE criado_em>=? AND origem IN ({marcas}) GROUP BY dia, modelo ORDER BY dia",
+        (desde, *origens))]
+
+
+def media_por_resposta(desde: float, origens: tuple = ("chat",)) -> dict[str, dict]:
+    """Custo médio de uma resposta por modelo (só o que foi medido, não estimado): calibra as estimativas."""
+    marcas = ",".join("?" * len(origens))
+    return {r["modelo"]: dict(r) for r in conexao().execute(
+        f"SELECT modelo, COUNT(*) AS pedidos, AVG(custo_usd) AS usd, AVG({_TOKENS}) AS tokens FROM uso "
+        f"WHERE criado_em>=? AND origem IN ({marcas}) AND estimado=0 GROUP BY modelo", (desde, *origens))}
 
 
 # ---------- projetos ----------

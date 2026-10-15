@@ -108,6 +108,14 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "executar_fluxo",
                  "input": {"titulo": "Fluxo de demonstração", "objetivo": "Mostrar como um fluxo funciona.",
                            "etapas": etapas}}], "tool_use"
+    if not _tem_resultado(ultima) and "sugerir_conversa" in nomes and "outra conversa" in texto_etapa.lower():
+        return [{"type": "text", "text": "Respondi o que você pediu. Notei uma coisa que vale fazer à parte:"},
+                {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "sugerir_conversa",
+                 "input": {"titulo": "Organizar as fotos por data",
+                           "pedido": "Explique em linguagem simples como organizar fotos em pastas por ano e mês.",
+                           "por_que": "É um trabalho separado deste e fica melhor numa conversa própria."}}], "tool_use"
+    if _tem_resultado(ultima) and str(conteudo).startswith("A sugestão apareceu"):
+        return [{"type": "text", "text": "Se quiser, é só abrir pelo cartão."}], "end_turn"
     if not _tem_resultado(ultima) and "apresentar_plano" in nomes:
         return [{"type": "text", "text": "Olhei a pasta. Este é o plano:"},
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "apresentar_plano",

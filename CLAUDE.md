@@ -54,13 +54,15 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 | `servidor/permissoes.py` | Regras no formato do Claude Code: ler e salvar (app em `cfg["permissoes"]`, pasta em `.claude/settings*.json`), casar comando, caminho e domínio, sugerir regra, filtrar ferramentas de servidor |
 | `servidor/fluxos.py` | Fluxos: proposta (`normalizar`, estimativa, teto), `Rodada` (etapas como conversas escondidas, em grupos paralelos, com `Cofre` de custo) e modelos prontos |
 | `servidor/agentes.py`, `comandos.py`, `plugins.py` | Agentes (`.claude/agents`), comandos de barra (`.claude/commands`, `$ARGUMENTS`) e plugins (`.claude-plugin/plugin.json`, instalação de pasta e do GitHub) |
+| `servidor/precos.py` | Planos de assinatura, perfis de mensagem, custo de uma mensagem, a estimativa "API ou assinatura?" e a projeção do teto |
+| `servidor/estatisticas.py` | O painel "Seu uso": dias seguidos, mapa de calor, favorito, últimos 7 dias |
 | `servidor/rotinas.py`, `rodar_rotina.py` | Rotinas: horário, `Relogio` (dentro do app, a cada 30 s), Agendador de Tarefas (`schtasks`, pasta `Clave`) e o executor sem janela |
 | `servidor/ferramentas/excel.py`, `planilhas.py` | Excel com openpyxl e pelo Excel instalado (PowerShell + COM) |
 | `servidor/ferramentas/memoria.py` | Ferramenta `memory_20250818` em `dados/memoria`, com índice `MEMORY.md` |
 | `servidor/ferramentas/github.py`, `github_api.py` | GitHub REST (token do `gh` ou pessoal) |
 | `servidor/atualizador.py`, `iniciar.py` | Atualização pela release mais nova do GitHub e supervisor |
 | `servidor/api_falsa.py` | API do Claude de mentira (demonstração e testes) |
-| `app/js/*.js` | Interface sem build: `conversa.js` (tela e resposta ao vivo), `compositor.js` (caixa de texto e comandos de barra), `fluxo-ui.js` (cartões de aprovação, fluxo, plano e avisos), `fluxos.js`, `permissoes.js`, `plugins.js`, `rotinas.js`, `blocos.js`, `config.js`, `aprender.js`, `minichat.js`... |
+| `app/js/*.js` | Interface sem build: `conversa.js` (tela e resposta ao vivo), `compositor.js` (caixa de texto e comandos de barra), `fluxo-ui.js` (cartões de aprovação, fluxo, plano, sugestão de outra conversa e avisos), `painel-uso.js` (painéis do início: uso e ambientes), `precos.js`, `fluxos.js`, `permissoes.js`, `plugins.js`, `rotinas.js`, `blocos.js`, `config.js`, `aprender.js`, `minichat.js`... |
 | `agentes/`, `fluxos/`, `plugins/` | Agentes, fluxos e plugins que vêm com o app (o atualizador troca essas pastas) |
 | `electron/` | Janela, menu de contexto, escolher pasta nativo, abrir links fora |
 | `tutoriais/*.md` | Lições (cabeçalho: titulo, trilha, ordem, duracao, resumo); `glossario.md` alimenta o prompt |
@@ -127,6 +129,8 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   Nesta máquina, o Edge headless segura o SSE até fechar (provavelmente o
   antivírus); o Electron e o curl recebem na hora. Para testar a tela ao vivo,
   usar `testes\prints_janela.py` (Electron), não o Edge headless.
+- **Sugestão de outra conversa nunca abre sozinha.** A ferramenta `sugerir_conversa` só mostra um cartão; `POST /api/sugestoes/<id>/abrir` (o clique) cria a conversa com o pedido gravado no `tool_use` (não com o que a tela mandar) e a tabela `sugestoes` impede abrir duas vezes.
+- **Estimativa pela assinatura é piso declarado.** A Anthropic não publica o limite das assinaturas em tokens; a conta usa o único número oficial (pelo menos 45 mensagens curtas por janela de 5 h no Pro, 5x e 20x no Max) e diz isso na tela. Os preços dos planos ficam editáveis porque o do Max 20x só aparece em guias de terceiros.
 - **Lições ensinam o que o app faz de verdade.** Não prometer recurso que não
   existe (ex.: o app não gera Word).
 - **Demonstração não cobra**: com `CLAVE_API_FALSA`, o custo registrado é zero.
@@ -160,5 +164,8 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   matar o servidor, mate a árvore (`taskkill /T`).
 - Edição de arquivo com barra invertida feita por heredoc no Git Bash perde as
   barras: use a ferramenta de edição ou um script `.py` escrito direto.
+- Para conferir a sintaxe do JavaScript da interface, use
+  `node --input-type=module --check < app/js/arquivo.js`. O `node --check arquivo.js`
+  sozinho deixou passar um parêntese a mais que quebrou a tela inteira.
 - Fórmulas do openpyxl são em inglês (`SUM`, vírgula); o Excel em português
   mostra `SOMA`.

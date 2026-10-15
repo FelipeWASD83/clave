@@ -90,6 +90,13 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
 - **Rotinas**: pedidos que o Claude faz sozinho no horário (todo dia, em
   alguns dias da semana, a cada poucas horas), até com o Clave fechado, pelo
   Agendador de Tarefas do Windows.
+- **Preços e planos**: o preço de cada modelo e a conta "API ou assinatura?",
+  que estima quanto o seu uso do Claude normal custaria na API.
+- **Painel de uso** na conversa nova: tokens, dias seguidos, mapa de calor,
+  modelo favorito, os últimos 7 dias e a projeção de quando o teto do mês acaba.
+- **Ambientes no Code**, como no app oficial, e **sugestão de outra
+  conversa**: o Claude propõe um trabalho separado num cartão e ele só abre com
+  o seu clique.
 - **Excel**: lê, cria e altera planilhas (fórmulas, formatação, tabelas,
   gráficos, filtros, listas de opção). Com o Excel instalado, recalcula e
   exporta PDF.

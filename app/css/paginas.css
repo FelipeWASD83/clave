@@ -202,3 +202,40 @@
   .tabela { display: block; overflow-x: auto; }
   .tabela code.corta { max-width: 180px; }
 }
+
+/* ---------- Preços e planos ---------- */
+.projecao-texto { margin: 12px 0 8px; color: var(--texto-2); line-height: 1.5; }
+.tabela.compacta td { padding: 8px 6px; vertical-align: top; }
+.tabela.compacta .meta { font-family: var(--sans); margin-top: 2px; }
+.estimativa { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 26px; align-items: start;
+  padding: 22px; border: 1px solid var(--linha); border-radius: var(--raio-g); background: var(--papel); }
+.estimativa-form { display: grid; gap: 16px; }
+.campos-uso { display: grid; gap: 16px; }
+.campos-uso input[type="range"], .estimativa-form input[type="range"] { width: 100%; accent-color: var(--acao); }
+.segmentos { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel-2); }
+.segmentos button { flex: 1; padding: 7px 10px; border: 0; border-radius: var(--raio-p); background: transparent; color: var(--texto-2); font: inherit; font-size: 13px; cursor: pointer; }
+.segmentos button[aria-checked="true"] { background: var(--papel); color: var(--texto); box-shadow: var(--sombra-1); font-weight: 500; }
+.linha-check { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--texto-2); }
+.linha-check input { accent-color: var(--acao); width: 16px; height: 16px; }
+.estimativa-resumo { margin: 0 0 16px; color: var(--texto-2); line-height: 1.5; }
+.comparacao { display: grid; gap: 14px; }
+.comparacao-linha { display: grid; grid-template-columns: 96px minmax(0, 1fr) 190px; gap: 14px; align-items: center; }
+.comparacao-nome { font-weight: 600; font-size: 14px; }
+.comparacao-trilho { position: relative; height: 26px; border-radius: var(--raio-p); background: var(--papel-2); }
+.comparacao-trilho i { position: absolute; left: 0; top: 4px; bottom: 4px; border-radius: 4px; background: var(--acao); }
+.comparacao-linha.caro .comparacao-trilho i { background: var(--aviso); }
+.comparacao-trilho i.real { top: auto; bottom: -6px; height: 4px; background: var(--texto-2); opacity: .7; }
+.comparacao-marca { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 2px dashed var(--texto); }
+.comparacao-valor { display: grid; gap: 2px; text-align: right; font-family: var(--mono); font-size: 14px; }
+.comparacao-valor small { font-family: var(--sans); font-size: 12px; color: var(--texto-3); }
+.comparacao-linha.barato .comparacao-valor small:first-of-type { color: var(--sucesso); }
+.comparacao-valor small.real { color: var(--texto-2); }
+.notas-estimativa { margin-top: 14px; }
+.notas-estimativa > summary { cursor: pointer; color: var(--acao); font-size: 14px; }
+.notas-estimativa ul { margin: 10px 0 0; padding-left: 20px; color: var(--texto-3); font-size: 13.5px; line-height: 1.55; display: grid; gap: 6px; }
+@media (max-width: 860px) {
+  .estimativa { grid-template-columns: 1fr; }
+  .comparacao-linha { grid-template-columns: 80px minmax(0, 1fr); }
+  .comparacao-valor { grid-column: 1 / -1; text-align: left; }
+}
+.tabela td.num { white-space: nowrap; }

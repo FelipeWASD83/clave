@@ -108,6 +108,7 @@ PADRAO = {
     "plugins": {},
     # notificação do Windows quando uma resposta termina ou pede OK com a janela em segundo plano
     "notificacoes": True,
+    "painel_uso_inicio": True,
 }
 
 _trava = threading.Lock()

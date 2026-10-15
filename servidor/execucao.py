@@ -58,6 +58,22 @@ PLANO = {
 }
 
 
+SUGERIR = {
+    "name": "sugerir_conversa",
+    "description": ("Sugere a quem usa abrir OUTRA conversa para um trabalho separado deste: algo que você notou e vale "
+                    "fazer, ou um próximo passo independente que fica melhor começando do zero. Vira um cartão com o "
+                    "título e o pedido; nada roda sem quem usa clicar, e a conversa nova não vê esta. Use só para "
+                    "trabalho de verdade e separado (nunca para o que você mesmo vai fazer aqui), no máximo uma vez "
+                    "por resposta, e não repita a sugestão no texto."),
+    "eager_input_streaming": True,
+    "input_schema": {"type": "object", "properties": {
+        "titulo": {"type": "string", "description": "Nome curto da tarefa, até 60 caracteres"},
+        "pedido": {"type": "string", "description": "O pedido completo para a conversa nova, como quem usa mandaria: "
+                                                    "o que fazer, onde, o que já se sabe e como saber que terminou"},
+        "por_que": {"type": "string", "description": "Uma frase dizendo por que vale fazer isso"}},
+        "required": ["titulo", "pedido"]},
+}
+
 def _custo(modelo: str, uso: dict) -> dict:
     c = custo.custo_uso(modelo, uso)
     if os.environ.get("CLAVE_API_FALSA"):
@@ -275,6 +291,8 @@ class Execucao:
         if (modo in ("chat", "code") and not etapa and not op.get("rotina") and cfg.get("fluxos_ligados", True)
                 and not permissoes.nega(self.regras, "Fluxo")):
             ferramentas_cliente.append(fluxos.definicao(str(pasta) if pasta else None))
+        if modo in ("chat", "code") and not etapa and not op.get("rotina"):
+            ferramentas_cliente.append(dict(SUGERIR))
         mcp = []
         for m in (cfg.get("conectores_mcp") or []) if modo in ("chat", "code") and not etapa else []:
             if m.get("ligado") and m.get("url") and m.get("nome"):
@@ -517,6 +535,9 @@ class Execucao:
         if nome == "apresentar_plano":
             return self._plano(tid, entrada or {})
 
+        if nome == "sugerir_conversa":
+            return self._sugerir(tid, entrada or {}, modo)
+
         if nome == "usar_skill" and self.ctx is None:
             s = contexto_pasta.conteudo_skill(self.skills_chat, str((entrada or {}).get("nome", "")).strip().lstrip("/"))
             if not s:
@@ -732,6 +753,19 @@ class Execucao:
         self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": f"plano aprovado ({NOMES_MODO[novo]})"})
         return _res(tid, f"Plano aprovado por quem usa. O modo de permissão agora é {NOMES_MODO[novo]}: execute o "
                          "plano, passo a passo, conferindo o resultado no fim.")
+
+    def _sugerir(self, tid: str, entrada: dict, modo: str) -> dict:
+        nome = "sugerir_conversa"
+        titulo = " ".join(str(entrada.get("titulo") or "").split())[:80]
+        pedido = str(entrada.get("pedido") or "").strip()[:8000]
+        if not titulo or not pedido:
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": "faltou título ou pedido"})
+            return _res(tid, "Faltou o título ou o pedido da sugestão.", True)
+        self.emitir({"tipo": "sugestao_conversa", "id": tid, "titulo": titulo, "pedido": pedido,
+                     "por_que": str(entrada.get("por_que") or "").strip()[:400], "modo": modo})
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": f"sugeriu: {titulo}"})
+        return _res(tid, "A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra "
+                         "conversa. Não repita a sugestão no texto.")
 
     def _recusado(self, tid, nome) -> dict:
         texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""

@@ -72,9 +72,17 @@ def chat(cfg: dict, projeto: dict | None = None) -> str:
             "Skills disponíveis (procedimentos salvos por quem usa e pelos plugins ligados). Quando o pedido combinar "
             "com uma delas, carregue a skill com usar_skill antes de responder e siga o que ela diz. Aqui no chat "
             "não há pasta nem terminal: se a skill depender disso, sugira o modo Code.\n" + "\n".join(linhas))
+    partes.append(OUTRA_CONVERSA)
     if cfg.get("memoria_ligada"):
         partes.append(memoria.instrucoes_completas())
     return "\n\n".join(partes)
+
+
+OUTRA_CONVERSA = (
+    "Outra conversa: quando a pessoa citar um trabalho que é outro assunto ou fica para depois, ou quando você notar "
+    "algo separado que vale fazer (um próximo passo independente), sugira com sugerir_conversa em vez de só "
+    "comentar no texto: vira um cartão e quem usa decide se abre. No máximo uma por resposta, nunca para o que você "
+    "mesmo vai fazer aqui.")
 
 
 def code(cfg: dict, pasta: str) -> str:
@@ -94,6 +102,7 @@ def code(cfg: dict, pasta: str) -> str:
         "Tarefas grandes: dá para propor um fluxo (executar_fluxo), em que cada etapa roda num modelo diferente "
         "(por exemplo, Opus planeja, Sonnet faz e testa). O fluxo custa mais e sempre pede o OK de quem usa; "
         "use quando valer o custo ou quando a pessoa pedir.",
+        OUTRA_CONVERSA,
         "Como trabalhar:\n"
         "- Muita gente que usa o Clave não programa. Explique em linguagem simples o que vai fazer e o que fez.\n"
         "- Antes de começar uma tarefa com vários passos, diga em uma frase o que vai fazer e use "

@@ -57,6 +57,11 @@ const P = {
   peca: '<path d="M10 3.5a2 2 0 0 1 4 0V6h4v4h-1.5a2 2 0 0 0 0 4H18v4h-4v-1.5a2 2 0 0 0-4 0V18H6v-4h1.5a2 2 0 0 0 0-4H6V6h4z"/>',
   calendario: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v3l2 1"/>',
   sino: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
+  etiqueta: '<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.4 1.4 0 0 1 0 2l-6.7 6.7a1.4 1.4 0 0 1-2 0z"/><circle cx="8" cy="8" r="1.4"/>',
+  chama: '<path d="M12 21c-4 0-6.5-2.7-6.5-6.2 0-3.6 2.6-5.6 3.6-8.8 2.4 1.4 3.4 3.5 3.4 5.3 1-.6 1.7-1.7 1.9-3 2.4 1.8 4.1 4.2 4.1 6.6C18.5 18.3 16 21 12 21z"/>',
+  estrela: '<path d="M12 3.8l2.5 5.1 5.6.8-4.1 4 1 5.6-5-2.7-5 2.7 1-5.6-4.1-4 5.6-.8z"/>',
+  computador: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2.5 19h19"/>',
+  mais_tarefa: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M12 9v6M9 12h6"/>',
 };
 
 export function ic(nome, extra = '') {

@@ -11,7 +11,7 @@ No chat, o Claude só conversa. No **modo Code**, ele vira um [agente](#/aprende
 ## Começando
 
 1. Na barra da esquerda, clique em **Novo trabalho no Code**.
-2. **Escolha a pasta** onde ele vai trabalhar (ou crie uma com o [modelo de pasta](#/aprender/modelo-de-pasta), que é o recomendado).
+2. **Escolha o ambiente**, a pasta onde ele vai trabalhar, no painel embaixo da caixa de texto. O Clave já começa na última pasta que você usou; em **Escolher ambiente** dá para pegar outra ou criar uma com o [modelo de pasta](#/aprender/modelo-de-pasta), que é o recomendado. No mesmo painel, **Ativar modo automático** liga o modo Livre (explicado abaixo).
 3. Peça a tarefa, do mesmo jeito que pediria a uma pessoa.
 
 Ele vai mostrando cada passo: "Olhou a pasta", "Leu planilha.xlsx", "Rodou: renomear fotos". Clique em qualquer passo para ver os detalhes.

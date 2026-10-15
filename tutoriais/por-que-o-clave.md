@@ -45,7 +45,7 @@ O plano Max dá crédito mensal na API (US$ 100 no Max 5x, US$ 200 no Max 20x), 
 
 ## Quando o app oficial é melhor
 
-Sem enrolação: se você quer o Claude **no celular** ou sincronizado entre vários aparelhos, o app oficial faz isso e o Clave não. E quem usa o Opus o dia inteiro, todo dia, pode gastar mais pela API do que pela assinatura. A página **Uso e gasto** mostra quanto você gastou por dia e por modelo: em um mês você sabe qual dos dois sai mais barato para o seu jeito de usar.
+Sem enrolação: se você quer o Claude **no celular** ou sincronizado entre vários aparelhos, o app oficial faz isso e o Clave não. E quem usa o Opus o dia inteiro, todo dia, pode gastar mais pela API do que pela assinatura. A página **Preços e planos** faz essa conta para você: diga como usa o Claude normal e ela estima quanto daria na API. E a página **Uso e gasto** mostra o que você gastou de verdade, por dia e por modelo.
 
 ```experimentar
 Quanto eu gastaria por mês se fizesse umas 20 perguntas curtas por dia no Haiku 5.5? E no Sonnet 5.5? Faça a conta passo a passo.

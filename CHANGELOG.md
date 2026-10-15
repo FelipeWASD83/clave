@@ -1,5 +1,28 @@
 # Novidades do Clave
 
+## 2.1.0 (14/10/2026)
+
+**Novo**
+
+- Página **Preços e planos**: o preço de cada modelo (e quanto sai uma mensagem curta, média ou longa), os
+  planos do Claude e a conta "API ou assinatura?". Você diz como usa o Claude normal (quantas janelas de 5
+  horas por semana e quanto do limite gasta, ou quantas mensagens por dia) e ela estima o custo na API de cada
+  modelo, comparado com o preço do plano. Quando você já tem respostas no Clave, aparece também a conta pelo
+  seu custo real.
+- Painel **Seu uso** na tela de conversa nova (chat e Code): tokens no total, dias seguidos de uso (e o
+  recorde), mapa de calor das últimas 20 semanas, modelo favorito, cada modelo nos últimos 7 dias e a
+  projeção do mês: no ritmo dos últimos 14 dias, quanto o ciclo fecha e em que dia o teto acaba. Dá para
+  esconder em Configurações > Aparência.
+- Painel **Ambiente** no Code, como no app oficial: as pastas recentes com a atual marcada, "Escolher
+  ambiente" e "Ativar modo automático" (o modo Livre). O Code já começa na última pasta usada.
+- **Sugestão de outra conversa**: quando aparece um trabalho separado, o Claude pode sugerir abrir outra
+  conversa. Vira um cartão com o título e o pedido; "Abrir em outra conversa" cria a conversa e o Claude já
+  começa a trabalhar nela, enquanto você continua na atual. Nada abre sem o seu clique.
+
+**Mudou**
+
+- O Code não tem mais a tela separada "Em qual pasta": a escolha fica no painel de ambientes.
+
 ## 2.0.1 (14/10/2026)
 
 **Corrigido**

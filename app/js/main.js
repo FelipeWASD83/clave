@@ -12,6 +12,7 @@ import { checarAtualizacao } from './atualizar.js';
 import { telaFluxos } from './fluxos.js';
 import { telaPlugins } from './plugins.js';
 import { telaRotinas } from './rotinas.js';
+import { telaPrecos } from './precos.js';
 import { telaPermissoes } from './permissoes.js';
 import { notificar } from './fluxo-ui.js';
 import { aviso, el } from './ui.js';
@@ -42,6 +43,7 @@ async function trocarTela() {
     else if (a === 'fluxos') telaAtual = await telaFluxos(principal, b);
     else if (a === 'plugins') telaAtual = await telaPlugins(principal);
     else if (a === 'rotinas') telaAtual = await telaRotinas(principal);
+    else if (a === 'precos') telaAtual = await telaPrecos(principal);
     else if (a === 'permissoes') telaAtual = await telaPermissoes(principal);
     else if (a === 'config') telaAtual = await telaConfig(principal, b);
     else location.hash = '#/novo';

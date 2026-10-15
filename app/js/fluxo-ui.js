@@ -405,3 +405,49 @@ export function cartaoPlanoSalvo(entrada, resultado) {
       el('div', {}, el('small', { class: 'sobre', texto: 'Modo Plano' }), el('b', { texto: aprovado ? 'Plano aprovado' : 'Plano apresentado' }))),
     corpo);
 }
+
+// ---------- sugestão de outra conversa ----------
+// O Claude propôs um trabalho separado; nada roda sem o clique. "Abrir em outra conversa" cria a conversa (mesmo
+// modo e pasta) e já manda o pedido, em segundo plano: quem usa continua aqui.
+export function cartaoSugestao(s, { conversaId } = {}) {
+  const origem = conversaId || estado.conversaAtual;
+  const acoes = el('div', { class: 'aprovacao-botoes' });
+  const pedido = el('div', { class: 'resposta sugestao-pedido' });
+  renderizar(pedido, s.pedido || '', { final: true });
+  const card = el('div', { class: 'fluxo sugestao-conversa', dados: { id: s.id }, role: 'group', 'aria-label': 'Sugestão de outra conversa' },
+    el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('mais_tarefa') }),
+      el('div', {}, el('small', { class: 'sobre', texto: 'Sugestão de outra conversa' }), el('b', { texto: s.titulo || 'Nova tarefa' }))),
+    s.por_que ? el('p', { class: 'sugestao-motivo', texto: s.por_que }) : null,
+    el('details', { class: 'sugestao-detalhes' }, el('summary', { texto: 'Ver o pedido' }), pedido),
+    acoes);
+  const linkAberta = (c) => el('a', { class: 'botao pequeno', href: `#/c/${c.id}`, html: `${ic('chat')}Ir para "${(c.titulo || 'a conversa').replace(/[<>&"]/g, '')}"` });
+  const desenhar = (estadoAtual, conversa) => {
+    if (estadoAtual === 'aberta' && conversa) {
+      acoes.replaceChildren(el('span', { class: 'meta', texto: 'Aberta em outra conversa, rodando por lá.' }), linkAberta(conversa));
+    } else if (estadoAtual === 'dispensada') {
+      acoes.replaceChildren(el('span', { class: 'meta', texto: 'Dispensada.' }),
+        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Abrir mesmo assim', onclick: abrir }));
+    } else {
+      acoes.replaceChildren(
+        el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('mais_tarefa')}Abrir em outra conversa`, onclick: abrir }),
+        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Dispensar', onclick: dispensar }));
+    }
+  };
+  async function abrir() {
+    try {
+      acoes.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+      const r = await api(`/sugestoes/${encodeURIComponent(s.id)}/abrir`, { metodo: 'POST', corpo: { conversa_id: origem } });
+      desenhar('aberta', r.conversa);
+      const { avisar } = await import('./estado.js');
+      avisar('conversas-mudaram');
+      aviso(r.ja_aberta ? 'Essa conversa já tinha sido aberta.' : 'Conversa aberta. O Claude já está trabalhando nela.');
+    } catch (e) { aviso(e.message, 'erro'); desenhar('nova'); }
+  }
+  async function dispensar() {
+    try { await api(`/sugestoes/${encodeURIComponent(s.id)}/dispensar`, { metodo: 'POST', corpo: { conversa_id: origem } }); desenhar('dispensada'); }
+    catch (e) { aviso(e.message, 'erro'); }
+  }
+  desenhar('nova');
+  api(`/sugestoes/${encodeURIComponent(s.id)}`).then((r) => { if (r.estado !== 'nova') desenhar(r.estado, r.conversa); }).catch(() => {});
+  return card;
+}

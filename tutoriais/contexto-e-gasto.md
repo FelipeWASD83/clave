@@ -37,6 +37,10 @@ Em **Configurações > Limite de gasto** você define:
 
 O Clave avisa quando você passa de 50%, 80% e 95% do teto. Em **Uso e gasto** você vê o gasto por dia, por modelo e por conversa.
 
+Na tela de conversa nova, o painel **Seu uso** mostra os tokens que você já gastou, há quantos dias seguidos usa, um mapa de calor dos dias, o modelo favorito, cada modelo nos últimos 7 dias e uma **projeção**: no ritmo dos últimos 14 dias, quanto o mês vai fechar e em que dia o teto acaba. Assina o Max? Pôr o teto em US$ 100 (ou 200) mostra quando o crédito do plano acaba.
+
+Em **Preços e planos** fica o preço de cada modelo e a conta **API ou assinatura?**: você diz como usa o Claude normal (quantas vezes bate o limite de 5 horas, ou quantas mensagens manda por dia) e ele estima quanto isso custaria na API, modelo por modelo.
+
 ## Quanto custa, na prática
 
 Valores aproximados, só para ter ideia:

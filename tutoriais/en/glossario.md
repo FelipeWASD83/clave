@@ -3,7 +3,7 @@ titulo: Glossary: the hard words
 trilha: 1. First steps
 ordem: 7
 duracao: reference
-resumo: API, token, JSON, Git, GitHub, Python, Electron and more than 70 terms explained in plain language.
+resumo: API, token, JSON, Git, GitHub, Python, Electron and more than 90 terms explained in plain language.
 ---
 
 Words that show up in Clave, in the lessons and in Claude's answers, explained as simply as possible. You don't have to read it all: use it like a dictionary. If you're still confused, ask the helper at the bottom of the page.
@@ -32,6 +32,10 @@ The request you write to the AI. "Summarize this text in 3 bullet points" is a p
 
 The "little piece" of text the AI reads and writes. A short word is usually 1 token; a long word becomes 2 or 3. The API charges per token: both what you send and what Claude answers. A thousand tokens is about 700 words of English.
 
+## Input and output tokens {#entrada-e-saida}
+
+The two sides of the bill for each answer. **Input** is everything that goes to Claude: your message, the attachments, the instructions and the whole conversation so far (it rereads everything with every answer). **Output** is what it writes, reasoning included. On the current models, an output token costs 5 times as much as an input token: that's why asking for a shorter answer saves money.
+
 ## Context window (context) {#janela-de-contexto}
 
 Everything Claude can "keep in mind" at once: the whole conversation, the attached files and the instructions. Current models handle up to 1 million tokens. The gauge below the text box shows how much has been used. A very long conversation gets more expensive, because every answer rereads everything.
@@ -43,6 +47,10 @@ Before answering, Claude can "think" for a while: plan, check math, compare path
 ## Effort {#esforco}
 
 How much Claude thinks before answering: Low, Medium, High, Extra high or Max. High effort is better for hard problems and code; low effort is faster and cheaper for simple things.
+
+## Model advisor {#conselheiro-de-modelo}
+
+The notice that suggests the right model for the task. Haiku reads the chat at the first message and then every 5 and says which model does it for the lowest price, with one button to use the suggested model and another to keep the current one. Each check costs a fraction of a cent. You turn it on and off in **Settings > Models**, where you can also let Clave switch on its own.
 
 ## Hallucination {#alucinacao}
 
@@ -60,9 +68,17 @@ A long password (it starts with `sk-ant-`) that tells Anthropic which account th
 
 The API has no monthly fee: you put credit (money) on your Anthropic account and each answer takes a little off, based on the number of tokens. People who subscribe to the Claude Max plan get a monthly API credit.
 
+## Spending cap {#teto-de-gasto}
+
+The limit in dollars you set in **Settings > Spending limit**. When the month's total reaches the cap, Clave stops answering until the month rolls over (or only warns you, if you prefer). There's also the per-task cap in Code mode, which pauses a long task when it spends too much. More in [Tracking and capping your spending](#/aprender/acompanhar-o-gasto).
+
 ## Cache {#cache}
 
-A fast memory that reuses the beginning of a conversation from one message to the next. The reused part costs much less (up to 20 times less). Clave turns this on by itself.
+A fast memory that reuses the beginning of a conversation from one message to the next. The reused part costs 10 to 40 times less, depending on the model. It lasts 5 minutes after it was last used: if you take longer than that to send the next message, the beginning is charged at full price again. Clave turns this on by itself.
+
+## Compaction (/compact) {#compactacao}
+
+Replacing the beginning of a long conversation with a summary, so each new answer rereads less and costs less. It happens on its own when the conversation gets very big (**Settings > Features > Summarize very long chats**) or right away, when you type `/compact`. Making the summary also costs a little, but the following messages get cheaper. More in [Lean conversations](#/aprender/conversas-enxutas).
 
 ## Agent {#agente}
 
@@ -112,6 +128,10 @@ A shortcut that starts with `/` in the message box, like `/new` (starts a new ch
 
 A line that says what Claude can do without asking, what it always asks about and what it never does, like `Bash(npm test *)` or `Edit(docs/**)`. It applies to one folder or to all of Clave, and it takes priority over the permission mode.
 
+## Protected file {#arquivo-protegido}
+
+A file or folder on the **Protected files and folders** list (Settings > Code mode), such as `.env` and `*.key`. Claude's file tools never read or change what's there, and a command that mentions one of them always asks for your OK. Put anything with passwords or sensitive data there.
+
 ## Routine {#rotina}
 
 A saved request that Claude carries out on its own at a set time (every day, on certain days of the week, or every few hours). In a routine it doesn't ask anything: it only does what your permission rules already allow.
@@ -124,9 +144,21 @@ A program built into Windows that runs things at a set time, even with no app op
 
 A simple way to format text with symbols: `**bold**`, `# Title`, `- list item`. Claude writes in Markdown and Clave turns it into formatted text. `.md` files are Markdown text.
 
+## Widget {#widget}
+
+A card Claude draws in the chat when it helps more than text: products and prices, a map, recommendations, a drawing or floor plan, a chart, a comparison, a timeline and a checklist. They're on by default; the switch is in **Settings > Features > Widgets**. Photos from other sites only load when you click. See [Widgets](#/aprender/widgets).
+
+## OpenStreetMap {#openstreetmap}
+
+A free map of the world, made by volunteers, like a Wikipedia of maps. The maps in Clave's widgets come from it, over the internet, and addresses become points on the map through its address search (Nominatim).
+
 ## File and folder {#arquivo-e-pasta}
 
 A file is a document (photo, spreadsheet, text). A folder is a "drawer" that holds files and other folders. In Windows you see both in File Explorer.
+
+## Recycle Bin {#lixeira}
+
+The place in Windows where a file goes when you delete it in File Explorer or from the **Files** tab in Code mode. You can bring it back from there (right-click > **Restore**). A file deleted by a command doesn't go through the Recycle Bin: it's gone for good. See [Undo, backup and Git](#/aprender/rede-de-seguranca).
 
 ## Path (file path) {#caminho}
 
@@ -140,6 +172,10 @@ The letters after the dot in a file's name, which say its type: `.xlsx` (Excel s
 
 A window where you give orders to the computer by typing instead of clicking. It looks like hacker stuff, but it's just another way to tell the computer what to do.
 
+## Console (terminal) {#console}
+
+The **Console** tab of the Code mode panel: a real Windows terminal (PowerShell) inside Clave, already open in the working folder, where you type commands yourself. It opens with **Ctrl+`** (the key to the left of 1 on a US keyboard). The **Send to Claude** button takes the selected text, or the last lines, to the message box. See [The console](#/aprender/console).
+
 ## PowerShell {#powershell}
 
 The Windows terminal. In Code mode, when Claude "runs a command", it uses PowerShell.
@@ -147,6 +183,10 @@ The Windows terminal. In Code mode, when Claude "runs a command", it uses PowerS
 ## Command {#comando}
 
 An order typed in the terminal. For example, `mkdir Photos` creates a folder called Photos.
+
+## Background {#segundo-plano}
+
+When a program keeps running without holding up the chat. In Code mode, Claude leaves in the background whatever needs to stay on, like a [local server](#/aprender/glossario/servidor-local): the reply ends and the command keeps running. You follow it and stop it in the **Tasks** tab (Ctrl+Shift+Y), and a counter in the left sidebar shows how many are running. There can be at most 5 per chat, and they all stop when Clave closes.
 
 ## Script {#script}
 
@@ -204,6 +244,10 @@ An automation recorded inside a spreadsheet (`.xlsm` files). Macros can be dange
 
 A document format that looks the same on any computer, good for sending and printing. Claude reads PDFs and Clave can export spreadsheets as PDF.
 
+## Flashcard {#flashcard}
+
+A study card with a question on one side and the answer on the other, for training your memory. Claude makes flashcards in a spreadsheet (which you can take to apps like Anki) or in a small page that flips the card when you click.
+
 ## Git {#git}
 
 A program that keeps a project's history: every time you save a version (a "commit"), you can go back to it later. It's like Google Docs' "version history", but for whole folders.
@@ -215,6 +259,10 @@ A project folder controlled by Git, with its whole version history. It can stay 
 ## Commit {#commit}
 
 A "snapshot" of the project at a moment in time, with a message saying what changed. "Committing" is saving that version into Git's history.
+
+## .gitignore {#gitignore}
+
+A text file in the folder listing what Git should ignore, like `.env`, `*.key` and folders of temporary files. What's on it doesn't go into the versions and doesn't go to GitHub: it's the way to keep passwords and keys out. See [Git and GitHub](#/aprender/github).
 
 ## Branch {#branch}
 
@@ -260,9 +308,13 @@ Ready-made code that someone else wrote and that a program uses so it doesn't ha
 
 A program that sits waiting for requests and answers them. Anthropic's servers answer Clave; and Clave has a small server inside your own computer, which only it uses.
 
-## Localhost {#localhost}
+## Local server {#servidor-local}
 
-Your own computer's "address" (`127.0.0.1`). When something runs on localhost, only your computer can access it.
+A server that runs on your own computer, just for you to test. When Claude builds a website in Code mode, it usually starts one with a command like `npm run dev` or `python -m http.server`, which shows an address like `http://localhost:8000`. You open that address in the panel's **Browser** (the **Local** button lists the servers running on this computer). What Claude started shows up in the **Tasks** tab and stops when Clave closes. See [Background tasks and local servers](#/aprender/tarefas-em-segundo-plano).
+
+## Localhost and port {#localhost}
+
+**Localhost** is your own computer's "address" (`127.0.0.1`): what runs on localhost only your computer can access. The **port** is the number after the colon, which keeps one program apart from another: in `http://localhost:5173`, the site you're testing is on port 5173.
 
 ## Port {#porta}
 
@@ -296,6 +348,14 @@ Scrambling information so that only someone with the right "key" can read it. Th
 
 A special, long password that gives a program permission to use an account of yours (GitHub, for example). Like the API key: never share it.
 
+## App password {#senha-de-app}
+
+An extra password you create in your account (Gmail, for example) just so a program can sign in to it, like Clave's e-mail connector or a script. It doesn't change your normal password and you can delete it at any time without affecting anything else. On Google, it only shows up with 2-Step Verification turned on.
+
+## Credential Manager {#gerenciador-de-credenciais}
+
+The password vault that already comes with Windows (Start menu > **Credential Manager** > **Windows Credentials**). A program Claude builds for you can keep the password there, instead of writing it in the code or asking for it in the chat. See [Passwords, keys and personal data](#/aprender/segredos-e-dados).
+
 ## Open source {#codigo-aberto}
 
 A program whose code anyone can read, and often use and modify, following a license.
@@ -314,4 +374,12 @@ A setting the computer keeps "outside" the programs and which they can read. Som
 
 ## Prompt injection {#prompt-injection}
 
-A trick in which a text (from a website, email or file) carries hidden instructions for the AI, trying to make it obey someone else. That's why Clave asks for your OK before important actions: always check what you're approving.
+A trick in which a text (from a website, email or file) carries hidden instructions for the AI, trying to make it obey someone else. That's why Clave asks for your OK before important actions: always check what you're approving. See [When a page or file tries to give Claude orders](#/aprender/injecao-de-instrucoes).
+
+## Data leak (exfiltration) {#vazamento-de-dados}
+
+When information of yours ends up with someone who shouldn't have it: a password pasted into a website, a key sent to GitHub, customer data in the wrong e-mail. "Exfiltration" is when someone does it on purpose, for example with an order hidden in a page that tries to make the AI send data from the chat somewhere else (even inside a photo's address). That's why widget photos wait for your click.
+
+## Personal data {#dado-pessoal}
+
+Any information that identifies a person: name, ID or Social Security number, phone, address, e-mail, health data, account number. Before sending a spreadsheet or a document, remove or replace what Claude doesn't need (for example, "Customer 1" instead of the name). See [Passwords, keys and personal data](#/aprender/segredos-e-dados).

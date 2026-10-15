@@ -28,7 +28,7 @@ O Clave confere a chave com a Anthropic antes de salvar e guarda ela **criptogra
 ## Regras de ouro da chave
 
 - **Nunca mostre a chave para ninguém** e nunca cole em sites ou conversas. Quem tem a chave gasta o seu crédito.
-- Se achar que ela vazou, apague no Console (API Keys) e crie outra.
+- Se achar que ela vazou, apague no Console (API Keys) e crie outra. O passo a passo, e o que mais nunca colar, está em [Senhas, chaves e dados pessoais](#/aprender/segredos-e-dados).
 - Não precisa guardar a chave em outro lugar: se perder, crie uma nova.
 
 ## Para não gastar mais do que quer
@@ -45,6 +45,8 @@ Dois detalhes importantes:
 - Use o **Haiku 5.5** para perguntas simples: custa 40 vezes menos que o Opus.
 - Raciocínio em **Baixo** ou **Médio** resolve a maior parte das coisas.
 - Mudou de assunto? **Comece uma conversa nova**: conversa comprida encarece cada resposta.
+
+A trilha **5. Economizar crédito** tem o resto, a começar por [Para onde vai o seu crédito](#/aprender/para-onde-vai-o-credito).
 
 ```experimentar
 Explique para mim, com números de exemplo, quanto custaria usar a IA para responder 30 e-mails por dia durante um mês.

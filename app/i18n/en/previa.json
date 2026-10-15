@@ -9,7 +9,7 @@
   "Baixar": "Download",
   "Abrir no navegador": "Open in browser",
   "Fechar": "Close",
-  "Fechar a prévia": "Close the preview",
   "desenho.svg": "drawing.svg",
-  "pagina.html": "page.html"
+  "pagina.html": "page.html",
+  "Quando o Claude escrever uma página HTML ou um desenho SVG, clique em Prévia no bloco de código para ver aqui.": "When Claude writes an HTML page or an SVG drawing, click Preview on the code block to see it here."
 }

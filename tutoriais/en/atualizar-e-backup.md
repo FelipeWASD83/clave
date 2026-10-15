@@ -23,16 +23,18 @@ Your conversations, settings, memories and key **are not touched**: they stay in
 
 In **Settings > Data & backup**:
 
-- **Download backup**: a file with your conversations, projects and spending history.
+- **Download chat backup**: a file with your conversations, projects, routines and spending history.
 - **Import backup**: brings everything back (on a new computer, for example).
 
-Attached files and the key are not included in the backup. You create the key again in the Console; send the attachments again if you need them.
+Attached files, the key and the [memory](#/aprender/memoria) are not included in the backup. You create the key again in the Console; send the attachments again if you need them. The memory lives in the `dados\memoria` folder: the copy of the `dados` folder, just below, takes it along.
 
 To be safe, also keep a copy of Clave's `dados` folder on an external hard drive or in the cloud from time to time (with Clave closed).
+
+What about the files of your own work, in the Code mode folders? That's a different story: see [Undo, backup and Git: your safety net](#/aprender/rede-de-seguranca).
 
 ## Signing out and uninstalling
 
 In **Settings > Updates & about**, at the bottom:
 
-- **Sign out**: deletes the API key and the saved passwords (e-mail, GitHub, connectors), sets every setting back to default and turns routines off. Your conversations, projects and memory stay. Then the welcome screens and the tours show up again, like the first time. It's for handing the computer to someone else or starting over with another key.
+- **Sign out**: deletes the API key, the saved passwords (e-mail, GitHub, connectors) and the Code browser's data (the sites' logins and cookies), sets every setting back to default and turns routines off. Your conversations, projects and memory stay. Then the welcome screens and the tours show up again, like the first time. It's for handing the computer to someone else or starting over with another key.
 - **Uninstall**: Clave closes and deletes its folder (with the conversations, which live inside it), the shortcuts and the routines' tasks in the Windows Task Scheduler. This can't be undone: if you want to keep your conversations, download the backup first.

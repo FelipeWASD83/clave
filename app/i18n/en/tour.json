@@ -53,5 +53,15 @@
   "Pular o tour": "Skip tour",
   "{n} de {total}": "{n} of {total}",
   "Concluir": "Done",
-  "Próximo": "Next"
+  "Próximo": "Next",
+  "O painel do Code": "The Code panel",
+  "Abre ao lado da conversa, com a largura que você quiser (arraste a borda). Ctrl + J abre e fecha.": "It opens next to the chat, as wide as you want (drag its edge). Ctrl + J opens and closes it.",
+  "Arquivos": "Files",
+  "A pasta inteira: abra qualquer arquivo no visualizador, renomeie, crie ou mande para a Lixeira.": "The whole folder: open any file in the viewer, rename, create or send to the Recycle Bin.",
+  "Console": "Console",
+  "O PowerShell de verdade, já na pasta. O botão \"Mandar para o Claude\" leva o resultado para a conversa.": "The real PowerShell, already in the folder. The \"Send to Claude\" button takes the output to the chat.",
+  "Navegador": "Browser",
+  "Você e o Claude usam o mesmo. O botão Locais abre os sites que estão rodando no seu computador. Para clicar ou digitar num site, ele pede OK.": "You and Claude use the same one. The Local button opens the sites running on your computer. To click or type on a site, Claude asks for your OK.",
+  "Tarefas": "Tasks",
+  "O que está rodando em segundo plano: respostas, fluxos, rotinas, servidores e downloads, com o botão Parar.": "What is running in the background: replies, workflows, routines, servers and downloads, with a Stop button."
 }

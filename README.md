@@ -77,6 +77,20 @@ you.
   files, edits spreadsheets and runs commands to automate tasks. You approve
   each change (or allow everything at once), see the before and after, and can
   undo.
+- **The Code panel**, beside the conversation: **Files** (the folder as a tree,
+  with search, rename and the Recycle Bin), a **Viewer** (code, Markdown, PDF,
+  spreadsheets, Word, images, audio and video, and what Claude changed), a real
+  PowerShell **Console** (a command from Claude's reply goes there with one
+  click, and the output goes back to Claude), a **Browser** and **Tasks**.
+- **A browser you share with Claude**: in Code mode it opens and reads pages and
+  takes screenshots and, with your OK, clicks and types, to check what it built
+  on a local server or to use a site. The servers running on your computer open
+  with one click.
+- **Background tasks**: local servers that Claude leaves running, replies,
+  workflows, routines and downloads in one list, with the log and a Stop button.
+- **Widgets**: in chat and in Code, Claude draws the answer as a card: products
+  and prices, maps, recommendations, floor plans and drawings, charts,
+  comparisons, timelines and checklists.
 - **Workflows**: a big task becomes steps, each on the right model (Opus plans,
   Sonnet does the work and tests it, Haiku checks it), with steps running in
   parallel. A workflow costs more, so it **always asks for your OK** first,
@@ -142,8 +156,11 @@ you.
   comes with Clave works with both names (/summary or /resumo, /sales:proposal or
   /vendas:proposta), and the menu shows the one in your language.
 
-- **Learn**: lessons for people who have never used AI, with a glossary of terms
-  (API, JSON, Git...) and a helper that answers questions about each lesson.
+- **Learn**: lessons for people who have never used AI, in nine tracks (first
+  steps, making Claude yours, automation with Code mode, going further, saving
+  credit, the Code workspace, visual answers, using it safely and recipes by
+  area), with a glossary of terms (API, JSON, Git...), short videos and a helper
+  that answers questions about each lesson.
 - **Guided tours**: the first time, arrows point to each part of the screen and
   explain what it does.
 - **English and Brazilian Portuguese**: the interface, the lessons, the folder
@@ -192,7 +209,9 @@ The key is stored only on your computer, encrypted by Windows.
 ## Videos
 
 Short narrated videos, in English and in Brazilian Portuguese. They also play inside Clave, in the
-lessons (**Learn**): the lesson downloads the video the first time you press play.
+lessons (**Learn**): Clave downloads the ones in its language in the background (about 28 MB) and the
+lesson plays them from your computer. They are not part of Clave's download; to download them only
+when you press play, turn it off in Settings > Updates & about.
 
 | Video | What it shows |
 |---|---|
@@ -220,6 +239,14 @@ shows the cost of each reply and stops when the month reaches the cap you set.
   publish something **always** ask, unless a rule of yours allows that command,
   and Plan mode changes nothing. Sensitive files go on the protected list: the
   file tools never touch them, and a command that mentions them asks for an OK.
+- The browser in Code mode keeps its own cookies and logins, apart from the
+  rest of Clave. Outside Auto mode, Claude asks before using each new site in a
+  task and before every click or typing; it never types passwords, access codes
+  or card numbers, and it treats what a page says as data, never as orders. Sign
+  out deletes the browser's data.
+- Photos in widgets come from other sites, so they only load when you click
+  (a page could use a photo's address to carry data out). Maps come from
+  OpenStreetMap through Clave.
 - Workflows always ask for your OK. Routines never ask: they only do what your
   rules already allow and stop at the rest.
 - Plugins bring instructions for Claude: install them only from people you
@@ -249,8 +276,9 @@ conversations live inside the folder, so download the backup first (Settings >
 Data & backup) if you want to keep them. By hand: delete Clave's folder and the
 two shortcuts.
 
-**Sign out** (same place) deletes the key and the saved passwords and sets every
-setting back to default, keeping your conversations.
+**Sign out** (same place) deletes the key, the saved passwords and the logins
+and cookies of the Code browser, and sets every setting back to default, keeping
+your conversations.
 
 ## For developers
 
@@ -277,7 +305,8 @@ Technical details and decisions in [`CLAUDE.md`](CLAUDE.md). History in
 ## License
 
 Clave's code is free software, under the [MIT](LICENSE) license. The libraries
-and fonts in `app/vendor/` have their own licenses, in the file next to each one.
+and fonts in `app/vendor/` (including xterm.js and Leaflet) have their own
+licenses, in the file next to each one. Map data © OpenStreetMap contributors.
 The screenshots in `modelo-de-pasta/.claude/referencias-visuais/prints/` are
 captures of public websites, kept only as a study reference; the sites and the
 brands belong to their owners.

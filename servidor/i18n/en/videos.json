@@ -3,5 +3,13 @@
   "O vídeo é maior do que o esperado; o download parou.": "The video is bigger than expected; the download stopped.",
   "O arquivo baixado não é um vídeo.": "The downloaded file is not a video.",
   "Este vídeo ainda não está no GitHub ({codigo}).": "This video is not on GitHub yet ({codigo}).",
-  "Sem conexão para baixar o vídeo ({erro}).": "No connection to download the video ({erro})."
+  "Sem conexão para baixar o vídeo ({erro}).": "No connection to download the video ({erro}).",
+  "Vídeo da lição \"{titulo}\"": "Lesson video \"{titulo}\"",
+  "Baixando do GitHub": "Downloading from GitHub",
+  "Pronto para assistir na lição": "Ready to watch in the lesson",
+  "A conexão caiu no meio do download do vídeo ({erro}); tente de novo.": "The connection dropped in the middle of the video download ({erro}); try again.",
+  "Não deu para baixar o vídeo ({erro}).": "Couldn't download the video ({erro}).",
+  "O download foi parado.": "The download was stopped.",
+  "O download do vídeo parou no meio ({baixados} de {total} MB); tente de novo.": "The video download stopped halfway ({baixados} of {total} MB); try again.",
+  "Parado; dá para baixar de novo na lição": "Stopped; you can download it again in the lesson"
 }

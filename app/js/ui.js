@@ -25,11 +25,24 @@ export function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// sem "reduzir movimento" no Windows, rolagens longas deslizam; com ele, pulam direto
+export function rolagemSuave() {
+  return matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+
+// tira um elemento com a animação de saída dele (a classe .saindo do CSS) e só depois remove
+export function sairComAnimacao(elemento, ms = 200) {
+  if (!elemento?.isConnected) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { elemento.remove(); return; }
+  elemento.classList.add('saindo');
+  setTimeout(() => elemento.remove(), ms);
+}
+
 export function aviso(texto, tipo = '') {
   const caixa = document.getElementById('avisos');
   const a = el('div', { class: `aviso-flutuante ${tipo}`, texto });
   caixa.append(a);
-  setTimeout(() => a.remove(), tipo === 'erro' ? 7000 : 3800);
+  setTimeout(() => sairComAnimacao(a, 200), tipo === 'erro' ? 7000 : 3800);
 }
 
 // ---------- janelas ----------
@@ -40,7 +53,11 @@ export function janela({ titulo, corpo, botoes = [], larga = false, classe = '',
   const fechar = () => {
     if (fechada) return;
     fechada = true;
-    j.remove();
+    // a última janela leva o fundo escuro junto, sumindo devagar
+    const ultima = camada.children.length === 1;
+    if (ultima) camada.classList.add('fechando');
+    j.classList.add('saindo');
+    setTimeout(() => { j.remove(); if (!camada.children.length) camada.classList.remove('fechando'); }, 160);
     document.removeEventListener('keydown', tecla);
     camada.removeEventListener('mousedown', cliqueFora);
     aoFechar?.();
@@ -66,6 +83,7 @@ export function janela({ titulo, corpo, botoes = [], larga = false, classe = '',
     el('div', { class: 'janela-corpo' }, corpo),
     rodape);
   camada.addEventListener('mousedown', cliqueFora);
+  camada.classList.remove('fechando');  // uma janela nova logo depois de outra fechar não some junto com o fundo
   camada.append(j);
   document.addEventListener('keydown', tecla);
   setTimeout(() => j.querySelector('input, textarea, select, button.primario')?.focus(), 30);
@@ -105,7 +123,7 @@ export function perguntarTexto(titulo, { valor = '', rotulo = '', placeholder = 
 
 // ---------- menus flutuantes ----------
 let menuAberto = null;
-export function fecharMenu() { menuAberto?.remove(); menuAberto = null; }
+export function fecharMenu() { if (menuAberto) sairComAnimacao(menuAberto, 110); menuAberto = null; }
 export function menu(ancora, itens, { alinhar = 'esquerda', acima = false } = {}) {
   fecharMenu();
   const m = el('div', { class: 'menu', role: 'menu' });
@@ -128,6 +146,8 @@ export function menu(ancora, itens, { alinhar = 'esquerda', acima = false } = {}
   if (y < 8) y = 8;
   x = Math.min(Math.max(8, x), innerWidth - w - 8);
   m.style.left = `${x}px`; m.style.top = `${y}px`;
+  if (y < r.top) m.classList.add('acima');
+  if (alinhar === 'direita') m.style.transformOrigin = `top right`;
   menuAberto = m;
   setTimeout(() => {
     const fora = (e) => { if (!m.contains(e.target)) { fecharMenu(); document.removeEventListener('mousedown', fora); } };

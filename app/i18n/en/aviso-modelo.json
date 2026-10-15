@@ -1,0 +1,9 @@
+{
+  "Pronto: as conversas novas voltam a usar o modelo de antes.": "Done: new chats go back to the model you used before.",
+  "Pronto: as conversas novas usam o Haiku 5.5.": "Done: new chats use Haiku 5.5.",
+  "O padrão agora é o Haiku 5.5": "Haiku 5.5 is now the default",
+  "Para gastar menos, as conversas novas começam no Haiku 5.5, o modelo mais barato. Antes você usava: {modelos}.": "To spend less, new chats start on Haiku 5.5, the cheapest model. Before, you used: {modelos}.",
+  "O conselheiro de modelo continua sugerindo um modelo mais forte quando a tarefa pede. Conversas que já existem continuam no modelo delas, e dá para trocar quando quiser em Configurações > Modelos.": "The model advisor still suggests a stronger model when the task needs it. Existing chats keep their own model, and you can change it any time in Settings > Models.",
+  "Voltar para o de antes": "Go back to the previous one",
+  "Manter o Haiku": "Keep Haiku"
+}

@@ -86,6 +86,10 @@ PADRAO = {
     "conselheiro_modelo": True,
     "trocar_modelo_sozinho": False,
     "modelos_antigos": False,
+    # 5.0: o Haiku virou o padrão também de quem já usava; aviso_haiku guarda os modelos de antes até a pessoa
+    # responder o aviso ("manter o Haiku" ou "voltar")
+    "padrao_haiku_migrado": False,
+    "aviso_haiku": None,
     # recursos
     "busca_web": True,  # desde a 3.1.0: o Claude decide quando pesquisar; o botão Web desliga numa conversa
     "web_por_padrao_migrada": False,
@@ -133,6 +137,11 @@ PADRAO = {
     "permissoes": {"allow": [], "ask": [], "deny": []},
     # fluxos (várias etapas em modelos diferentes): sempre pedem OK antes de rodar
     "fluxos_ligados": True,
+    # 5.0: widgets (cartões que o Claude desenha na conversa), o navegador do Code e os vídeos das lições
+    "widgets_ligados": True,
+    "widgets_imagens": "clicar",  # "clicar": as fotos de fora só carregam com um clique; "sempre"
+    "navegador_ligado": True,
+    "baixar_videos": True,  # baixa sozinho, em segundo plano, os vídeos das lições no idioma do app
     # plugins: {nome: {ligado, fonte, versao}}
     "plugins": {},
     # notificação do Windows quando uma resposta termina ou pede OK com a janela em segundo plano
@@ -199,7 +208,7 @@ def resetar() -> dict:
     # de terceiro que a pessoa desligou), o índice das conversas dos ajudantes das lições (zerar deixaria essas
     # conversas órfãs) e a marca da migração da 3.1.0 (zerar faria ela rodar de novo e apagar a escolha de Web das
     # conversas)
-    for chave in ("plugins", "ajudantes", "web_por_padrao_migrada"):
+    for chave in ("plugins", "ajudantes", "web_por_padrao_migrada", "padrao_haiku_migrado"):
         novo[chave] = copy.deepcopy(antes.get(chave, PADRAO[chave]))
     with _trava:
         DADOS.mkdir(parents=True, exist_ok=True)

@@ -1,12 +1,18 @@
 /* ---------- estrutura geral ---------- */
+/* a largura da barra lateral é uma propriedade registrada para poder deslizar (a coluna do painel é "auto", e uma
+   grade com "auto" não anima direto) */
+@property --largura-lateral { syntax: "<length>"; inherits: true; initial-value: 280px; }
 .app {
+  --largura-lateral: 280px;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) auto;
+  grid-template-columns: var(--largura-lateral) minmax(0, 1fr) auto;
   height: 100vh; height: 100dvh;
   overflow: hidden;
+  transition: --largura-lateral var(--normal) var(--curva);
 }
-.app.lateral-fechada { grid-template-columns: 0 minmax(0, 1fr) auto; }
-.app.lateral-fechada .lateral { visibility: hidden; }
+.app.lateral-fechada { --largura-lateral: 0px; }
+/* fechando, a barra some só depois de recolher; abrindo, aparece na hora */
+.app.lateral-fechada .lateral { visibility: hidden; transition: visibility 0s linear var(--normal); }
 .principal { position: relative; min-width: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--papel); }
 
 /* ---------- barra lateral (tinta) ---------- */
@@ -99,24 +105,36 @@
 .topo .abrir-lateral { display: none; }
 .app.lateral-fechada .topo .abrir-lateral { display: inline-grid; }
 
-/* ---------- painel de prévia ---------- */
-.painel-previa {
-  width: min(48vw, 900px); min-width: 360px; display: flex; flex-direction: column;
-  border-left: 1px solid var(--linha); background: var(--papel-2);
+/* o botão de abrir a barra nas páginas (Aprender, lição, Configurações...): a conversa tem o dela no .topo, as
+   páginas não têm topo. Ele fica preso no canto, no mesmo lugar do botão da conversa, em cima de uma faixa do
+   tamanho do .topo, para o conteúdo nunca passar por baixo dele. Só aparece com a barra escondida. Posicionado na
+   coluna da área principal da grade, ele anda junto com ela quando a barra recolhe. */
+.app { position: relative; }
+.abrir-lateral-pagina { display: none; position: absolute; z-index: 20; top: 12px; left: 16px; grid-column: 2; grid-row: 1; }
+.app.lateral-fechada:not(:has(> .principal > .conversa)) .abrir-lateral-pagina { display: inline-grid; }
+.app.lateral-fechada:not(:has(> .principal > .conversa)) .principal::before {
+  content: ""; flex: none; height: 56px; border-bottom: 1px solid var(--linha);
 }
-.painel-previa .topo { background: var(--papel-2); }
-.painel-previa iframe { flex: 1; width: 100%; border: 0; background: #fff; }
-.painel-previa pre { flex: 1; margin: 0; overflow: auto; }
 
 /* ---------- celular e telas estreitas ---------- */
 @media (max-width: 900px) {
   .app { grid-template-columns: minmax(0, 1fr); }
+  /* fechada, a gaveta fica fora da tela e escondida: a sombra dela não vaza na borda esquerda e o Tab não cai nos
+     links dela; fechando, ela some só depois de deslizar */
   .lateral {
     position: fixed; z-index: 70; inset: 0 auto 0 0; width: min(300px, 86vw);
-    transform: translateX(-100%); transition: transform var(--normal) var(--curva); box-shadow: var(--sombra-2);
+    transform: translateX(-100%); visibility: hidden; box-shadow: var(--sombra-2);
+    transition: transform var(--normal) var(--curva), visibility 0s linear var(--normal);
   }
-  .app.lateral-aberta .lateral { transform: none; }
+  .app.lateral-aberta .lateral { transform: none; visibility: visible; transition: transform var(--normal) var(--curva); }
   .app.lateral-aberta::after { content: ""; position: fixed; inset: 0; z-index: 60; background: rgb(0 0 0 / .35); }
   .topo .abrir-lateral { display: inline-grid; }
-  .painel-previa { position: fixed; z-index: 75; inset: 0; width: auto; min-width: 0; }
+  .abrir-lateral-pagina { grid-column: 1; }
+  .app:not(:has(> .principal > .conversa)) .abrir-lateral-pagina { display: inline-grid; }
+  .app:not(:has(> .principal > .conversa)) .principal::before {
+    content: ""; flex: none; height: 56px; border-bottom: 1px solid var(--linha);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lateral { transition-delay: 0s !important; }
 }

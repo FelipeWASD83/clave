@@ -70,6 +70,32 @@ class TestFormato(unittest.TestCase):
         finally:
             shutil.rmtree(base, ignore_errors=True)
 
+    def test_dominio_lido_como_o_navegador_le(self):
+        """WebFetch(domain:x) negado não se dribla com ponto no fim, maiúsculas, %2e, letras largas, IDN ou @."""
+        for burla in ("https://github.com./", "HTTPS://GITHUB.COM/", "https://github%2ecom/", "https://ｇithub.com/",
+                      "https://user@github.com/", "https://github.com\\@outro.com/", "github.com.", "GitHub.com:443"):
+            self.assertTrue(P.casa_dominio("domain:github.com", burla), burla)
+        self.assertTrue(P.casa_dominio("domain:GitHub.COM.", "https://github.com/"))
+        self.assertTrue(P.casa_dominio("domain:münchen.de", "https://xn--mnchen-3ya.de/"))
+        self.assertTrue(P.casa_dominio("domain:xn--mnchen-3ya.de", "https://münchen.de/"))
+        self.assertFalse(P.casa_dominio("domain:github.com", "https://github.com.evil.com/"))
+        self.assertFalse(P.casa_dominio("domain:github.com", "https://outro.com/?u=github.com"))
+        r = regras(("deny", "WebFetch(domain:github.com)"))
+        self.assertIsNotNone(P.nega(r, "WebFetch", "https://GitHub.com./x"))
+
+    def test_regras_do_navegador_com_nomes_em_ingles_e_porta(self):
+        self.assertIsNone(P.validar("Navegador(click:bank.com)"))
+        self.assertIsNone(P.validar("Navegador(type:localhost:5173)"))
+        self.assertIsNotNone(P.validar("Navegador(apagar:x.com)"))
+        self.assertIsNotNone(P.validar("Navegador(:x.com)"))
+        r = regras(("allow", "Navegador(click:bank.com)"))
+        self.assertEqual(P.avaliar(r, [("Navegador", P.alvo_navegador("clicar", "https://bank.com/"))], None)[0], "allow")
+        r = regras(("allow", "Navegador(clicar:localhost:5173)"))
+        self.assertEqual(P.avaliar(r, [("Navegador", P.alvo_navegador("clicar", "http://localhost:5173/"))], None)[0], "allow")
+        self.assertIsNone(P.avaliar(r, [("Navegador", P.alvo_navegador("clicar", "http://localhost:3000/"))], None)[0])
+        # a regra ruim gravada num settings.json é ignorada com aviso, não vira regra de outro site
+        self.assertEqual(P._do_dict({"allow": ["Navegador(apagar:x.com)", "Navegador(x.com)"]}, "app")[0].texto, "Navegador(x.com)")
+
     def test_dominio_e_mcp(self):
         self.assertTrue(P.casa_dominio("domain:github.com", "https://github.com/a/b"))
         self.assertFalse(P.casa_dominio("domain:github.com", "https://api.github.com/x"))

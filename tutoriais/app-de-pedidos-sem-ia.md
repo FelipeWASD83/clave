@@ -3,16 +3,16 @@ titulo: Um app de pedidos sem IA (e quase sem custo)
 trilha: 3. Automação com o modo Code
 ordem: 28
 duracao: 12 min
-resumo: Pedidos que chegam por e-mail viram linhas no Excel e vão para o site, com um programa feito uma vez só, em vez de pagar o Claude a cada 15 minutos.
+resumo: Pedidos que chegam por e-mail viram linhas no Excel e vão para o site, com um programa feito uma vez só, em vez de pagar o Claude toda hora.
 ---
 
-Imagine um escritório de vendas. Os pedidos chegam por e-mail, alguém copia cada um para uma planilha do Excel e depois digita tudo de novo no site da empresa. A ideia natural é criar uma [rotina](#/aprender/rotinas) que chama o Claude a cada 15 minutos para fazer isso.
+Imagine um escritório de vendas. Os pedidos chegam por e-mail, alguém copia cada um para uma planilha do Excel e depois digita tudo de novo no site da empresa. A ideia natural é criar uma [rotina](#/aprender/rotinas) que chama o Claude de hora em hora para fazer isso.
 
 Funciona, mas é o jeito caro. Esta lição mostra o jeito melhor: pedir ao modo Code, **uma vez só**, um pequeno programa que faz o serviço **sem IA**. Quem roda o programa no horário é o próprio Windows, e cada rodada custa zero token.
 
 ## 1. Por que não uma rotina
 
-Uma rotina a cada 15 minutos são 96 chamadas ao Claude por dia, cerca de 2.900 por mês. Cada chamada paga para o Claude ler os e-mails, mesmo quando não chegou pedido nenhum. E o gasto continua no mês seguinte, e no outro, para sempre.
+No Clave, a rotina mais frequente roda de hora em hora (**A cada N horas**, de 1 a 24). Isso dá 24 chamadas ao Claude por dia, cerca de 730 por mês. Cada chamada paga para o Claude ler os e-mails, mesmo quando não chegou pedido nenhum. E o gasto continua no mês seguinte, e no outro, para sempre. Além disso, um pedido pode esperar até uma hora para entrar: conferir a cada 15 minutos só dá com um programa fora do Clave, que é justamente o que esta lição monta.
 
 Um [script](#/aprender/glossario/script) faz o mesmo serviço seguindo regras fixas: acha o e-mail, separa os campos, grava na planilha. Ele custa só a conversa que o construiu. Depois disso, pode rodar o dia inteiro de graça.
 
@@ -165,16 +165,17 @@ Cuidados:
 
 ## 9. Quanto custa
 
-| | Rotina a cada 15 min | Programa sem IA |
+| | Rotina de hora em hora | Programa sem IA, a cada 15 min |
 |---|---|---|
 | Para montar | nada (só escrever o pedido) | uma conversa no modo Code, uma vez |
 | Cada rodada | tokens, mesmo sem pedido novo | zero |
-| Rodadas por mês | cerca de 2.900 | cerca de 2.900 |
-| Exemplo, a US$ 0,02 por rodada | cerca de US$ 58 por mês, todo mês | US$ 0 |
+| Rodadas por mês | cerca de 730 | cerca de 2.900 |
+| Um pedido espera até | 1 hora | 15 minutos |
+| Exemplo, a US$ 0,02 por rodada | cerca de US$ 15 por mês, todo mês | US$ 0 |
 | Resultado | pode variar um pouco | sempre igual |
 | Se o formato do e-mail mudar | se adapta sozinha | precisa de um ajuste (outra conversa curta) |
 
-Os US$ 0,02 por rodada são só um exemplo: o custo de verdade depende do modelo e de quantos e-mails ela lê. Para entender de onde vem o gasto, veja [Tokens, contexto e gasto](#/aprender/contexto-e-gasto).
+Os US$ 0,02 por rodada são só um exemplo (é o preço de uma resposta média no Sonnet 5.5 com raciocínio, na tabela de **Preços e planos**): o custo de verdade depende do modelo e de quantos e-mails ela lê. Para entender de onde vem o gasto, veja [Tokens, contexto e gasto](#/aprender/contexto-e-gasto).
 
 ## 10. Antes de deixar no automático
 

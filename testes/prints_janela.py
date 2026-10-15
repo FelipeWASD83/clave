@@ -6,6 +6,17 @@ A janela aparece na tela por uns 40 segundos e fecha sozinha. Dados numa pasta t
 """
 from __future__ import annotations
 
+def _da_janela(url: str, dados: str) -> bool:
+    """A página do Clave, e não a do navegador embutido do Code (que também é uma página e pode estar em 127.0.0.1)."""
+    import json as _json
+    from pathlib import Path as _Path
+    try:
+        porta = _json.loads((_Path(dados) / "servidor.json").read_text(encoding="utf-8"))["porta"]
+        return url.startswith(f"http://127.0.0.1:{porta}/")
+    except (OSError, ValueError, KeyError):
+        return "127.0.0.1" in url
+
+
 import base64
 import importlib.util
 import json
@@ -43,7 +54,7 @@ def main() -> int:
         for _ in range(120):
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{PORTA_DEPURACAO}/json", timeout=2) as r:
-                    paginas = [p for p in json.loads(r.read()) if p.get("type") == "page" and "127.0.0.1" in p.get("url", "")]
+                    paginas = [p for p in json.loads(r.read()) if p.get("type") == "page" and _da_janela(p.get("url", ""), dados)]
                 if paginas:
                     alvo = paginas[0]
                     break
@@ -82,7 +93,9 @@ def main() -> int:
 
         time.sleep(2.5)
         js("window.__erros = []; const _e = console.error; console.error = (...a) => { window.__erros.push(a.join(' ')); _e(...a); }; 1")
-        post("/api/config", {"configurado": True, "nome": "Ana"})
+        # sem os tours e o cartão do modelo novo por cima: as fotos são dos cartões que chegam ao vivo
+        post("/api/config", {"configurado": True, "nome": "Ana", "tours_vistos": ["geral", "code", "mesa", "precos", "fluxos"],
+                             "modelos_apresentados": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1"]})
         js("location.hash = '#/novo'; location.reload()", 2.5)
         js("window.__erros = []; const _e = console.error; console.error = (...a) => { window.__erros.push(a.join(' ')); _e(...a); }; 1")
 

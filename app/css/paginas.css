@@ -1,6 +1,13 @@
 /* ---------- páginas (Projetos, Aprender, Uso, Configurações) ---------- */
 .pagina { flex: 1; overflow-y: auto; }
 .pagina-corpo { max-width: 1040px; margin: 0 auto; padding: 36px 28px 64px; }
+/* páginas de cartões (Aprender, Projetos, Fluxos, Plugins, Rotinas) usam mais da tela num monitor largo; as de
+   leitura (lição, Configurações) continuam estreitas. Até 1800 px de janela nada muda. */
+@media (min-width: 1800px) {
+  .pagina-corpo:has(.grade-cartoes) { max-width: 1600px; }
+  /* com a página larga, os botões do cabeçalho vão para a borda direita da grade em vez de boiar no meio */
+  .pagina-corpo:has(.grade-cartoes) .pagina-cab > :first-child { flex: 1; }
+}
 .pagina-cab { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 26px; flex-wrap: wrap; }
 .pagina-cab h1 { margin: 0; flex: 1; font-family: var(--serifa); font-weight: 400; font-size: 38px; line-height: 1.1; }
 .pagina-cab p { margin: 6px 0 0; color: var(--texto-3); max-width: 60ch; }
@@ -27,13 +34,16 @@
 .licao-num { font-family: var(--mono); font-size: 12px; color: var(--acao); }
 
 .leitor { max-width: 760px; margin: 0 auto; padding: 32px 28px 80px; }
-.leitor .voltar { margin-bottom: 18px; }
+/* o recuo do botão fantasma (padding e borda) sai para fora, e a seta fica na mesma linha do texto da lição */
+.leitor .voltar { margin-bottom: 18px; margin-left: calc(-1 * var(--e3) - 1px); }
 .leitor h1 { font-family: var(--serifa); font-weight: 400; font-size: 40px; line-height: 1.12; margin: 6px 0 18px; }
 .leitor .resposta { font-size: 17.5px; }
 /* o vídeo da lição, logo abaixo do título */
 .video-licao { margin: 0 0 24px; }
 .video-licao video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--raio-m); background: var(--tinta); }
 .video-capa { display: grid; justify-items: start; gap: 8px; padding: 18px 20px; border: 1px dashed var(--linha); border-radius: var(--raio-m); background: var(--papel-2); }
+.video-progresso { width: min(100%, 360px); height: 6px; border-radius: 99px; background: var(--papel-3); overflow: hidden; }
+.video-progresso i { display: block; height: 100%; border-radius: inherit; background: var(--acao); transition: width var(--normal) var(--curva); }
 .experimentar {
   margin: 0 0 1.1em; padding: 14px 16px; border-radius: var(--raio-m); background: var(--acao-suave);
   border: 1px solid transparent; display: grid; gap: 10px; font-family: var(--sans);
@@ -78,6 +88,18 @@
 .item-lista { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--linha); border-radius: var(--raio-m); }
 .item-lista .textos { flex: 1; min-width: 0; display: grid; }
 .item-lista .textos small { color: var(--texto-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* linhas de ação (versão, Sair da conta, Desinstalar): o texto explica o botão e não pode ser cortado; na janela
+   estreita o botão desce para baixo do texto, alinhado à direita */
+.item-lista.item-acao { flex-wrap: wrap; row-gap: 8px; }
+.item-lista.item-acao .textos { flex: 1 1 240px; }
+.item-lista.item-acao .textos small { white-space: normal; overflow: visible; text-overflow: clip; }
+.item-lista.item-acao > .botao { margin-left: auto; }
+/* botões soltos numa seção ficam do tamanho do texto (a seção é uma grade e esticaria eles) */
+.config-secao > .botao { justify-self: start; }
+/* um texto de ajuda que ainda não recebeu nada (o resultado de um teste, por exemplo) não ocupa uma linha da grade */
+.config-secao > .ajuda:empty { display: none; }
+/* número cabe numa caixa curta: um campo da largura da coluna para "150000" vira uma barra vazia */
+.config-secao input[type="number"].entrada { max-width: 220px; }
 
 /* jeito de falar: um cartão com uma linha por controle, nome à esquerda e a escolha à direita */
 .linhas-tom { border: 1px solid var(--linha); border-radius: var(--raio-g); padding: 0 var(--e4); }

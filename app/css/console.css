@@ -1,0 +1,143 @@
+/* ---------- Aba Console: o PowerShell de verdade dentro do Code ---------- */
+
+/* As cores do terminal. Fundo e texto são o papel e a tinta do app; as 16 cores ANSI são as que os programas pedem
+   (vermelho de erro, verde de sucesso, o amarelo que o PSReadLine usa nos comandos...), puxadas para ler bem no papel.
+   O "branco" vira cinza-tinta no tema claro: o PowerShell escreve os argumentos em branco, que sumiria no papel.
+   Só as que não têm variável no app ganham um valor aqui; o tema escuro troca essas logo abaixo. */
+:root {
+  --console-fundo: var(--papel);
+  --console-texto: var(--texto);
+  --console-preto: var(--texto);
+  --console-vermelho: var(--erro);
+  --console-verde: var(--sucesso);
+  --console-amarelo: var(--aviso);
+  --console-azul: #2d5b94;
+  --console-magenta: #87407c;
+  --console-ciano: var(--acao);
+  --console-branco: var(--texto-2);
+  --console-preto-claro: var(--texto-3);
+  --console-vermelho-claro: #b4432f;
+  --console-verde-claro: #2f7a3a;
+  --console-amarelo-claro: #966600;
+  --console-azul-claro: #3a6db0;
+  --console-magenta-claro: #9c4a90;
+  --console-ciano-claro: #237980;
+  --console-branco-claro: var(--texto);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --console-preto: var(--texto-4);
+    --console-azul: #7fa6db;
+    --console-magenta: #c98bc0;
+    --console-vermelho-claro: #f0a090;
+    --console-verde-claro: #a6d6ad;
+    --console-amarelo-claro: #ecc97f;
+    --console-azul-claro: #a3c2ea;
+    --console-magenta-claro: #dcaad4;
+    --console-ciano-claro: #95d3cf;
+  }
+}
+:root[data-tema="escuro"] {
+  --console-preto: var(--texto-4);
+  --console-azul: #7fa6db;
+  --console-magenta: #c98bc0;
+  --console-vermelho-claro: #f0a090;
+  --console-verde-claro: #a6d6ad;
+  --console-amarelo-claro: #ecc97f;
+  --console-azul-claro: #a3c2ea;
+  --console-magenta-claro: #dcaad4;
+  --console-ciano-claro: #95d3cf;
+}
+
+.aba-console { container-type: inline-size; }
+
+/* a barra: subabas à esquerda (rolam de lado se não couberem), ações à direita */
+.console-barra { gap: var(--e2); padding-left: var(--e2); }
+.console-guias-rolagem {
+  display: flex; align-items: center; gap: 2px; min-width: 0; flex: 0 1 auto;
+  overflow-x: auto; scrollbar-width: none;
+}
+.console-guias-rolagem::-webkit-scrollbar { display: none; }
+.console-guias { display: flex; align-items: center; gap: 2px; }
+.console-guia {
+  display: inline-flex; align-items: center; flex: none; height: 30px; border-radius: var(--raio-p);
+  color: var(--texto-3); transition: background var(--rapido), color var(--rapido);
+}
+.console-guia:hover { background: var(--papel-3); color: var(--texto); }
+.console-guia.atual { background: var(--papel); color: var(--texto); box-shadow: var(--sombra-1); }
+.console-guia.terminou .console-guia-nome span:last-child { text-decoration: line-through; text-decoration-color: var(--texto-4); }
+.console-guia-nome {
+  display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 4px 0 10px;
+  border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap;
+}
+.console-guia-nome:focus-visible { outline-offset: -2px; border-radius: var(--raio-p); }
+.console-guia-fechar {
+  display: grid; place-items: center; width: 22px; height: 22px; margin-right: 4px; padding: 0;
+  border: 0; border-radius: 4px; background: transparent; color: var(--texto-4); cursor: pointer;
+  opacity: 0; transition: opacity var(--rapido), background var(--rapido), color var(--rapido);
+}
+.console-guia-fechar svg { width: 13px; height: 13px; }
+.console-guia:hover .console-guia-fechar, .console-guia.atual .console-guia-fechar { opacity: 1; }
+.console-guia-fechar:hover { background: var(--papel-3); color: var(--texto); }
+/* saída nova numa subaba que não está na tela */
+.console-ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--acao); flex: none; }
+.console-novo { flex: none; width: 30px; height: 30px; }
+.console-novo:disabled { opacity: .4; cursor: not-allowed; }
+.console-barra .icone-botao:disabled { opacity: .4; cursor: not-allowed; }
+.console-mandar { flex: none; gap: 6px; }
+.console-mandar svg { width: 15px; height: 15px; }
+@container (max-width: 520px) {
+  .console-mandar span { display: none; }
+  .console-mandar { padding: 0 8px; }
+}
+
+/* o aviso do modo simples (sem pseudo console) */
+.console-aviso {
+  display: flex; align-items: flex-start; gap: var(--e2); padding: var(--e2) var(--e3);
+  border-bottom: 1px solid var(--linha); background: var(--aviso-suave); color: var(--texto-2); font-size: 13px;
+}
+.console-aviso svg { width: 16px; height: 16px; margin-top: 2px; flex: none; color: var(--aviso); }
+.console-aviso p { margin: 0; }
+
+/* a área dos terminais */
+.console-telas { position: relative; flex: 1; min-height: 0; background: var(--console-fundo); }
+.console-tela { position: absolute; inset: 0; display: flex; }
+.console-xterm { flex: 1; min-width: 0; min-height: 0; }
+/* o respiro vai no próprio .xterm: o addon de ajuste desconta o padding dele, não o da caixa em volta */
+.console-xterm .xterm { height: 100%; padding: 8px 10px 6px 12px; }
+.aba-console .xterm .xterm-viewport { background-color: var(--console-fundo); }
+.aba-console .xterm .composition-view { background: var(--papel-2); color: var(--texto); }
+
+/* por cima do terminal: abrindo, reconectando, terminou */
+.console-estado {
+  position: absolute; z-index: 6; left: var(--e4); right: var(--e4); bottom: var(--e4);
+  width: max-content; max-width: calc(100% - 2 * var(--e4)); margin-inline: auto;
+  display: flex; align-items: center; gap: var(--e2);
+  padding: 7px 8px 7px 12px; border: 1px solid var(--linha); border-radius: var(--raio-m);
+  background: var(--papel-2); color: var(--texto-2); box-shadow: var(--sombra-2); font-size: 13px;
+  animation: console-estado-entra var(--normal) var(--curva);
+}
+.console-estado.carregando { top: 50%; bottom: auto; transform: translateY(-50%); padding-right: 14px; box-shadow: var(--sombra-1); }
+.console-estado-texto { min-width: 0; }
+.console-estado-icone svg { width: 16px; height: 16px; color: var(--texto-3); display: block; }
+.console-estado .botao { flex: none; }
+@keyframes console-estado-entra { from { opacity: 0; } }
+
+.console-girando {
+  width: 14px; height: 14px; flex: none; border-radius: 50%;
+  border: 2px solid var(--linha); border-top-color: var(--acao);
+  animation: console-girar 900ms linear infinite;
+}
+.console-girando.grande { width: 26px; height: 26px; margin: 0 auto; border-width: 2.5px; }
+@keyframes console-girar { to { transform: rotate(360deg); } }
+
+/* estados vazios: sem pasta, nenhum console aberto, erro */
+.console-vazio .botao { justify-self: center; }
+.console-vazio .botao svg { width: 16px; height: 16px; margin: 0; color: currentColor; }
+.console-vazio-pasta { overflow-wrap: anywhere; }
+
+@media (prefers-reduced-motion: reduce) {
+  .console-estado { animation: none; }
+  .console-girando { animation-duration: 2.4s; }
+  .console-guia, .console-guia-fechar { transition: none; }
+}

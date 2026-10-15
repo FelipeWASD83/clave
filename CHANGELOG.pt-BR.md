@@ -2,6 +2,123 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 5.0.0 (15/10/2026)
+
+O modo Code vira uma bancada: os seus arquivos, um console de verdade, um navegador que você divide com o Claude e o
+que roda em segundo plano, tudo ao lado da conversa. E no chat e no Code o Claude pode desenhar a resposta num cartão.
+
+**Novo**
+
+- **Painel lateral no modo Code**, ao lado da conversa e da largura que você arrastar, com as abas **Arquivos**,
+  **Visualizador**, **Console**, **Navegador** e **Tarefas**. Ctrl+J abre e fecha; Ctrl+Shift+E vai para Arquivos,
+  Ctrl+` para o Console, Ctrl+Shift+L para o Navegador e Ctrl+Shift+Y para Tarefas. A aba continua trabalhando com o
+  painel fechado (o console guarda o que rodou), e o modo Code reabre o painel do jeito que você deixou. Um tour
+  mostra o painel na primeira vez.
+- **Arquivos**: a pasta de trabalho em árvore, com filtro e busca em todas as pastas. O botão direito abre no
+  Visualizador, mostra no Explorador, copia o caminho, menciona na conversa, renomeia (F2), cria arquivo ou pasta e
+  manda para a Lixeira (Delete). Arrastar um arquivo para a caixa de mensagem menciona ele. Os arquivos que o Claude
+  mudou nesta conversa ganham uma marca, e a árvore se atualiza sozinha. Abrir programa ou script com o programa
+  padrão pergunta antes.
+- **Visualizador**: código com cores e números de linha (Ctrl+F, ir para uma linha), Markdown com as imagens dele,
+  imagens, PDF, planilhas do Excel e CSV (fórmula aparece como fórmula), Word (o texto), JSON organizado, áudio e
+  vídeo, e **Ver como página** para HTML. **Mudanças do Claude** mostra o que o Claude mudou no arquivo nesta conversa.
+  Arquivos protegidos (como o `.env`) só abrem depois de **Mostrar mesmo assim**. Nas respostas do Claude, o caminho
+  de cada passo com arquivo (ler, escrever, editar, Word, Excel) abre o arquivo aqui com um clique.
+- **Console**: um PowerShell de verdade dentro do Clave, já na pasta de trabalho, com cores, histórico e programas
+  interativos, até 6 de uma vez. **Mandar para o Claude** põe o texto selecionado (ou as últimas linhas) na caixa de
+  mensagem. No modo Code, os blocos de código de PowerShell e cmd nas respostas ganham **Rodar no console**: o comando
+  é escrito no console, e você confere e aperta Enter.
+- **Navegador**: um navegador dentro da janela do Clave que você e o Claude usam juntos. O Claude abre páginas, lê,
+  tira print, rola e volta, para conferir o que construiu ou usar uma página, e uma faixa mostra quando ele está
+  usando o navegador. **Locais** lista os servidores rodando neste computador (npm run dev, python -m
+  http.server...) para abrir com um clique.
+- **As travas do navegador**: os cookies e logins dele ficam separados do resto do Clave. Fora do modo Livre, o
+  Claude pergunta uma vez por tarefa antes de usar cada site novo (localhost, o seu próprio computador, não pergunta),
+  e cada clique e cada digitação pedem o seu OK, a não ser que uma regra diga aquela ação
+  (`Navegador(clicar:localhost)`); o modo Plano só lê. O Claude nunca digita senha, código de acesso nem número de
+  cartão: quem digita é você. O que a página diz é tratado como dado, nunca como ordem. Um bloqueio
+  `WebFetch(domain:...)` também bloqueia o navegador naquele site, e uma página que pula para um site bloqueado fica
+  em branco. O Clave nunca entrega a um site um certificado do Windows (como um e-CPF). **Sair da conta** apaga os
+  dados do navegador, e Configurações > Modo Code tem **Apagar os dados do navegador**. As regras novas são
+  `Navegador(site)` e `Navegador(ação:site)`, com porta se você quiser (`Navegador(localhost:5173)`), e as ações podem
+  ser escritas em português ou em inglês.
+- **Comandos em segundo plano**: o Claude pode deixar um servidor local ou um observador de arquivos rodando (npm run
+  dev, python -m http.server) e seguir trabalhando: ele lê a saída quando precisa e para quando termina, no máximo 5
+  por conversa. Eles aparecem em Tarefas com o endereço local, que abre no navegador com um clique, e param quando
+  você aperta Parar, quando apaga a conversa e quando o Clave fecha. Um programa com janela que eles abriram (o
+  navegador de um servidor de desenvolvimento, um editor) continua aberto, e o mesmo vale para programas abertos pelo
+  console.
+- **Tarefas** (Ctrl+Shift+Y), no chat e no Code: tudo o que roda em segundo plano (respostas ainda chegando, fluxos
+  com as etapas, rotinas, comandos em segundo plano e downloads dos vídeos das lições), com o tempo, o registro,
+  **Parar** e **Ir para a conversa**. As terminadas ficam 30 minutos. A barra da esquerda mostra "N rodando", e uma
+  tarefa longa que termina mostra um aviso (e uma notificação do Windows quando o Clave está em segundo plano).
+- **Widgets**, no chat e no Code: quando um cartão ajuda mais que texto, o Claude desenha ele na conversa. Oito
+  tipos: produtos e preços (em ordem de preço, com o mais barato marcado e a data em que foram vistos), mapa com
+  pontos e rota, recomendações (séries, filmes, jogos, livros, música...), desenhos e plantas com medidas, gráficos
+  (barras, linhas, pizza, área), comparações, linhas do tempo e listas para marcar. Cada um tem tela cheia e **Copiar
+  como texto**, e desenhos e gráficos baixam em PNG ou SVG. Eles voltam quando você reabre a conversa e vão junto na
+  exportação em Markdown. Configurações > Recursos desliga.
+- **Fotos só com clique**: fotos de produto e capas vêm de outros sites, então só carregam quando você clica em
+  **Mostrar imagens** (o botão diz de quais sites), porque uma página poderia usar o endereço de uma foto para levar
+  dados da conversa para fora. Configurações > Recursos muda isso. As imagens passam pelo Clave: só endereço https
+  público, até 5 MB, nunca SVG. **Mapas** carregam na hora: vêm do OpenStreetMap pelo próprio Clave, seguindo as
+  regras de uso dele (cada pedaço de mapa fica guardado pelo menos 7 dias, e endereço é procurado no máximo uma vez
+  por segundo), e o Clave diz onde cada endereço caiu e quais ficaram de fora.
+- **23 lições novas**, em cinco trilhas novas: **Economizar crédito** (para onde vai o seu crédito, o modelo certo
+  pelo menor preço, raciocínio, conversas enxutas, o modo Code sem desperdício, automatizar sem pagar a IA toda vez,
+  acompanhar e travar o gasto), **A mesa do Code** (o painel, o console, o navegador, tarefas em segundo plano e
+  servidores locais, um site do zero até o navegador), **Respostas visuais** (widgets, comparar produtos e preços,
+  mapas e roteiros, plantas, desenhos e gráficos), **Usar com segurança** (quando uma página ou arquivo tenta dar
+  ordens ao Claude, o que nunca colar, desfazer, backup e Git) e **Receitas por área** (estudar, escritório, pequeno
+  negócio, casa). O glossário ganhou as palavras novas (widget, console, segundo plano, servidor local, Lixeira...).
+
+**Mudou**
+
+- **O Haiku 5.5 é o padrão para todo mundo**, inclusive para quem já usava: as conversas novas começam no modelo
+  mais barato. Uma vez, depois de atualizar, o Clave mostra o modelo que você usava antes, com **Manter o Haiku** e
+  **Voltar para o de antes**. As conversas que já existem continuam no modelo delas, e o conselheiro de modelo
+  continua sugerindo um mais forte quando a tarefa pede. Rotinas novas também começam no Haiku.
+- **Os vídeos das lições baixam sozinhos**, em segundo plano e só no idioma do app (uns 28 MB), então a lição já
+  abre com o vídeo pronto e toca do seu computador. Eles continuam fora do download do Clave. O download aparece em
+  Tarefas e dá para parar por lá; Configurações > Atualizações e sobre desliga (aí a lição baixa o vídeo quando você
+  dá play).
+- **A prévia de HTML e SVG** agora é a aba **Prévia** do painel lateral.
+- **Apagar uma conversa** para o que roda por ela (a resposta ainda chegando, os fluxos e os comandos em segundo
+  plano dela) em vez de pedir que você pare a resposta antes.
+- **Fechar o Clave** primeiro pede ao servidor que termine sozinho (por até 3 segundos), então programas com janela
+  que o console ou um comando em segundo plano abriram continuam abertos.
+- **Interface mais suave**: janelas, menus e avisos saem com uma animação curta em vez de sumir, os botões cedem ao
+  clique, a barra da esquerda desliza ao abrir e fechar, rolagens longas deslizam e a barra do topo da conversa se
+  ajeita numa janela estreita em vez de transbordar. Com as animações do Windows desligadas, tudo fica parado.
+- **Em monitor bem largo** (ultrawide), o painel lateral começa mais largo (até 1200 px), os cartões dos widgets
+  ganham espaço fora da coluna do texto, e Aprender, Projetos, Fluxos, Plugins e Rotinas mostram mais cartões por
+  linha. Em 1440 px nada muda.
+- **No cartão do site do navegador**, o **Permitir** já libera o site até o fim da tarefa, como a pergunta diz:
+  ler a página logo depois de abrir não pergunta de novo.
+
+**Corrigido**
+
+- Um comando que deixava um processo escondido para trás, ainda segurando a saída (um servidor local aberto de dentro
+  do comando), deixava ele rodando depois da resposta, sem nada que o parasse. Agora o Clave fecha esse processo,
+  avisa no resultado e indica ao Claude a opção de segundo plano. Uma janela que o comando abriu (o Bloco de Notas, um
+  editor) continua aberta.
+- Um vídeo de lição cujo download caía no meio podia ficar guardado como se estivesse inteiro; agora é erro com
+  **Tentar de novo**, e qualquer outra falha de rede mostra uma mensagem legível.
+- Configurações > Dados e backup agora diz o que o backup leva de verdade: as rotinas vão junto; a memória, os anexos
+  e a chave não.
+- A skill "automação sem IA" do plugin de vendas contava uma rotina conferindo a cada 15 minutos, mas rotina roda no
+  máximo uma vez por hora; a comparação agora usa isso.
+- Reabrir uma conversa que ainda estava respondendo ou esperando o seu OK mostrava o texto da resposta duas vezes.
+- Na primeira abertura, o tour e o cartão do modelo novo abriam um por cima do outro. Agora o tour vem primeiro e o
+  cartão aparece quando ele fecha, e um tour nunca abre por cima de uma janela.
+- Numa janela estreita, as páginas Aprender, a lição e Configurações não tinham botão para abrir a barra da esquerda,
+  e uma faixa escura aparecia na borda esquerda da janela. O botão de enviar caía sozinho numa segunda linha.
+- Configurações: as descrições de **Sair da conta** e **Desinstalar** eram cortadas com "...", os botões que levam a
+  outra página apareciam sublinhados, **Abrir as regras de permissão** se esticava pela coluna inteira, a caixa de
+  arquivos protegidos cortava a última linha ao meio e os campos de número ocupavam a largura toda.
+- No tema escuro, o logo da barra da esquerda aparecia dentro de um quadrado mais claro, e o cartão de modelo novo
+  tinha um bloco claro demais.
+
 ## 4.3.0 (15/10/2026)
 
 **Novo**

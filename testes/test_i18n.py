@@ -62,9 +62,12 @@ class TestCatalogos(unittest.TestCase):
     def test_descricoes_das_ferramentas(self):
         import execucao
         import fluxos
+        import navegador
+        import widgets
         from ferramentas import code as fcode, github as fgithub, planilhas as fplanilhas
         defs = (fcode.definicoes(com_skills=True) + fplanilhas.definicoes() + fgithub.definicoes(escrita=True)
-                + [execucao.PLANO, execucao.SUGERIR, fluxos.DEFINICAO])
+                + [execucao.PLANO, execucao.SUGERIR, execucao.PERGUNTAR, fluxos.DEFINICAO]
+                + navegador.definicoes_para_teste() + widgets.definicoes_para_teste())
         cat = catalogo(RAIZ / "servidor" / "i18n" / "en")
         falta = []
 

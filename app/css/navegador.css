@@ -1,0 +1,107 @@
+/* Aba Navegador: o navegador que a pessoa e o Claude usam dentro do Code.
+   A página em si é uma vista nativa do Electron desenhada por cima de .navegador-vista; o que está aqui é a barra,
+   as telas de começo e de erro, a faixa "o Claude está usando" e a foto que fica no lugar da página quando algo do
+   app aparece por cima. Cores só das variáveis do base.css (funcionam no tema escuro). */
+
+.aba-navegador { position: relative; }
+
+/* ---------- barra: voltar, avançar, recarregar, endereço, Locais, abrir fora ---------- */
+.navegador-barra { gap: 2px; padding: 6px var(--e2) 6px var(--e1); }
+.navegador-barra .icone-botao:disabled { opacity: .38; cursor: default; background: transparent; }
+.navegador-endereco {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; height: 32px; margin: 0 var(--e1); padding: 0 10px;
+  border: 1px solid var(--linha); border-radius: 99px; background: var(--papel);
+  transition: border-color var(--rapido), box-shadow var(--rapido);
+}
+.navegador-endereco:focus-within { border-color: var(--acao); box-shadow: 0 0 0 3px var(--acao-suave); }
+.navegador-endereco-icone { display: grid; place-items: center; color: var(--texto-4); }
+.navegador-endereco-icone svg { width: 14px; height: 14px; }
+.navegador-endereco-campo {
+  flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: none; background: transparent;
+  color: var(--texto-2); font-family: var(--mono); font-size: 12.5px;
+}
+.navegador-endereco-campo:focus { color: var(--texto); }
+.navegador-endereco-campo::placeholder { color: var(--texto-4); font-family: var(--sans); font-size: 13px; }
+.navegador-botao-locais { gap: 6px; padding: 0 10px; }
+.navegador-botao-locais svg { width: 15px; height: 15px; }
+
+/* ---------- carregando: uma linha fina que corre embaixo da barra ---------- */
+.navegador-carga { position: relative; height: 2px; overflow: hidden; background: var(--acao-suave); }
+.navegador-carga::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 34%; background: var(--acao);
+  animation: navegador-carga 1.1s var(--curva) infinite;
+}
+@keyframes navegador-carga { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+/* ---------- o Claude está mexendo ---------- */
+.navegador-claude {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; padding: 7px var(--e3);
+  border-bottom: 1px solid var(--linha); background: var(--acao-suave); color: var(--acao-forte); font-size: 13px;
+  animation: navegador-faixa var(--normal) var(--curva);
+}
+.navegador-claude b { font-weight: 600; }
+.navegador-claude small { color: var(--texto-3); font-size: 12px; }
+.navegador-claude-ponto {
+  align-self: center; width: 8px; height: 8px; border-radius: 50%; background: var(--acao);
+  animation: navegador-pulso 1.4s ease-in-out infinite;
+}
+@keyframes navegador-faixa { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes navegador-pulso { 50% { opacity: .3; } }
+
+/* ---------- a área da página ---------- */
+.navegador-area { position: relative; flex: 1; min-height: 0; background: var(--papel); }
+.navegador-vista, .navegador-foto, .navegador-tela { position: absolute; inset: 0; }
+/* a foto não estica: enquanto a alça do painel é arrastada, ela corta em vez de deformar */
+.navegador-foto { width: 100%; height: 100%; object-fit: cover; object-position: left top; max-width: none; }
+.navegador-tela { overflow: auto; background: var(--papel); }
+.navegador-tela .painel-vazio { min-height: 100%; align-content: center; }
+.aba-navegador.com-claude .navegador-area { box-shadow: inset 0 0 0 2px var(--acao); }
+
+.navegador-inicio-locais, .navegador-sem-janela-locais { width: min(420px, 100%); margin: var(--e2) auto 0; text-align: left; }
+.navegador-inicio-titulo { display: flex; align-items: center; gap: var(--e2); }
+/* o ícone grande da tela vazia (.painel-vazio svg) não vale para os botões pequenos da lista */
+.navegador-inicio-titulo .icone-botao svg { width: 16px; height: 16px; margin: 0; color: inherit; }
+.navegador-inicio-titulo h4 { flex: 1; }
+.navegador-inicio-locais h4, .navegador-sem-janela-locais h4 {
+  margin: 0; padding: 6px 0; font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--texto-3);
+}
+.navegador-locais { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.navegador-local {
+  display: flex; align-items: center; gap: var(--e3); width: 100%; padding: 9px 12px; text-align: left; cursor: pointer;
+  border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel); color: var(--texto);
+  transition: border-color var(--rapido), background var(--rapido);
+}
+.navegador-local:hover { border-color: var(--acao); background: var(--papel-2); }
+.navegador-local.mudo { color: var(--texto-3); }
+.navegador-local-porta {
+  flex: none; min-width: 52px; padding: 3px 7px; border-radius: var(--raio-p); text-align: center;
+  background: var(--acao-suave); color: var(--acao-forte); font-family: var(--mono); font-size: 12.5px; font-weight: 500;
+}
+.navegador-local.mudo .navegador-local-porta { background: var(--papel-3); color: var(--texto-3); }
+.navegador-local-textos { min-width: 0; display: grid; gap: 1px; }
+.navegador-local-textos b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a segunda linha (endereço, programa e "não é uma página") quebra em até duas linhas; o texto inteiro fica na dica */
+.navegador-local-textos small {
+  color: var(--texto-3); font-size: 12px; line-height: 1.4; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+.navegador-locais-vazio { margin: 0; padding: var(--e2) 0; color: var(--texto-3); font-size: 13px; }
+
+.navegador-erro svg { color: var(--erro); }
+.navegador-erro-url { display: grid; gap: 2px; overflow-wrap: anywhere; }
+.navegador-erro-url small { color: var(--texto-4); font-size: 11.5px; }
+.navegador-erro-botoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--e2); }
+.navegador-pedido { word-break: break-all; }
+
+/* os avisos do app passam para a esquerda da página enquanto ela está à vista (senão ficariam atrás dela) */
+body.navegador-a-vista .avisos { right: calc(var(--navegador-reserva, 0px) + 20px); }
+
+@media (max-width: 560px) {
+  .navegador-botao-locais span { display: none; }
+  .navegador-claude small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navegador-carga::after { animation: none; width: 100%; opacity: .6; }
+  .navegador-claude-ponto { animation: none; }
+}

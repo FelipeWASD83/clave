@@ -18,7 +18,11 @@ import { telaPermissoes } from './permissoes.js';
 import { notificar } from './fluxo-ui.js';
 import { tourDaTela } from './tour.js';
 import { apresentarNovidade } from './lancamentos.js';
+import { avisoHaiku } from './aviso-modelo.js';
 import { aviso, el } from './ui.js';
+import { ic } from './icones.js';
+import { iniciarPainel, definirContexto, atalhoDoPainel } from './painel.js';
+import './abas.js';
 
 const principal = document.getElementById('principal');
 let telaAtual = null;
@@ -33,6 +37,7 @@ async function trocarTela() {
   const { a, b, c } = rota();
   telaAtual?.sair?.();
   telaAtual = null;
+  if (a !== 'c' && a !== 'novo' && a !== 'code') definirContexto(null);  // a tela da conversa define o dela
   document.getElementById('app').classList.remove('lateral-aberta');
   try {
     if (a === 'c' && b) telaAtual = await abrirConversa(principal, b);
@@ -60,6 +65,7 @@ async function trocarTela() {
 }
 
 function atalhos(e) {
+  if (atalhoDoPainel(e)) { e.preventDefault(); return; }
   const ctrl = e.ctrlKey || e.metaKey;
   if (ctrl && e.shiftKey && (e.key === 'O' || e.key === 'o')) { e.preventDefault(); location.hash = '#/novo'; }
   else if (ctrl && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); document.querySelector('.busca-lateral input')?.focus(); }
@@ -85,6 +91,11 @@ async function iniciar() {
     return;
   }
   montarLateral(document.getElementById('lateral'));
+  // as páginas não têm o .topo da conversa: este botão abre a barra nelas quando ela está escondida (o CSS decide
+  // quando ele aparece; na conversa, o do .topo serve)
+  principal.before(el('button', { class: 'icone-botao abrir-lateral-pagina', type: 'button', 'aria-label': t('Abrir a barra lateral'),
+    title: t('Abrir a barra lateral (Ctrl+B)'), html: ic('menu'), onclick: alternarLateral }));
+  iniciarPainel();
   await carregarConversas().catch(() => {});
   window.addEventListener('hashchange', trocarTela);
   document.addEventListener('keydown', atalhos);
@@ -92,7 +103,7 @@ async function iniciar() {
   if (!estado.info.cfg.configurado) boasVindas();
   else {
     if (estado.info.cfg.checar_atualizacoes && !estado.info.dev) checarAtualizacao({ silencioso: true });
-    apresentarNovidade();
+    avisoHaiku().then(() => apresentarNovidade());
   }
   // quem acabou de chegar vê o modelo novo depois do tour das boas-vindas
   addEventListener('clave:tour-fechou', () => apresentarNovidade());

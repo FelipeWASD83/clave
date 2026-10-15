@@ -27,6 +27,7 @@ const P = {
   faisca: '<path d="M12 3l2.2 6.3L20.5 12l-6.3 2.2L12 20.5l-2.2-6.3L3.5 12l6.3-2.7z"/>',
   escudo: '<path d="M12 3l7.5 3v5.5c0 4.7-3.2 8-7.5 9.5-4.3-1.5-7.5-4.8-7.5-9.5V6z"/>',
   arquivo: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  arquivos: '<path d="M15 3H9a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7z"/><path d="M15 3v4h4"/><path d="M4 8v11a2 2 0 0 0 2 2h8"/>',
   baixar: '<path d="M12 4v11M6.5 10l5.5 5.5 5.5-5.5M4 20h16"/>',
   subir: '<path d="M12 20V9M6.5 14l5.5-5.5 5.5 5.5M4 4h16"/>',
   olho: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
@@ -34,6 +35,9 @@ const P = {
   externo: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   painel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+  painel_direito: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
+  // a aba Tarefas: uma linha de atividade (o círculo meio cheio de "progresso" parecia o botão de tema)
+  tarefas: '<path d="M3 12h3.5l2.5-6.5 5 13 2.5-6.5H21"/>',
   alerta: '<path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.3"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.3"/>',
   circulo: '<circle cx="12" cy="12" r="8"/>',

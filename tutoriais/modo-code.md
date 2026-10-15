@@ -16,6 +16,10 @@ No chat, o Claude só conversa. No **modo Code**, ele vira um [agente](#/aprende
 
 Ele vai mostrando cada passo: "Olhou a pasta", "Leu planilha.xlsx", "Rodou: renomear fotos". Clique em qualquer passo para ver os detalhes.
 
+## O painel ao lado
+
+Os botões no topo da conversa abrem um painel do lado direito, com abas: **Arquivos** (a pasta de trabalho; clicar num arquivo abre o **Visualizador**), **Console** (o PowerShell dentro do Clave), **Navegador** (você e o Claude na mesma página) e **Tarefas** (o que está rodando em segundo plano). **Ctrl+J** abre e fecha o painel, e dá para arrastar a borda dele para mudar a largura. Tudo em [O painel do Code](#/aprender/painel-do-code).
+
 ## Permissões: você manda
 
 O botão do escudo na caixa de texto escolhe quanta liberdade ele tem:
@@ -25,7 +29,7 @@ O botão do escudo na caixa de texto escolhe quanta liberdade ele tem:
 | **Perguntar** (padrão) | Lê sozinho; pede o seu OK para mudar arquivos e rodar comandos. |
 | **Aceitar edições** | Muda arquivos sozinho; pede OK para comandos. |
 | **Plano** | Só lê e apresenta um plano num cartão. Você aprova (e escolhe como ele executa) ou pede outro. Ótimo para começar. |
-| **Livre** | Faz tudo sozinho, menos apagar ou publicar coisas, que sempre pedem OK. |
+| **Livre** | Faz tudo sozinho, menos apagar ou publicar coisas, que sempre pedem OK. No navegador do Code, usa qualquer site, clica e digita sem perguntar. |
 
 Quando ele pede permissão, aparece um cartão mostrando **exatamente** o que vai fazer: o comando, ou o antes e depois do arquivo (as linhas vermelhas saem, as verdes entram). Você pode **Permitir** ou **Recusar** dizendo o que prefere. Em **Mais opções** dá para liberar aquilo pelo resto da tarefa ou salvar uma regra ("sempre nesta pasta" ou "sempre em todo o Clave"), para ele não perguntar de novo. Veja a lição de [permissões](#/aprender/permissoes).
 
@@ -43,15 +47,15 @@ Isso vale em qualquer modo. Se preferir que ele vá direto, desligue em **Config
 
 ## Desfazer
 
-Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou editou naquela resposta voltam a ser como eram. O que um **comando** fez (mover, renomear, apagar, rodar um script) não volta com o botão: por isso o card do comando mostra o que vai rodar antes, e os que apagam ou mexem fora da pasta sempre pedem OK. Para uma mudança grande feita por comando, peça antes uma lista do que vai ser mexido, ou uma cópia.
+Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou editou naquela resposta voltam a ser como eram. O que um **comando** fez (mover, renomear, apagar, rodar um script) não volta com o botão: por isso o card do comando mostra o que vai rodar antes, e os que apagam ou mexem fora da pasta sempre pedem OK. Para uma mudança grande feita por comando, peça antes uma lista do que vai ser mexido, ou uma cópia. Mais jeitos de voltar atrás em [Desfazer, backup e Git: a sua rede de segurança](#/aprender/rede-de-seguranca).
 
 ## Arquivos protegidos
 
-Em Configurações > Modo Code fica a lista de arquivos protegidos, como senhas e chaves (`.env`, `*.key`): as ferramentas de arquivo **nunca** leem nem mudam esses arquivos, e um comando que cite um deles sempre pede o seu OK. Ponha ali qualquer coisa sensível.
+Em Configurações > Modo Code fica a lista **Arquivos e pastas protegidos**, como senhas e chaves (`.env`, `*.key`): as ferramentas de arquivo **nunca** leem nem mudam esses arquivos, e um comando que cite um deles sempre pede o seu OK. Ponha ali qualquer coisa sensível.
 
 ## Teto por tarefa
 
-Uma tarefa grande pode fazer muitas chamadas. O **teto por tarefa** (padrão US$ 2) pausa a tarefa quando ela gasta isso; você decide se continua mandando "continue".
+Uma tarefa grande pode fazer muitas chamadas. O **teto por tarefa** (padrão US$ 2) pausa a tarefa quando ela gasta isso; você decide se continua mandando "continue". Para gastar menos no Code, veja [O modo Code sem desperdício](#/aprender/code-sem-desperdicio).
 
 ## Tarefa grande? Fluxo
 

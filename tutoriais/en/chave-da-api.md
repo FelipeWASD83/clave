@@ -28,7 +28,7 @@ Clave checks the key with Anthropic before saving it, and stores it **encrypted,
 ## Golden rules for the key
 
 - **Never show the key to anyone** and never paste it into websites or chats. Whoever has the key spends your credit.
-- If you think it leaked, delete it in the Console (API Keys) and create another.
+- If you think it leaked, delete it in the Console (API Keys) and create another. The step by step, and what else never to paste, is in [Passwords, keys and personal data](#/aprender/segredos-e-dados).
 - You don't need to keep the key anywhere else: if you lose it, create a new one.
 
 ## So you don't spend more than you want
@@ -45,6 +45,8 @@ Two important details:
 - Use **Haiku 5.5** for simple questions: it costs 40 times less than Opus.
 - Reasoning at **Low** or **Medium** handles most things.
 - Changed the subject? **Start a new chat**: a long conversation makes every answer more expensive.
+
+The **5. Saving credit** track has the rest, starting with [Where your credit goes](#/aprender/para-onde-vai-o-credito).
 
 ```experimentar
 Explain to me, with example numbers, how much it would cost to use AI to answer 30 emails a day for a month.

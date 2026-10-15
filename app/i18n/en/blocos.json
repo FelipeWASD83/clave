@@ -69,5 +69,10 @@
   "Olhou a caixa de entrada": "Checked the inbox",
   "Enviou um e-mail para": "Sent an e-mail to",
   "Salvou o anexo": "Saved the attachment",
-  "Fez uma pergunta": "Asked a question"
+  "Fez uma pergunta": "Asked a question",
+  "(em segundo plano)": "(in the background)",
+  "Olhou um comando em segundo plano": "Checked a background command",
+  "Parou um comando em segundo plano": "Stopped a background command",
+  "Mostrou um widget": "Showed a widget",
+  "Abrir no Visualizador": "Open in the Viewer"
 }

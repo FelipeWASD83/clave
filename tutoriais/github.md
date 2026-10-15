@@ -32,6 +32,12 @@ O [GitHub](#/aprender/glossario/github) é um site que guarda repositórios Git 
 
 Repositórios podem ser **privados** (só você vê) ou **públicos**. **Nunca** envie senhas, chaves ou dados pessoais para o GitHub, nem em repositório privado.
 
+Para isso existe o [`.gitignore`](#/aprender/glossario/gitignore): um arquivo de texto na pasta com a lista do que o Git nunca deve guardar (por exemplo, `.env` e `*.key`). O que está nele não entra nas versões e não vai para o GitHub. O que nunca deve sair do seu computador está em [Senhas, chaves e dados pessoais](#/aprender/segredos-e-dados).
+
+```experimentar-code
+Confira se esta pasta tem um .gitignore que deixa de fora senhas, chaves e arquivos com dados pessoais. Se faltar algo, me mostre o que você colocaria antes de mudar.
+```
+
 ## Ligar o GitHub ao Clave
 
 Em **Configurações > GitHub**:

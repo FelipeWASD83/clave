@@ -3,6 +3,7 @@ import { ic } from './icones.js';
 import { el, esc } from './ui.js';
 import { renderizar } from './markdown.js';
 import { t } from './i18n.js';
+import { widgetPorId, iconeDaFerramenta } from './widgets.js';
 
 // cada entrada é uma função, então o t() roda na hora de desenhar (o catálogo já carregou)
 const NOMES_FERRAMENTA = {
@@ -12,7 +13,9 @@ const NOMES_FERRAMENTA = {
   achar_arquivos: (e) => ['busca', t('Procurou arquivos'), e.padrao],
   escrever_arquivo: (e) => ['lapis', t('Escreveu'), e.caminho],
   editar_arquivo: (e) => ['lapis', t('Editou'), e.caminho],
-  rodar_comando: (e) => ['terminal', e.descricao || t('Rodou um comando'), e.comando],
+  rodar_comando: (e) => ['terminal', e.descricao || t('Rodou um comando'), e.em_segundo_plano ? `${e.comando} ${t('(em segundo plano)')}` : e.comando],
+  ver_comando: (e) => ['terminal', t('Olhou um comando em segundo plano'), e.id],
+  parar_comando: (e) => ['parar', t('Parou um comando em segundo plano'), e.id],
   atualizar_tarefas: () => ['feito', t('Atualizou a lista de passos'), ''],
   usar_skill: (e) => ['faisca', t('Usou a skill'), e.nome],
   mostrar_arquivo: (e) => ['imagem', t('Mostrou'), e.caminho],
@@ -45,7 +48,28 @@ const NOMES_FERRAMENTA = {
   apresentar_plano: () => ['lista', t('Apresentou o plano'), ''],
   perguntar: () => ['chat', t('Fez uma pergunta'), ''],
   sugerir_conversa: (e) => ['mais_tarefa', t('Sugeriu outra conversa'), e.titulo || ''],
+  // o ícone do tipo de widget e sem o título: o cartão logo abaixo já mostra o título
+  mostrar_widget: (e) => [iconeDaFerramenta(e.tipo), t('Mostrou um widget'), ''],
+  navegador_abrir: (e) => ['globo', t('Abriu no navegador'), e.url],
+  navegador_ler: () => ['globo', t('Leu a página do navegador'), ''],
+  navegador_print: () => ['imagem', t('Tirou um print do navegador'), ''],
+  navegador_clicar: (e) => ['globo', t('Clicou na página'), e.descricao || (e.ref != null ? `[${e.ref}]` : '')],
+  navegador_digitar: (e) => ['globo', t('Digitou na página'), e.ref != null ? `[${e.ref}] "${String(e.texto || '').slice(0, 60)}"` : ''],
+  navegador_rolar: (e) => ['globo', t('Rolou a página'), { baixo: t('para baixo'), cima: t('para cima'), topo: t('até o topo'), fim: t('até o fim') }[e.direcao] || ''],
+  navegador_voltar: () => ['globo', t('Voltou uma página no navegador'), ''],
 };
+
+// no Code, o caminho destes blocos abre o arquivo no Visualizador do painel
+const ABREM_ARQUIVO = new Set(['ler_arquivo', 'escrever_arquivo', 'editar_arquivo', 'mostrar_arquivo', 'word_ler', 'word_criar', 'word_alterar', 'excel_ler', 'excel_alterar']);
+function alvoDoBloco(nome, alvo, entrada) {
+  if (!alvo) return null;
+  const texto = String(alvo).slice(0, 200);
+  const caminho = entrada?.caminho;
+  if (!ABREM_ARQUIVO.has(nome) || !caminho) return el('code', { texto });
+  return el('code', { class: 'caminho-clicavel', texto, title: t('Abrir no Visualizador'), role: 'link', tabindex: '0',
+    onclick: (ev) => { ev.preventDefault(); ev.stopPropagation(); import('./arquivos.js').then((m) => m.abrirArquivo(caminho)); },
+    onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); import('./arquivos.js').then((m) => m.abrirArquivo(caminho)); } } });
+}
 
 export function descreverFerramenta(nome, entrada = {}) {
   const f = NOMES_FERRAMENTA[nome];
@@ -107,7 +131,7 @@ export function blocoPensamento(texto, { aberto = false, ativo = false } = {}) {
 // ---------- ferramentas ----------
 export function blocoFerramenta(bloco) {
   const [icone, verbo, alvo] = descreverFerramenta(bloco.name, bloco.input);
-  const desc = el('span', { class: 'desc' }, verbo + (alvo ? ' ' : ''), alvo ? el('code', { texto: String(alvo).slice(0, 200) }) : null);
+  const desc = el('span', { class: 'desc' }, verbo + (alvo ? ' ' : ''), alvoDoBloco(bloco.name, alvo, bloco.input));
   const detalhe = el('div', { class: 'detalhe' });
   const det = el('details', { class: 'ferramenta', dados: { toolId: bloco.id || '', nome: bloco.name || '' } },
     el('summary', {}, el('span', { class: 'ic', html: ic(icone) }), desc, el('span', { class: 'meta estado-ferramenta' })),
@@ -115,13 +139,18 @@ export function blocoFerramenta(bloco) {
   det._detalhe = detalhe;
   // o arquivo que o Claude mostrou fica fora do bloco recolhido, sempre à vista
   if (bloco.name === 'mostrar_arquivo') det.companheiro = el('div', { class: 'arquivo-mostrado-vaga' });
+  // o widget também fica fora do bloco recolhido (o id deixa a tela guardar o mapa vivo ao redesenhar a conversa)
+  if (bloco.name === 'mostrar_widget') det.companheiro = el('div', { class: 'widget-vaga', dados: { widget: bloco.id || '' } });
   det.definirEntrada = (entrada) => {
     bloco.input = entrada || bloco.input;
     detalhe.querySelector('.bloco-entrada')?.remove();
     const pre = entradaLegivel(bloco.name, entrada || {});
     if (pre) detalhe.prepend(el('div', { class: 'bloco-entrada' }, el('div', { class: 'rotulo-detalhe', texto: t('O que ele pediu') }), pre));
-    const [, v, a] = descreverFerramenta(bloco.name, entrada);
-    desc.replaceChildren(v + (a ? ' ' : ''), a ? el('code', { texto: String(a).slice(0, 200) }) : '');
+    const [icone, v, a] = descreverFerramenta(bloco.name, entrada);
+    desc.replaceChildren(v + (a ? ' ' : ''), alvoDoBloco(bloco.name, a, bloco.input) || '');
+    // ao vivo o bloco nasce sem entrada: o ícone que depende dela (o tipo do widget, por exemplo) acerta aqui
+    const icEl = det.querySelector(':scope > summary > .ic');
+    if (icEl && icone) icEl.innerHTML = ic(icone);
   };
   det.definirResultado = (texto, erro = false) => {
     detalhe.querySelector('.bloco-resultado')?.remove();
@@ -129,10 +158,12 @@ export function blocoFerramenta(bloco) {
     det.classList.remove('rodando');
     if (texto) detalhe.append(el('div', { class: 'bloco-resultado' }, el('div', { class: 'rotulo-detalhe', texto: erro ? t('Erro') : t('Resultado') }), el('pre', { texto: String(texto).slice(0, 6000) })));
     det.querySelector('.arquivo-gerado')?.remove();
-    if (det.companheiro) {
+    if (det.companheiro && bloco.name === 'mostrar_arquivo') {
       const m = !erro && /\(id ([0-9a-f]{16})\)/.exec(String(texto || ''));
       det.companheiro.replaceChildren(m ? previaArquivo(m[1], String(bloco.input?.caminho || '').split(/[\\/]/).pop() || 'arquivo', bloco.input?.legenda) : '');
     }
+    // ao vivo o widget já chegou pelo evento "widget"; reabrindo a conversa, ele vem do servidor
+    if (det.companheiro && bloco.name === 'mostrar_widget' && !erro && bloco.id && !det.companheiro.firstChild) det.companheiro.replaceChildren(widgetPorId(bloco.id));
     const gerado = !erro && /^planilha_(criar|pdf)$/.test(bloco.name) && /:\s*([^\n]+?)\s*\(id ([0-9a-f]{16})\)/.exec(String(texto || ''));
     if (gerado) det.append(cartaoGerado(gerado[2], gerado[1]));
   };

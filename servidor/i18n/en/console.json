@@ -1,0 +1,15 @@
+{
+  "A pasta {pasta} não existe mais. Escolha outra pasta.": "The folder {pasta} no longer exists. Choose another folder.",
+  "Console não encontrado. Ele pode ter sido fechado.": "Console not found. It may have been closed.",
+  "Escolha uma pasta para abrir o console.": "Choose a folder to open the console in.",
+  "Este console já terminou. Abra de novo para continuar.": "This console has already ended. Open it again to continue.",
+  "Já tem {n} consoles abertos. Feche um para abrir outro.": "{n} consoles are already open. Close one to open another.",
+  "Não achei o PowerShell neste computador.": "PowerShell was not found on this computer.",
+  "Não deu para mudar o tamanho do console.": "Could not resize the console.",
+  "Não foi possível abrir o PowerShell: {erro}": "Could not open PowerShell: {erro}",
+  "O console só funciona no Windows.": "The console only works on Windows.",
+  "Pedido inválido.": "Invalid request.",
+  "PowerShell {numero}": "PowerShell {numero}",
+  "Tamanho de console inválido.": "Invalid console size.",
+  "Texto grande demais para mandar ao console de uma vez.": "Text too long to send to the console at once."
+}

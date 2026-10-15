@@ -320,7 +320,13 @@ const SECOES = {
         liga('troca_se_recusar', t('Trocar de modelo se ele recusar'), t('Se o filtro de segurança recusar um pedido normal por engano, a Anthropic tenta de novo com outro modelo indicado por ela. Não vale para o Haiku.')),
         el('div', { class: 'campo' }, el('span', { texto: t('Recursos desligados por erro') }),
           el('small', { texto: t('Quando a API recusa um destes recursos para um modelo, o Clave desliga só aquele recurso e segue. Se a Anthropic passar a aceitar, religue aqui.') }),
-          el('button', { class: 'botao pequeno', type: 'button', texto: t('Religar tudo'), style: 'justify-self:start', onclick: async () => { await api('/compat', { metodo: 'DELETE' }); aviso(t('Recursos religados.')); } }))));
+          el('button', { class: 'botao pequeno', type: 'button', texto: t('Religar tudo'), style: 'justify-self:start', onclick: async () => { await api('/compat', { metodo: 'DELETE' }); aviso(t('Recursos religados.')); } }))),
+      secao(t('Widgets'), t('Cartões que o Claude desenha na conversa quando ajudam mais que texto: produtos e preços, mapas, recomendações, desenhos e plantas, gráficos, comparações, linhas do tempo e listas de tarefas.'),
+        liga('widgets_ligados', t('Deixar o Claude mostrar widgets'), t('Vale para as conversas novas e as respostas seguintes. Os mapas usam o OpenStreetMap pela internet.')),
+        campo(t('Fotos de sites de fora'), selecao('widgets_imagens', [
+          ['clicar', t('Só carregar quando eu clicar (recomendado)')],
+          ['sempre', t('Carregar sempre')]]),
+        t('Fotos de produtos e capas vêm de outros sites. Uma página maliciosa poderia usar o endereço de uma foto para tirar dados da conversa; esperar o clique evita isso.'))));
   },
 
   async limite(alvo) {
@@ -338,7 +344,8 @@ const SECOES = {
   },
 
   async code(alvo) {
-    const prot = el('textarea', { class: 'area mono', style: 'font-size:13px;min-height:160px' });
+    // a caixa cresce até mostrar a lista inteira (16 linhas no máximo, depois rola sem cortar uma linha ao meio)
+    const prot = el('textarea', { class: 'area mono', style: 'font-size:13px;field-sizing:content;min-height:calc(6 * 1.5em + 20px);max-height:calc(16 * 1.5em + 20px)' });
     prot.value = (cfg().protegidos || []).join('\n');
     prot.addEventListener('change', () => salvar({ protegidos: prot.value.split('\n').map((x) => x.trim()).filter(Boolean) }, t('Salvo.')));
     alvo.replaceChildren(
@@ -350,6 +357,16 @@ const SECOES = {
           ['livre', t('Livre: faz tudo (menos apagar ou publicar)')]])),
         liga('pedir_ok_plano', t('Pedir OK antes de tarefas grandes'), t('Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer "pode ir", em qualquer modo. Vale para as conversas novas.')),
         liga('carregar_claude_md', t('Ler as regras da pasta (CLAUDE.md e AGENTS.md)'), t('Como no Claude Code: as regras escritas na pasta e nas pastas acima dela valem para o Claude.')),
+        liga('navegador_ligado', t('Deixar o Claude usar o navegador do Code'), t('Ele abre páginas, lê, tira print e, com o seu OK, clica e digita. Fora do modo Livre, você libera cada site novo uma vez por tarefa (o seu computador, localhost, não pergunta). Senha e cartão quem digita é você. Só funciona na janela do Clave.')),
+        el('div', { class: 'campo' }, el('span', { texto: t('Dados do navegador') }),
+          el('small', { texto: t('Apaga cookies, logins, armazenamento e cache do navegador do Code. Os sites vão pedir login de novo. "Sair da conta" também apaga.') }),
+          el('button', { class: 'botao pequeno', type: 'button', style: 'justify-self:start', texto: t('Apagar os dados do navegador'), onclick: async (e) => {
+            e.currentTarget.disabled = true;
+            try {
+              const r = await api('/navegador/limpar', { metodo: 'POST' });
+              aviso(r.ok ? t('Dados do navegador apagados.') : t('O navegador só existe na janela do Clave.'), r.ok ? '' : 'erro');
+            } catch (erro) { aviso(erro.message, 'erro'); } finally { e.currentTarget.disabled = false; }
+          } })),
         campo(t('Arquivos e pastas protegidos'), prot, t('Um por linha (ex.: .env, *.key, segredos/**). As ferramentas de arquivo nunca leem nem mudam o que combina com estes padrões, e um comando que cite um deles sempre pede o seu OK.'))),
       secao(t('Regras de permissão'), t('Para liberar ou bloquear ações específicas (um comando, uma pasta, um site), sem mudar o modo inteiro. Mesmo formato do Claude Code.'),
         el('a', { class: 'botao', href: '#/permissoes', html: `${ic('escudo')}${t('Abrir as regras de permissão')}` })));
@@ -515,22 +532,21 @@ const SECOES = {
             aviso(t('Importado: {conversas} conversa(s), {mensagens} mensagem(ns).', { conversas: r.importado.conversas, mensagens: r.importado.mensagens }));
           } catch (e) { aviso(e.message, 'erro'); }
         } })),
-      el('p', { class: 'ajuda', texto: t('O backup leva as conversas, os projetos e o histórico de gasto. Os arquivos anexados e a chave não vão junto.') })));
+      el('p', { class: 'ajuda', texto: t('O backup leva as conversas, os projetos, as rotinas e o histórico de gasto. Os arquivos anexados, a memória e a chave não vão junto.') })));
   },
 
   async sobre(alvo) {
     const info = estado.info;
-    const caixaAtual = el('div', { class: 'ajuda', texto: '' });
     alvo.replaceChildren(
       secao(t('Atualizações'), null,
-        el('div', { class: 'item-lista' }, el('span', { html: ic('subir') }), el('span', { class: 'textos' }, el('b', { texto: t('Versão {versao}', { versao: info.versao }) }),
+        el('div', { class: 'item-lista item-acao' }, el('span', { html: ic('subir') }), el('span', { class: 'textos' }, el('b', { texto: t('Versão {versao}', { versao: info.versao }) }),
           el('small', { texto: info.dev ? t('Cópia de desenvolvimento (atualize com git pull)') : (cfg().ultima_checagem ? t('Última verificação: {quando}', { quando: cfg().ultima_checagem }) : t('Ainda não verificou')) })),
           el('button', { class: 'botao pequeno', type: 'button', texto: t('Procurar atualização'), onclick: async () => { const r = await checarAtualizacao({ forcar: true }); if (r?.nova) abrirAtualizacao(); } })),
-        caixaAtual,
-        liga('checar_atualizacoes', t('Procurar atualização sozinho'), t('Uma vez por dia, ao abrir. Nunca instala sem você clicar.'))),
+        liga('checar_atualizacoes', t('Procurar atualização sozinho'), t('Uma vez por dia, ao abrir. Nunca instala sem você clicar.')),
+        liga('baixar_videos', t('Baixar os vídeos das lições sozinho'), t('Em segundo plano, só os do idioma do app (uns 30 MB). Assim a lição já abre com o vídeo pronto. Desligado, ele baixa quando você der play.'))),
       secao(t('Sobre o Clave'), null,
         el('p', { style: 'margin:0', texto: t('O Clave é um app independente para usar o Claude pela API da Anthropic, com a sua chave. Ele não é um produto da Anthropic nem tem ligação com ela. "Claude" é marca da Anthropic.') }),
-        el('p', { class: 'ajuda', texto: t('Feito com: marked, DOMPurify, highlight.js, KaTeX, fontes Source Serif 4 e IBM Plex, o SDK oficial da Anthropic para Python e o Electron. As licenças estão na pasta app/vendor.') }),
+        el('p', { class: 'ajuda', texto: t('Feito com: marked, DOMPurify, highlight.js, KaTeX, xterm.js, Leaflet, fontes Source Serif 4 e IBM Plex, o SDK oficial da Anthropic para Python e o Electron. Mapas do OpenStreetMap (© colaboradores do OpenStreetMap). As licenças estão na pasta app/vendor.') }),
         el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
           el('a', { class: 'botao', href: '#/aprender', texto: t('Abrir as lições') }),
           el('button', { class: 'botao perigo', type: 'button', html: `${ic('sair')}${t('Fechar o Clave')}`, onclick: async () => {
@@ -538,11 +554,11 @@ const SECOES = {
             if (window.clave?.sair) window.clave.sair(); else { await api('/sair', { metodo: 'POST' }).catch(() => {}); document.body.innerHTML = `<p style="padding:40px;font-family:sans-serif">${t('O Clave foi fechado. Pode fechar esta janela.')}</p>`; }
           } }))),
       secao(t('Sair e desinstalar'), null,
-        el('div', { class: 'item-lista' }, el('span', { html: ic('chave') }),
+        el('div', { class: 'item-lista item-acao' }, el('span', { html: ic('chave') }),
           el('span', { class: 'textos' }, el('b', { texto: t('Sair da conta') }),
             el('small', { texto: t('Apaga a chave e as senhas, volta tudo ao padrão e mostra a apresentação e os tours de novo. As conversas ficam.') })),
           el('button', { class: 'botao pequeno', type: 'button', texto: t('Sair da conta'), onclick: sairDaConta })),
-        el('div', { class: 'item-lista' }, el('span', { html: ic('lixo') }),
+        el('div', { class: 'item-lista item-acao' }, el('span', { html: ic('lixo') }),
           el('span', { class: 'textos' }, el('b', { texto: t('Desinstalar o Clave') }),
             el('small', { texto: info.dev ? t('Esta é uma cópia de desenvolvimento: apague a pasta à mão, se quiser.') : t('Tira o Clave do computador: a pasta, os atalhos e as tarefas das rotinas.') })),
           el('button', { class: 'botao pequeno perigo', type: 'button', texto: t('Desinstalar'), disabled: !!info.dev, onclick: desinstalar }))));

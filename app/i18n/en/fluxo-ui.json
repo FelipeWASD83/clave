@@ -118,5 +118,9 @@
   "Converter para .xlsx": "Convert to .xlsx",
   "Usar o Excel": "Use Excel",
   "Abrir no Excel": "Open in Excel",
-  "Criar a planilha": "Create the spreadsheet"
+  "Criar a planilha": "Create the spreadsheet",
+  "Deixar rodando em segundo plano": "Leave running in the background",
+  "Tirar um print da página": "Take a screenshot of the page",
+  "Rolar a página": "Scroll the page",
+  "Voltar uma página no navegador": "Go back a page in the browser"
 }

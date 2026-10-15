@@ -10,7 +10,7 @@ resumo: Pacotes prontos de skills, agentes e fluxos, e os atalhos que começam c
 
 Digite `/` na caixa de mensagem e aparece a lista de atalhos:
 
-- **Do Clave:** `/novo`, `/modelo haiku`, `/esforco alto`, `/plano` (modo Plano no Code), `/custo`, `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`. Todo comando que vem com o Clave também funciona com o nome em inglês (`/help`, `/summary`, `/sales:proposal`...).
+- **Do Clave:** `/novo`, `/modelo haiku`, `/esforco alto`, `/plano` (modo Plano no Code), `/custo`, `/compact` (resume a conversa agora para gastar menos nas próximas mensagens), `/web off` (desliga a busca na web nesta conversa), `/resumo`, `/exportar`, `/economia`, `/importar`, `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`. Todo comando que vem com o Clave também funciona com o nome em inglês (`/help`, `/summary`, `/sales:proposal`...).
 - **Comandos:** pedidos prontos com espaço para completar, como `/escrita:email para o fornecedor pedindo prazo`.
 - **Skills:** chamar uma [skill](#/aprender/glossario/skill) direto, como `/escritorio:excel-avancado`.
 
@@ -18,7 +18,7 @@ Você cria os seus comandos num arquivo `.claude/commands/nome.md` (dentro da pa
 
 ## Plugins
 
-Um **plugin** junta skills, agentes, comandos e fluxos para um tipo de trabalho. O Clave vem com sete:
+Um **plugin** junta skills, agentes, comandos e fluxos para um tipo de trabalho. O Clave vem com oito:
 
 | Plugin | Para quê |
 |---|---|
@@ -28,6 +28,7 @@ Um **plugin** junta skills, agentes, comandos e fluxos para um tipo de trabalho.
 | Escrita | e-mail, revisão de texto, resumo, ata de reunião |
 | Sites e apps | páginas num arquivo só, conferência antes de publicar, como publicar |
 | Programação | achar a causa de um erro, testes, revisar e explicar código |
+| Vendas | propostas em Word e PDF, follow-up de clientes, pedidos para a planilha, relatório de vendas, respostas a clientes e automações que rodam sem IA |
 | Crie o seu | o Claude te ajuda a criar skills, agentes, comandos e plugins |
 
 Em **Plugins** (barra da esquerda) você liga e desliga cada um. Desligado, nada dele aparece para o Claude.

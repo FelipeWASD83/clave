@@ -21,7 +21,7 @@ A **régua** embaixo da caixa de texto mostra quanto da [janela de contexto](#/a
 
 Duas coisas ajudam sozinhas:
 
-- **Cache**: o começo repetido da conversa sai até 20 vezes mais barato. Já vem ligado.
+- **Cache**: o começo repetido da conversa sai de 10 a 40 vezes mais barato, conforme o modelo. Ele dura 5 minutos depois do último uso: responder dentro desse tempo aproveita o desconto. Já vem ligado.
 - **Resumo automático**: quando a conversa passa de um tamanho (150 mil tokens, por padrão), a Anthropic resume o começo para caber e ficar mais barata. Aparece uma linha "A conversa foi resumida aqui".
 
 Mesmo assim, a melhor economia é simples: **mudou de assunto, conversa nova**.
@@ -46,10 +46,12 @@ Em **Preços e planos** fica o preço de cada modelo e a conta **API ou assinatu
 Valores aproximados, só para ter ideia:
 
 - pergunta curta no Haiku: menos de US$ 0,001;
-- resposta média no Sonnet: em torno de US$ 0,01;
+- resposta média no Sonnet, com raciocínio: em torno de US$ 0,02;
 - análise de um PDF de 20 páginas no Opus: em torno de US$ 0,10 a US$ 0,30;
 - tarefa grande no modo Code (muitos passos): de US$ 0,20 a alguns dólares.
 
 ```experimentar
 Explique de um jeito simples por que uma conversa muito longa com uma IA fica mais cara a cada resposta.
 ```
+
+Quer gastar menos? A trilha de economia começa em [Para onde vai o seu crédito](#/aprender/para-onde-vai-o-credito).

@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     criado_em REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_ck_exec ON checkpoints(execucao_id);
+CREATE INDEX IF NOT EXISTS ix_ck_conv ON checkpoints(conversa_id);
 CREATE TABLE IF NOT EXISTS permissoes_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     criado_em REAL NOT NULL,

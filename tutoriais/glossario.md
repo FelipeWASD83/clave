@@ -3,7 +3,7 @@ titulo: Glossário: as palavras difíceis
 trilha: 1. Primeiros passos
 ordem: 7
 duracao: consulta
-resumo: API, token, JSON, Git, GitHub, Python, Electron e mais de 70 termos explicados em linguagem simples.
+resumo: API, token, JSON, Git, GitHub, Python, Electron e mais de 90 termos explicados em linguagem simples.
 ---
 
 Palavras que aparecem no Clave, nas lições e nas respostas do Claude, explicadas do jeito mais simples possível. Não precisa ler tudo: use como dicionário. Se ficar com dúvida, pergunte ao ajudante no fim da página.
@@ -32,6 +32,10 @@ O pedido que você escreve para a IA. "Resuma este texto em 3 tópicos" é um pr
 
 O "pedacinho" de texto que a IA lê e escreve. Uma palavra curta costuma ser 1 token; uma palavra longa vira 2 ou 3. É por token que a API cobra: tanto o que você manda quanto o que o Claude responde. Mil tokens dão umas 600 a 700 palavras em português.
 
+## Tokens de entrada e de saída {#entrada-e-saida}
+
+Os dois lados da conta de cada resposta. **Entrada** é tudo o que vai para o Claude: a sua mensagem, os anexos, as instruções e a conversa inteira até ali (ele relê tudo a cada resposta). **Saída** é o que ele escreve, contando o raciocínio. Nos modelos atuais, um token de saída custa 5 vezes o de entrada: por isso pedir uma resposta mais curta economiza.
+
 ## Janela de contexto (contexto)
 
 Tudo o que o Claude consegue "ter na cabeça" de uma vez: a conversa inteira, os arquivos anexados e as instruções. Os modelos atuais aguentam até 1 milhão de tokens. A régua embaixo da caixa de texto mostra quanto já foi usado. Conversa muito longa fica mais cara, porque cada resposta relê tudo.
@@ -43,6 +47,10 @@ Antes de responder, o Claude pode "pensar" por um tempo: planejar, conferir cont
 ## Esforço
 
 O quanto o Claude pensa antes de responder: Baixo, Médio, Alto, Muito alto ou Máximo. Esforço alto é melhor para problemas difíceis e código; esforço baixo é mais rápido e barato para coisas simples.
+
+## Conselheiro de modelo
+
+O aviso que sugere o modelo certo para a tarefa. O Haiku lê a conversa na primeira mensagem e depois a cada 5 e diz qual modelo faz aquilo pelo menor preço, com um botão para usar o sugerido e outro para manter o atual. Cada avaliação custa uma fração de centavo. Liga e desliga em **Configurações > Modelos**, onde também dá para deixar o Clave trocar sozinho.
 
 ## Alucinação
 
@@ -60,9 +68,17 @@ Uma senha comprida (começa com `sk-ant-`) que diz à Anthropic de qual conta sa
 
 A API não tem mensalidade: você coloca crédito (dinheiro) na sua conta da Anthropic e cada resposta desconta um pouco, pelo número de tokens. Quem assina o plano Max do Claude ganha um crédito mensal na API.
 
+## Teto de gasto
+
+O limite em dólares que você põe em **Configurações > Limite de gasto**. Quando a soma do mês chega no teto, o Clave para de responder até o mês virar (ou só avisa, se você preferir). Existe também o teto por tarefa do modo Code, que pausa uma tarefa longa quando ela gasta demais. Mais em [Acompanhar e travar o gasto](#/aprender/acompanhar-o-gasto).
+
 ## Cache
 
-Uma memória rápida que reaproveita o começo de uma conversa entre uma mensagem e outra. A parte reaproveitada custa bem menos (até 20 vezes menos). O Clave liga isso sozinho.
+Uma memória rápida que reaproveita o começo de uma conversa entre uma mensagem e outra. A parte reaproveitada custa de 10 a 40 vezes menos, conforme o modelo. Ela dura 5 minutos depois do último uso: se você demorar mais que isso para mandar a próxima mensagem, o começo volta a ser cobrado pelo preço cheio. O Clave liga isso sozinho.
+
+## Compactação (/compact) {#compactacao}
+
+Trocar o começo de uma conversa longa por um resumo, para cada resposta nova reler menos e custar menos. Acontece sozinha quando a conversa fica muito grande (**Configurações > Recursos > Resumir conversas muito longas**) ou na hora, quando você digita `/compact`. Fazer o resumo também custa um pouco, mas as mensagens seguintes ficam mais baratas. Mais em [Conversas enxutas](#/aprender/conversas-enxutas).
 
 ## Agente
 
@@ -112,6 +128,10 @@ Um atalho que começa com `/` na caixa de mensagem, como `/novo`, `/modelo haiku
 
 Uma linha que diz o que o Claude pode fazer sozinho, o que sempre pergunta e o que nunca faz, como `Bash(npm test *)` ou `Edit(docs/**)`. Vale numa pasta ou no Clave inteiro, e tem prioridade sobre o modo de permissão.
 
+## Arquivo protegido
+
+Um arquivo ou pasta da lista **Arquivos e pastas protegidos** (Configurações > Modo Code), como `.env` e `*.key`. As ferramentas de arquivo do Claude nunca leem nem mudam o que está ali, e um comando que cite um deles sempre pede o seu OK. Ponha ali o que tiver senha ou dado sensível.
+
 ## Rotina
 
 Um pedido salvo que o Claude faz sozinho num horário (todo dia, em alguns dias da semana ou a cada poucas horas). Numa rotina ele não pergunta nada: só faz o que suas regras de permissão já liberam.
@@ -124,9 +144,21 @@ Um programa do próprio Windows que roda coisas num horário, mesmo sem nenhum a
 
 Um jeito simples de formatar texto com símbolos: `**negrito**`, `# Título`, `- item de lista`. O Claude escreve em Markdown e o Clave transforma em texto formatado. Arquivos `.md` são textos em Markdown.
 
+## Widget
+
+Um cartão que o Claude desenha na conversa quando ele ajuda mais que texto: produtos e preços, mapa, recomendações, desenho ou planta, gráfico, comparação, linha do tempo e lista de tarefas. Vêm ligados; o interruptor fica em **Configurações > Recursos > Widgets**. Fotos de outros sites só carregam quando você clica. Veja [Widgets](#/aprender/widgets).
+
+## OpenStreetMap
+
+Um mapa do mundo gratuito, feito por voluntários, como uma Wikipédia de mapas. Os mapas dos widgets do Clave vêm dele, pela internet, e os endereços viram pontos no mapa pela busca de endereços dele (o Nominatim).
+
 ## Arquivo e pasta
 
 Arquivo é um documento (foto, planilha, texto). Pasta é uma "gaveta" que guarda arquivos e outras pastas. No Windows você vê os dois no Explorador de Arquivos.
+
+## Lixeira
+
+O lugar do Windows para onde vai o arquivo apagado pelo Explorador de Arquivos ou pela aba **Arquivos** do modo Code. De lá dá para trazer de volta (botão direito > **Restaurar**). Arquivo apagado por um comando não passa pela Lixeira: some de vez. Veja [Desfazer, backup e Git](#/aprender/rede-de-seguranca).
 
 ## Caminho (de arquivo)
 
@@ -140,6 +172,10 @@ As letras depois do ponto no nome do arquivo, que dizem o tipo dele: `.xlsx` (pl
 
 Uma janela onde você dá ordens ao computador digitando, em vez de clicar. Parece coisa de hacker, mas é só outro jeito de mandar o computador fazer as coisas.
 
+## Console (terminal) {#console}
+
+A aba **Console** do painel do modo Code: um terminal do Windows (o PowerShell) de verdade dentro do Clave, já aberto na pasta de trabalho, onde você mesmo digita comandos. Abre com **Ctrl+`** (no teclado brasileiro, a tecla à esquerda do 1). O botão **Mandar para o Claude** leva o texto selecionado, ou as últimas linhas, para a caixa de mensagem. Veja [O console](#/aprender/console).
+
 ## PowerShell
 
 O terminal do Windows. No modo Code, quando o Claude "roda um comando", ele usa o PowerShell.
@@ -147,6 +183,10 @@ O terminal do Windows. No modo Code, quando o Claude "roda um comando", ele usa 
 ## Comando
 
 Uma ordem digitada no terminal. Por exemplo, `mkdir Fotos` cria uma pasta chamada Fotos.
+
+## Segundo plano
+
+Quando um programa continua rodando sem prender a conversa. No modo Code, o Claude deixa em segundo plano o que precisa ficar ligado, como um [servidor local](#/aprender/glossario/servidor-local): a resposta termina e o comando segue rodando. Você acompanha e para na aba **Tarefas** (Ctrl+Shift+Y), e um contador na barra da esquerda mostra quantos estão rodando. São no máximo 5 por conversa, e todos param quando o Clave fecha.
 
 ## Script
 
@@ -204,6 +244,10 @@ Uma automação gravada dentro de uma planilha (arquivos `.xlsm`). Macros podem 
 
 Um formato de documento que fica igual em qualquer computador, bom para enviar e imprimir. O Claude lê PDFs e o Clave consegue exportar planilhas em PDF.
 
+## Flashcard
+
+Um cartão de estudo com uma pergunta de um lado e a resposta do outro, para treinar a memória. O Claude cria flashcards numa planilha (que dá para levar para apps como o Anki) ou numa pequena página que vira o cartão quando você clica.
+
 ## Git
 
 Um programa que guarda o histórico de um projeto: cada vez que você salva uma versão (um "commit"), dá para voltar nela depois. É como o "histórico de versões" do Google Docs, mas para pastas inteiras.
@@ -215,6 +259,10 @@ Uma pasta de projeto controlada pelo Git, com todo o histórico de versões. Pod
 ## Commit
 
 Uma "foto" do projeto num momento, com uma mensagem dizendo o que mudou. "Commitar" é salvar essa versão no histórico do Git.
+
+## .gitignore
+
+Um arquivo de texto na pasta com a lista do que o Git deve ignorar, como `.env`, `*.key` e pastas de arquivos temporários. O que está nele não entra nas versões e não vai para o GitHub: é o jeito de deixar senhas e chaves de fora. Veja [Git e GitHub](#/aprender/github).
 
 ## Branch (ramo)
 
@@ -260,9 +308,13 @@ Código pronto que outra pessoa escreveu e que um programa usa para não reinven
 
 Um programa que fica esperando pedidos e respondendo. Os servidores da Anthropic respondem ao Clave; e o Clave tem um pequeno servidor dentro do seu próprio computador, que só ele usa.
 
-## Localhost
+## Servidor local
 
-O "endereço" do seu próprio computador (`127.0.0.1`). Quando algo roda em localhost, só o seu computador acessa.
+Um servidor que roda no seu próprio computador, só para você testar. Quando o Claude cria um site no modo Code, ele costuma ligar um com um comando como `npm run dev` ou `python -m http.server`, que mostra um endereço como `http://localhost:8000`. Você abre esse endereço no **Navegador** do painel (o botão **Locais** lista os servidores ligados neste computador). O que o Claude ligou fica na aba **Tarefas** e para quando o Clave fecha. Veja [Tarefas em segundo plano e servidores locais](#/aprender/tarefas-em-segundo-plano).
+
+## Localhost e porta {#localhost}
+
+**Localhost** é o "endereço" do seu próprio computador (`127.0.0.1`): o que roda em localhost só o seu computador acessa. A **porta** é o número depois dos dois-pontos, que separa um programa do outro: em `http://localhost:5173`, o site que você está testando está na porta 5173.
 
 ## Porta
 
@@ -296,6 +348,14 @@ Embaralhar uma informação de um jeito que só quem tem a "chave" certa consegu
 
 Uma senha especial, comprida, que dá a um programa permissão para usar uma conta sua (por exemplo, o GitHub). Igual à chave da API: nunca compartilhe.
 
+## Senha de app
+
+Uma senha extra que você cria na sua conta (do Gmail, por exemplo) só para um programa entrar nela, como o conector de e-mail do Clave ou um script. Ela não muda a sua senha normal e dá para apagar a qualquer hora, sem afetar o resto. No Google, ela só aparece com a verificação em duas etapas ligada.
+
+## Gerenciador de Credenciais
+
+O cofre de senhas que já vem no Windows (menu Iniciar > **Gerenciador de Credenciais** > **Credenciais do Windows**). Um programa que o Claude cria para você pode guardar a senha ali, em vez de escrever no código ou pedir na conversa. Veja [Senhas, chaves e dados pessoais](#/aprender/segredos-e-dados).
+
 ## Código aberto (open source)
 
 Programa cujo código qualquer pessoa pode ler, e muitas vezes usar e modificar, seguindo uma licença.
@@ -314,4 +374,12 @@ Uma configuração que o computador guarda "por fora" dos programas e que eles p
 
 ## Prompt injection
 
-Um truque em que um texto (de um site, e-mail ou arquivo) traz instruções escondidas para a IA, tentando fazê-la obedecer outra pessoa. Por isso o Clave pede o seu OK antes de ações importantes: confira sempre o que está aprovando.
+Um truque em que um texto (de um site, e-mail ou arquivo) traz instruções escondidas para a IA, tentando fazê-la obedecer outra pessoa. Por isso o Clave pede o seu OK antes de ações importantes: confira sempre o que está aprovando. Veja [Quando uma página ou arquivo tenta dar ordens ao Claude](#/aprender/injecao-de-instrucoes).
+
+## Vazamento de dados (exfiltração) {#vazamento-de-dados}
+
+Quando uma informação sua sai para quem não devia ter: uma senha colada num site, uma chave enviada para o GitHub, dados de clientes num e-mail errado. "Exfiltração" é quando alguém faz isso de propósito, por exemplo com uma ordem escondida numa página que tenta fazer a IA mandar dados da conversa para fora (até dentro do endereço de uma foto). Por isso as fotos dos widgets esperam o seu clique.
+
+## Dado pessoal
+
+Qualquer informação que identifica uma pessoa: nome, CPF, RG, telefone, endereço, e-mail, dados de saúde, número de conta. Antes de mandar uma planilha ou um documento, tire ou troque o que o Claude não precisa (por exemplo, "Cliente 1" no lugar do nome). Veja [Senhas, chaves e dados pessoais](#/aprender/segredos-e-dados).

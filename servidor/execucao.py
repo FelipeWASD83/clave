@@ -25,6 +25,7 @@ import i18n
 import orcamento
 import pedido
 import permissoes
+import provedores
 import segredos
 from ferramentas import code as fcode
 from ferramentas import email as femail
@@ -43,7 +44,7 @@ POR_CAPACIDADE = {
             "mostrar_arquivo"},
     "editar": {"escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app", "word_criar", "word_alterar",
                "word_no_app"},
-    "comandos": {"rodar_comando"},
+    "comandos": {"rodar_comando", "ver_comando", "parar_comando"},
 }
 SEMPRE = {"atualizar_tarefas", "usar_skill"}
 MODOS_PERMISSAO = {"executar_perguntar": "perguntar", "executar_aceitar": "aceitar_edicoes",
@@ -239,6 +240,7 @@ class Execucao:
                                     for r in (opcoes.get("regras_tarefa") or []) if not permissoes.validar(r)]
         self.skills_chat: list = []
         self.pediu_ok: dict | None = None       # rotina que parou porque precisaria de OK
+        self.inicio = time.time()               # para a aba Tarefas mostrar há quanto tempo está rodando
 
     # ---- eventos ----
     def emitir(self, ev: dict) -> None:
@@ -417,6 +419,8 @@ class Execucao:
         if modo in ("chat", "code") and not etapa and not op.get("rotina"):
             ferramentas_cliente.append(dict(SUGERIR))
             ferramentas_cliente.append(dict(PERGUNTAR))
+        for prov in provedores.todos():  # widgets, navegador...: cada módulo diz o que vale nesta resposta
+            ferramentas_cliente += prov.oferecer(self, modo=modo, op=op, cfg=cfg, etapa=etapa, pasta=pasta)
         ferramentas_cliente = i18n.traduzir_ferramentas(ferramentas_cliente)
         mcp = []
         for m in (cfg.get("conectores_mcp") or []) if modo in ("chat", "code") and not etapa else []:
@@ -701,6 +705,10 @@ class Execucao:
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": saida[:300]})
             return _res(tid, saida)
 
+        prov = provedores.dono(nome)
+        if prov is not None:
+            return prov.executar(self, tid, nome, entrada or {}, cfg, modo)
+
         if modo != "code" or self.ctx is None or nome not in fcode.FERRAMENTAS:
             return _res(tid, t("Ferramenta não disponível aqui: {nome}", nome=nome), True)
         pode = self.op.get("pode") if self.op.get("etapa_de_fluxo") else None
@@ -754,6 +762,10 @@ class Execucao:
         self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": erro_flag,
                      "resumo": resumo[:4000]})
         return _res(tid, saida, erro_flag)
+
+    def resultado(self, tid: str, conteudo, erro=False) -> dict:
+        """O tool_result de uma chamada (para os módulos de provedores.py)."""
+        return _res(tid, conteudo, erro)
 
     def _pedir_aprovacao(self, tid, nome, entrada, motivo, previa, extra: dict | None = None,
                          tipo: str = "aprovacao") -> str:
@@ -1005,6 +1017,8 @@ def _resumo_alvo(nome: str, e: dict, ctx: fcode.Contexto) -> str:
     e = e or {}
     if nome == "rodar_comando":
         return str(e.get("comando", ""))[:500]
+    if nome in ("ver_comando", "parar_comando"):
+        return str(e.get("id", ""))
     partes = []
     for campo in ("caminho", "saida"):
         if isinstance(e.get(campo), str) and e.get(campo):

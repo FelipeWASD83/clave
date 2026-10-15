@@ -1,7 +1,7 @@
 // Aprender: as lições para quem nunca usou o Claude (nem nenhuma IA), em trilhas, e o glossário.
 import { api } from './api.js';
 import { refazerTours } from './tour.js';
-import { estado } from './estado.js';
+import { estado, cfg } from './estado.js';
 import { ic } from './icones.js';
 import { el } from './ui.js';
 import { renderizar } from './markdown.js';
@@ -10,33 +10,76 @@ import { t, idioma } from './i18n.js';
 
 let cache = null;
 
-// O vídeo da lição: na primeira vez ele é baixado do GitHub (não vem dentro do app) e fica guardado no computador.
+// O vídeo da lição: não vem dentro do app; o Clave baixa do GitHub uma vez (sozinho, em segundo plano, ou no play)
+// e guarda no computador.
 function playerVideo(vid) {
   const lingua = encodeURIComponent(idioma());
   const caixa = el('div', { class: 'video-licao' });
+  // na demonstração o servidor não baixa nada sozinho; a lição também não: fica o botão
+  const demo = !!estado.info?.demo;
+  let espera = null;
+  let mostrado = false;  // com o vídeo na tela, nenhuma resposta atrasada troca ele pela barra de progresso
+  let rodada = 0;        // cada pergunta ao /estado ganha um número: só a resposta da última vale
   const mostrar = (tocar = false) => {
-    const v = el('video', { src: `/api/videos/${vid}?lingua=${lingua}`, controls: true, preload: 'metadata', playsinline: true });
-    caixa.replaceChildren(v);
-    if (tocar) v.play().catch(() => {});
+    clearTimeout(espera);
+    rodada += 1;
+    if (!mostrado) {
+      mostrado = true;
+      caixa.replaceChildren(el('video', { src: `/api/videos/${vid}?lingua=${lingua}`, controls: true, preload: 'metadata', playsinline: true }));
+    }
+    if (tocar) caixa.querySelector('video')?.play().catch(() => {});
+  };
+  // o app baixa os vídeos sozinho em segundo plano (Configurações > Atualizações): enquanto baixa, a lição mostra quanto
+  // falta e troca para o vídeo quando termina
+  const acompanhar = (r) => {
+    const barra = el('div', { class: 'video-progresso', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100' },
+      el('i', { style: `width:${Math.round((r.progresso ?? 0) * 100)}%` }));
+    if (r.progresso != null) barra.setAttribute('aria-valuenow', String(Math.round(r.progresso * 100)));
+    caixa.replaceChildren(el('div', { class: 'video-capa' },
+      el('p', { class: 'ajuda', texto: r.progresso != null ? t('Baixando o vídeo… {pct}%', { pct: Math.round(r.progresso * 100) }) : t('Baixando o vídeo…') }),
+      barra));
+    clearTimeout(espera);
+    espera = setTimeout(verificar, 1000);
   };
   const baixar = async (botao) => {
-    botao.disabled = true;
-    botao.innerHTML = `${ic('progresso')}${t('Baixando o vídeo…')}`;
+    if (botao) { botao.disabled = true; botao.innerHTML = `${ic('progresso')}${t('Baixando o vídeo…')}`; }
+    clearTimeout(espera);
+    espera = setTimeout(verificar, 800);
     try {
       await api(`/videos/${vid}/baixar?lingua=${lingua}`, { metodo: 'POST' });
-      mostrar(true);
+      mostrar(!!botao);
     } catch (e) {
-      caixa.replaceChildren(el('p', { class: 'ajuda', texto: t('Não deu para baixar o vídeo agora: {erro}', { erro: e.message }) }),
-        el('button', { class: 'botao pequeno', type: 'button', texto: t('Tentar de novo'), onclick: (ev) => baixar(ev.currentTarget) }));
+      if (mostrado) return;
+      clearTimeout(espera);
+      rodada += 1;  // uma resposta do /estado ainda a caminho não apaga o aviso de erro
+      falhou(e.message);
     }
   };
-  api(`/videos/${vid}/estado?lingua=${lingua}`).then((r) => {
-    if (r.pronto) return mostrar();
+  const falhou = (mensagem) => {
+    caixa.replaceChildren(el('p', { class: 'ajuda', texto: t('Não deu para baixar o vídeo agora: {erro}', { erro: mensagem }) }),
+      el('button', { class: 'botao pequeno', type: 'button', texto: t('Tentar de novo'), onclick: (ev) => baixar(ev.currentTarget) }));
+  };
+  const capa = (r) => {
     const botao = el('button', { class: 'botao primario', type: 'button', html: `${ic('olho')}${t('Assistir ao vídeo')}` });
     botao.addEventListener('click', () => baixar(botao));
-    caixa.replaceChildren(el('div', { class: 'video-capa' }, botao,
-      el('small', { class: 'ajuda', texto: t('Na primeira vez o Clave baixa o vídeo do GitHub (alguns MB) e guarda neste computador.') })));
-  }).catch(() => caixa.remove());
+    let texto = t('Na primeira vez o Clave baixa o vídeo do GitHub (alguns MB) e guarda neste computador.');
+    if (r.parado) texto = t('O download foi parado na aba Tarefas. Clique para baixar de novo.');
+    else if (r.erro) texto = t('Não deu para baixar o vídeo agora: {erro}', { erro: r.erro });
+    caixa.replaceChildren(el('div', { class: 'video-capa' }, botao, el('small', { class: 'ajuda', texto })));
+  };
+  const verificar = () => {
+    if (mostrado || (!caixa.isConnected && espera)) return;  // já mostrando o vídeo, ou saiu da lição
+    const minha = ++rodada;
+    api(`/videos/${vid}/estado?lingua=${lingua}`).then((r) => {
+      if (mostrado || minha !== rodada) return;  // resposta velha: o vídeo (ou outra resposta) já chegou
+      if (r.pronto) return mostrar();
+      if (r.baixando) return acompanhar(r);
+      // ainda não começou: começa já, menos na demonstração, depois de um erro ou de alguém parar na aba Tarefas
+      if (!demo && cfg().baixar_videos !== false && !r.erro && !r.parado) return baixar(null);
+      capa(r);
+    }).catch(() => { if (!mostrado && minha === rodada) caixa.remove(); });
+  };
+  verificar();
   return caixa;
 }
 

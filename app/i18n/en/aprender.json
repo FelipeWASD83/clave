@@ -24,5 +24,8 @@
   "Não deu para baixar o vídeo agora: {erro}": "Couldn't download the video right now: {erro}",
   "Assistir ao vídeo": "Watch the video",
   "Na primeira vez o Clave baixa o vídeo do GitHub (alguns MB) e guarda neste computador.": "The first time, Clave downloads the video from GitHub (a few MB) and keeps it on this computer.",
-  "com vídeo": "with video"
+  "com vídeo": "with video",
+  "Baixando o vídeo… {pct}%": "Downloading the video… {pct}%",
+  "Tentar de novo": "Try again",
+  "O download foi parado na aba Tarefas. Clique para baixar de novo.": "The download was stopped in the Tasks tab. Click to download it again."
 }

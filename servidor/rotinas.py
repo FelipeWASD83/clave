@@ -103,8 +103,9 @@ def validar(nome: str, dados: dict) -> dict:
         raise ErroRotina(t("Teto de gasto inválido."))
     if teto <= 0 or teto > 50:
         raise ErroRotina(t("O teto por rodada fica entre US$ 0,01 e US$ 50."))
+    # sem modelo escolhido, a rotina roda no Haiku (desde a 5.0, o padrão do app inteiro)
     return {"prompt": prompt, "modo": modo, "pasta": pasta, "quando": quando, "teto_usd": round(teto, 2),
-            "modelo": str(dados.get("modelo") or "claude-sonnet-5-5"), "esforco": str(dados.get("esforco") or "medium"),
+            "modelo": str(dados.get("modelo") or "claude-haiku-5-5"), "esforco": str(dados.get("esforco") or "medium"),
             "busca_web": bool(dados.get("busca_web")), "agendador": bool(dados.get("agendador"))}
 
 

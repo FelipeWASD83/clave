@@ -1,5 +1,7 @@
 {
   "texto": "text",
   "Prévia": "Preview",
-  "Copiar": "Copy"
+  "Copiar": "Copy",
+  "Rodar no console": "Run in console",
+  "Escreve o comando no console do painel; você confere e aperta Enter": "Writes the command in the panel's console; you check it and press Enter"
 }

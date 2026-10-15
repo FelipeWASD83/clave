@@ -1,5 +1,15 @@
 /* ---------- área da conversa ---------- */
 .conversa { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* o topo da conversa encolhe com a coluna (o painel aberto do lado deixa ela estreita): o título fica com o espaço,
+   a pasta e o projeto viram só o ícone e o gasto sai antes de qualquer coisa quebrar linha */
+.conversa { container-type: inline-size; container-name: conversa; }
+.topo h1 { min-width: 6ch; }
+.topo .chip { min-width: 0; max-width: 240px; flex: 0 1 auto; }
+.topo .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topo .meta { white-space: nowrap; flex: none; }
+@container conversa (max-width: 760px) { .topo .meta { display: none; } .topo .chip { max-width: 160px; } }
+@container conversa (max-width: 600px) { .topo .chip span { display: none; } .topo .chip { padding: 0 8px; } }
+@container conversa (max-width: 440px) { .botoes-painel .icone-botao:not([aria-pressed="true"]) { display: none; } }
 .rolagem { flex: 1; min-height: 0; overflow-y: auto; scroll-behavior: smooth; }
 .coluna { width: 100%; max-width: var(--largura-coluna, 780px); margin: 0 auto; padding: 0 24px; }
 body[data-largura="estreita"] { --largura-coluna: 680px; }
@@ -39,6 +49,7 @@ body[data-letra="sans"] .msg-claude .resposta { font-family: var(--sans); line-h
 .acoes-msg .icone-botao { width: 28px; height: 28px; }
 .acoes-msg .icone-botao svg { width: 15px; height: 15px; }
 .acoes-msg .meta { margin-left: 8px; }
+.msg-claude.continuando > .acoes-msg { display: none; }
 .versoes { display: inline-flex; align-items: center; gap: 2px; font-family: var(--mono); font-size: 12px; color: var(--texto-3); }
 
 /* markdown dentro das respostas */
@@ -167,6 +178,16 @@ body[data-letra="sans"] .msg-claude .resposta { font-family: var(--sans); line-h
 .compositor .anexos-pendentes { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 0; }
 .compositor-barra { display: flex; align-items: center; gap: 4px; padding: 6px 8px 8px 10px; flex-wrap: wrap; }
 .compositor-barra .espaco { flex: 1; }
+.compositor-grupo { display: inline-flex; align-items: center; gap: 4px; }
+/* se a barra quebrar linha, o enviar fica à direita, nunca sozinho do lado esquerdo */
+.compositor-barra .enviar { margin-left: auto; }
+/* coluna estreita (janela estreita ou painel aberto): chips mais justos e sem a setinha, para caber numa linha */
+@container conversa (max-width: 480px) {
+  .compositor-barra { gap: 2px; padding-left: 8px; padding-right: 6px; }
+  .compositor-grupo { gap: 2px; }
+  .compositor-barra .chip { padding: 0 7px; gap: 5px; }
+  .compositor-barra .chip .seta { display: none; }
+}
 .chip {
   display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: var(--raio-p);
   border: 1px solid transparent; background: transparent; color: var(--texto-2); cursor: pointer; font-size: 13.5px; font-weight: 500;
@@ -409,6 +430,14 @@ input.entrada.mini[type="number"] { width: 84px; }
 .familia-opus { --cor-tile: #e39b7f; }
 .familia-sonnet { --cor-tile: #ece5d6; }
 .familia-haiku { --cor-tile: #b9cfc3; }
+/* no escuro, a cor da família só tinge o quadro (cheia, ela vira o bloco mais claro da tela) e o desenho baixa um
+   pouco o brilho; as cores claras acima continuam valendo no tema claro */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) .modelo-arte { background: color-mix(in srgb, var(--cor-tile, var(--papel-2)) 38%, var(--papel-2)); }
+  :root:not([data-tema="claro"]) .modelo-arte img { filter: brightness(.9); }
+}
+:root[data-tema="escuro"] .modelo-arte { background: color-mix(in srgb, var(--cor-tile, var(--papel-2)) 38%, var(--papel-2)); }
+:root[data-tema="escuro"] .modelo-arte img { filter: brightness(.9); }
 .modelo-etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
 .modelo-etiquetas .etiqueta { font-weight: 400; }
 .selo-novo { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--acao); color: var(--acao-texto); font-size: 11.5px; font-weight: 600; letter-spacing: .02em; }
@@ -484,3 +513,9 @@ input.entrada.mini[type="number"] { width: 84px; }
   .apresentacao-corpo { padding: 22px 16px 18px; }
   .apresentacao-grade b { font-size: 12.5px; }
 }
+
+/* o caminho de um arquivo num bloco do Code: clicar abre o arquivo no Visualizador do painel */
+.ferramenta .caminho-clicavel { cursor: pointer; text-decoration: underline dotted var(--texto-4); text-underline-offset: 3px; transition: color var(--rapido), text-decoration-color var(--rapido); }
+.ferramenta .caminho-clicavel:hover, .ferramenta .caminho-clicavel:focus-visible { color: var(--acao); text-decoration-color: var(--acao); }
+/* "Rodar no console" só existe no Code */
+.conversa:not(.modo-code) .bloco-codigo [data-acao="console"] { display: none; }

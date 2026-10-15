@@ -32,6 +32,12 @@ Save a version in Git with a message explaining what changed today.
 
 Repositories can be **private** (only you see them) or **public**. **Never** send passwords, keys or personal data to GitHub, not even in a private repository.
 
+That's what [`.gitignore`](#/aprender/glossario/gitignore) is for: a text file in the folder listing what Git must never keep (for example, `.env` and `*.key`). What's on it doesn't go into the versions and doesn't go to GitHub. What should never leave your computer is in [Passwords, keys and personal data](#/aprender/segredos-e-dados).
+
+```experimentar-code
+Check whether this folder has a .gitignore that leaves out passwords, keys and files with personal data. If something is missing, show me what you would add before changing it.
+```
+
 ## Connect GitHub to Clave
 
 In **Settings > GitHub**:

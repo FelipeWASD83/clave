@@ -25,7 +25,7 @@ MODELOS: dict[str, dict] = {
     "claude-sonnet-5-5": {
         "nome": "Sonnet 5.5", "atual": True, "ordem": 2,
         "resumo": "Quase tão bom quanto o Opus, pela metade do preço. Rápido.",
-        "entrada": 2.0, "saida": 10.0, "cache_leitura": 0.10,
+        "entrada": 2.0, "saida": 10.0, "cache_leitura": 0.10,  # 0,05x da entrada (página oficial de preços, conferida em 15/10/2026)
         "pensamento": "between_tools", "esforco_padrao": "high", "esforco": True,
         "fallback": True, "rapido": False, "web_novo": True, "updates": True,
     },

@@ -7,6 +7,8 @@ import { esc } from './ui.js';
 import { t } from './i18n.js';
 
 const PREVIAVEIS = new Set(['html', 'svg', 'xml']);
+// blocos de terminal ganham "Rodar no console" no Code: o comando vai para o console do painel e quem aperta Enter é a pessoa
+const DE_TERMINAL = new Set(['powershell', 'ps1', 'pwsh', 'ps', 'cmd', 'bat', 'shell', 'console', 'terminal']);
 
 const marked = new Marked({
   gfm: true,
@@ -18,6 +20,7 @@ const marked = new Marked({
       return `<div class="bloco-codigo" data-lingua="${esc(lingua)}">`
         + `<div class="bloco-codigo-topo"><span class="lingua">${esc(lingua || t('texto'))}</span>`
         + (previa ? `<button type="button" data-acao="previa">${ic('olho')}${esc(t('Prévia'))}</button>` : '')
+        + (DE_TERMINAL.has(lingua) ? `<button type="button" data-acao="console" title="${esc(t('Escreve o comando no console do painel; você confere e aperta Enter'))}">${ic('terminal')}${esc(t('Rodar no console'))}</button>` : '')
         + `<button type="button" data-acao="copiar-codigo">${ic('copiar')}${esc(t('Copiar'))}</button></div>`
         + `<pre><code class="${lingua ? 'language-' + esc(lingua) : ''}">${esc(text)}</code></pre></div>`;
     },

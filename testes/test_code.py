@@ -1,7 +1,10 @@
+import os
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import base  # noqa: F401
 import banco
@@ -152,6 +155,44 @@ class TestFerramentas(unittest.TestCase):
     def test_skill_desconhecida(self):
         with self.assertRaises(fc.ErroFerramenta):
             fc.executar("usar_skill", {"nome": "nao-existe"}, self.ctx)
+
+
+class TestAmbiente(unittest.TestCase):
+    """O que os comandos do Claude recebem do ambiente do Clave."""
+
+    def setUp(self):
+        self.pasta = Path(tempfile.mkdtemp(prefix="clave-code-amb-"))
+        self.ctx = contexto(self.pasta)
+
+    def tearDown(self):
+        shutil.rmtree(self.pasta, ignore_errors=True)
+
+    def rodar(self, comando, **extra):
+        return fc.executar("rodar_comando", {"comando": comando, "descricao": "teste", **extra}, self.ctx)
+
+    def test_token_da_ponte_nao_chega_aos_comandos(self):
+        """O token da ponte do navegador daria a qualquer comando o controle do navegador do app."""
+        falso = {"CLAVE_PONTE_TOKEN": "segredo-da-ponte-123", "CLAVE_PONTE_URL": "http://127.0.0.1:9",
+                 "CLAVE_LANCADOR": "1", "ELECTRON_RUN_AS_NODE": "1", "OUTRA_COISA": "fica"}
+        cmd = ('Write-Output ("vars[" + $env:CLAVE_PONTE_TOKEN + "|" + $env:CLAVE_PONTE_URL + "|" + $env:CLAVE_LANCADOR '
+               '+ "|" + $env:ELECTRON_RUN_AS_NODE + "|" + $env:OUTRA_COISA + "]")')
+        with mock.patch.dict(os.environ, falso):
+            normal = self.rodar(cmd)
+            fundo = self.rodar(cmd, em_segundo_plano=True)
+        for saida in (normal, fundo):
+            self.assertIn("vars[||||fica]", saida)
+            self.assertNotIn("segredo-da-ponte-123", saida)
+        amb = fc._ambiente_comando()
+        self.assertFalse([k for k in amb if k.upper().startswith("CLAVE_")])
+
+    def test_acentos_de_um_script_python_chegam_inteiros(self):
+        """Depende do PYTHONIOENCODING=utf-8 que o _ambiente_comando põe: sem ele, o Python escreve no cano na
+        página de código do Windows e o ✓ nem sai (UnicodeEncodeError)."""
+        (self.pasta / "acentos.py").write_text("print('ação ✓ çã')\n", encoding="utf-8")
+        py = sys.executable.replace("'", "''")
+        saida = self.rodar(f"& '{py}' acentos.py")
+        self.assertIn("Código de saída: 0", saida)
+        self.assertIn("ação ✓ çã", saida)
 
 
 if __name__ == "__main__":

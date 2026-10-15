@@ -45,7 +45,14 @@ export function notificar(titulo, corpo) {
 const PEDIDO = () => ({
   escrever_arquivo: (e) => [t('Escrever'), e.caminho],
   editar_arquivo: (e) => [t('Editar'), e.caminho],
-  rodar_comando: () => [t('Rodar este comando'), ''],
+  rodar_comando: (e) => [e.em_segundo_plano ? t('Deixar rodando em segundo plano') : t('Rodar este comando'), ''],
+  navegador_clicar: (e) => [t('Clicar na página'), e.descricao || (e.ref != null ? `[${e.ref}]` : '')],
+  navegador_digitar: (e) => [t('Digitar na página'), `"${String(e.texto || '').slice(0, 80)}"`],
+  navegador_abrir: (e) => [t('Abrir no navegador do Clave'), e.url],
+  navegador_ler: () => [t('Ler a página do navegador'), ''],
+  navegador_print: () => [t('Tirar um print da página'), ''],
+  navegador_rolar: () => [t('Rolar a página'), ''],
+  navegador_voltar: () => [t('Voltar uma página no navegador'), ''],
   word_criar: (e) => [t('Criar o documento'), e.caminho],
   word_alterar: (e) => [t('Mexer no documento'), e.caminho],
   word_no_app: (e) => [t('Exportar o documento para PDF'), e.caminho],
@@ -90,8 +97,11 @@ export function cartaoAprovacao(ev, { execucaoId, temPasta = true, etapa = '' } 
 
   const podeTarefa = ev.pode_tarefa ?? ['mudar arquivo', 'rodar comando'].includes(ev.motivo);
   const podeSempre = ev.pode_sempre && ev.sugestao;
+  // o cartão do site do navegador pergunta "usar o site X nesta tarefa?": o Permitir dele já vale para a tarefa
+  const doSite = Boolean(ev.site);
+  const permitir = () => (doSite ? decidir('permitir_tarefa', { regra: ev.sugestao || '' }) : decidir('permitir'));
   const opcoes = [];
-  if (podeTarefa) opcoes.push({ texto: ev.nome === 'rodar_comando' ? t('Permitir comandos nesta tarefa') : t('Permitir nesta tarefa'), sub: t('Até esta resposta terminar, sem perguntar de novo.'), acao: () => decidir('permitir_tarefa', { regra: ev.sugestao || '' }) });
+  if (podeTarefa && !doSite) opcoes.push({ texto: ev.nome === 'rodar_comando' ? t('Permitir comandos nesta tarefa') : t('Permitir nesta tarefa'), sub: t('Até esta resposta terminar, sem perguntar de novo.'), acao: () => decidir('permitir_tarefa', { regra: ev.sugestao || '' }) });
   if (podeSempre && temPasta) opcoes.push({ texto: t('Sempre nesta pasta…'), sub: t('Salva uma regra para esta pasta.'), acao: () => pedirRegra('permitir_pasta') });
   if (podeSempre) opcoes.push({ texto: t('Sempre, em todo o Clave…'), sub: t('Salva uma regra que vale em todas as pastas.'), acao: () => pedirRegra('permitir_app') });
 
@@ -106,12 +116,12 @@ export function cartaoAprovacao(ev, { execucaoId, temPasta = true, etapa = '' } 
     el('div', { class: 'aprovacao-topo' }, el('span', { html: ic('escudo') }),
       el('div', {},
         etapa ? el('span', { class: 'etiqueta-etapa', texto: t('Etapa: {etapa}', { etapa }) }) : null,
-        el('b', { texto: t('Permitir: {acao}?', { acao: `${verbo}${alvo ? ' ' + String(alvo).slice(0, 120) : ''}` }) }),
+        el('b', { texto: ev.pergunta || t('Permitir: {acao}?', { acao: `${verbo}${alvo ? ' ' + String(alvo).slice(0, 120) : ''}` }) }),
         el('small', { texto: t('Motivo da pergunta: {motivo}.', { motivo: ev.motivo || t('ação que muda algo') }) }))),
     previa,
     caixaRegra,
     el('div', { class: 'aprovacao-botoes' },
-      el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Permitir'), onclick: () => decidir('permitir') }),
+      el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Permitir'), onclick: permitir }),
       maisBotao, comentario,
       el('button', { class: 'botao pequeno perigo', type: 'button', texto: t('Recusar'), onclick: () => decidir('recusar') })));
   notificar(t('O Clave precisa do seu OK'), `${verbo} ${alvo || ''}`);

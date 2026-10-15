@@ -2,6 +2,120 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 5.0.0 (2026-10-15)
+
+Code mode becomes a workbench: your files, a real console, a browser you share with Claude and the work running in
+the background, all beside the conversation. And in chat and in Code, Claude can draw the answer as a card.
+
+**New**
+
+- **Side panel in Code mode**, beside the conversation and as wide as you drag it, with the tabs **Files**,
+  **Viewer**, **Console**, **Browser** and **Tasks**. Ctrl+J opens and closes it; Ctrl+Shift+E goes to Files, Ctrl+`
+  to the Console, Ctrl+Shift+L to the Browser and Ctrl+Shift+Y to Tasks. A tab keeps working while the panel is
+  closed (the console keeps what it ran), and Code mode reopens the panel the way you left it. A tour shows it the
+  first time.
+- **Files**: the working folder as a tree, with a filter and a search across every folder. Right-click to open in
+  the Viewer, show in Explorer, copy the path, mention it in the conversation, rename (F2), create a file or a folder,
+  or send it to the Recycle Bin (Delete). Drag a file to the message box to mention it. The files Claude changed in
+  this conversation get a mark, and the tree updates on its own. Opening a program or a script with its default
+  program asks first.
+- **Viewer**: code with colors and line numbers (Ctrl+F, go to a line), Markdown with its images, pictures, PDF, Excel
+  and CSV spreadsheets (a formula shows as a formula), Word (the text), formatted JSON, audio and video, and **View as
+  a page** for HTML. **Claude's changes** shows what Claude changed in the file during this conversation. Protected
+  files (like `.env`) only open after **Show anyway**. In Claude's replies, the path of each file step (read, write,
+  edit, Word, Excel) opens the file here with one click.
+- **Console**: a real PowerShell inside Clave, already in the working folder, with colors, history and interactive
+  programs, up to 6 at once. **Send to Claude** puts the selected text (or the last lines) in the message box. In
+  Code mode, the PowerShell and cmd code blocks in Claude's replies get **Run in console**: the command is typed in
+  the console, and you check it and press Enter.
+- **Browser**: a browser inside the Clave window that you and Claude use together. Claude opens pages, reads them,
+  takes screenshots, scrolls and goes back, to check what it built or to use a page, and a strip shows when it is
+  using the browser. **Local** lists the servers running on this computer (npm run dev, python -m http.server...)
+  to open with one click.
+- **The browser's safety rules**: its cookies and logins live apart from the rest of Clave. Outside Auto mode,
+  Claude asks once per task before using each new site (localhost, your own computer, doesn't ask), and every click
+  and every bit of typing asks for your OK unless a rule names that action (`Navegador(click:localhost)`); Plan mode
+  only reads. Claude never types passwords, access codes or card numbers: you do. What a page says is treated as
+  data, never as orders. A `WebFetch(domain:...)` block also blocks the browser on that site, and a page that jumps
+  to a blocked site turns blank. Clave never hands a site a certificate from Windows (like a digital ID). **Sign out**
+  deletes the browser's data, and Settings > Code mode has **Delete the browser data**. The new rules are
+  `Navegador(site)` and `Navegador(action:site)`, with a port if you want one (`Navegador(localhost:5173)`), and the
+  actions can be written in English or Portuguese.
+- **Background commands**: Claude can leave a local server or a file watcher running (npm run dev, python -m
+  http.server) and keep working: it reads the output when it needs to and stops it when it's done, at most 5 per
+  conversation. They show up in Tasks with the local address, which opens in the browser with one click, and they
+  stop when you press Stop, when you delete the conversation and when Clave closes. A program with a window that they
+  opened (the browser of a dev server, an editor) stays open, and the same goes for programs opened from the console.
+- **Tasks** (Ctrl+Shift+Y), in chat and in Code: everything running in the background (replies still arriving,
+  workflows with their steps, routines, background commands and lesson video downloads), with the time, the log,
+  **Stop** and **Go to the conversation**. Finished ones stay for 30 minutes. The left bar shows "N running", and a
+  long task that ends shows a notice (and a Windows notification when Clave is in the background).
+- **Widgets**, in chat and in Code: when a card helps more than text, Claude draws it in the conversation. Eight
+  kinds: products and prices (sorted by price, with the cheapest marked and the date they were seen), a map with
+  points and a route, recommendations (series, movies, games, books, music...), drawings and floor plans with
+  measurements, charts (bars, lines, pie, area), comparisons, timelines and checklists you can tick. Each one has
+  full screen and **Copy as text**, and drawings and charts download as PNG or SVG. They come back when you reopen
+  the conversation and go into the Markdown export. Settings > Features turns them off.
+- **Photos only on click**: product photos and covers come from other sites, so they only load when you click **Show
+  images** (the button names the sites), because a page could use the address of a photo to carry data out of the
+  conversation. Settings > Features changes that. Images go through Clave: only public https addresses, up to 5 MB,
+  never SVG. **Maps** load right away: they come from OpenStreetMap through Clave itself, following its usage rules
+  (each piece of map is kept for at least 7 days, and addresses are looked up at most once a second), and Clave says
+  where each address landed and which ones were left out.
+- **23 new lessons**, in five new tracks: **Saving credit** (where your credit goes, the right model for the lowest
+  price, reasoning, lean conversations, Code mode without waste, automating without paying the AI every time,
+  tracking and capping your spending), **The Code workspace** (the panel, the console, the browser, background tasks
+  and local servers, a website from scratch to the browser), **Visual answers** (widgets, comparing products and
+  prices, maps and itineraries, floor plans, drawings and charts), **Using it safely** (when a page or a file tries
+  to give Claude orders, what never to paste, undo, backup and Git) and **Recipes by area** (studying, office work, a
+  small business, home). The glossary got the new words (widget, console, background, local server, Recycle Bin...).
+
+**Changed**
+
+- **Haiku 5.5 is the default for everyone**, existing installs too: new chats start on the cheapest model. Once,
+  after the update, Clave shows the model you used before, with **Keep Haiku** and **Go back to the previous one**.
+  Existing chats keep their model, and the model advisor still suggests a stronger one when the task needs it. New
+  routines also start on Haiku.
+- **Lesson videos download on their own**, in the background and only in the app's language (about 28 MB), so a
+  lesson opens with the video ready and plays it from your computer. They are still not part of Clave's download. The
+  download shows in Tasks and can be stopped there; Settings > Updates & about turns it off (then the lesson
+  downloads the video when you press play).
+- **The HTML and SVG preview** is now the **Preview** tab of the side panel.
+- **Deleting a conversation** stops what runs for it (the reply still arriving, its workflows and its background
+  commands) instead of asking you to stop the reply first.
+- **Closing Clave** first asks its server to finish on its own (for up to 3 seconds), so programs with a window that
+  the console or a background command opened stay open.
+- **Smoother interface**: windows, menus and notices leave with a short animation instead of vanishing, buttons give
+  under the click, the left bar slides open and closed, long scrolls glide, and the conversation's top bar tightens
+  in a narrow window instead of overflowing. With Windows animations turned off, everything stays still.
+- **On a very wide monitor** (ultrawide), the side panel starts wider (up to 1200 px), widget cards get room beyond
+  the text column, and Learn, Projects, Workflows, Plugins and Routines show more cards per row. At 1440 px nothing
+  changes.
+- **On the browser's site card**, **Allow** already allows the site until the task ends, as the question says:
+  reading the page right after opening it doesn't ask again.
+
+**Fixed**
+
+- A command that left a hidden process behind still holding its output (a local server started from inside the
+  command) kept it running after the reply, with nothing to stop it. Clave now closes it, says so in the result and
+  points Claude to the background option. A window that the command opened (Notepad, an editor) stays open.
+- A lesson video whose download was cut in the middle could be kept as if it were complete; now it is an error with
+  **Try again**, and any other network failure shows a readable message.
+- Settings > Data & backup now says what the backup really carries: the routines go with it; memory, attachments and
+  the key don't.
+- The sales plugin's "automation without AI" skill counted a routine checking every 15 minutes, but routines run at
+  most once an hour; the comparison now uses that.
+- Reopening a conversation that was still replying or waiting for your OK showed the reply's text twice.
+- On the first start, the tour and the new model card opened on top of each other. Now the tour comes first and the
+  card shows when it closes, and a tour never opens over a window.
+- In a narrow window, the Learn page, a lesson and Settings had no button to open the left bar, and a dark strip
+  showed on the window's left edge. The send button dropped alone to a second line.
+- Settings: the descriptions of **Sign out** and **Uninstall** were cut with "...", buttons that lead to another
+  page were underlined, **Open permission rules** stretched across the whole column, the protected files box cut
+  its last line in half and number fields took the full width.
+- In the dark theme, the logo in the left bar sat inside a lighter square, and the new model card had a block that
+  was too bright.
+
 ## 4.3.0 (2026-10-15)
 
 **New**

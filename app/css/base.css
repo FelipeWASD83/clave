@@ -32,9 +32,11 @@
   --sombra-1: 0 1px 2px rgb(40 30 15 / 0.08);
   --sombra-2: 0 10px 30px rgb(40 30 15 / 0.16), 0 2px 6px rgb(40 30 15 / 0.08);
 
-  /* movimento */
-  --rapido: 150ms; --normal: 300ms;
+  /* movimento: entra devagar no fim (curva), sai acelerando (curva-saida); a mola passa um pouco do ponto e volta */
+  --rapido: 150ms; --normal: 300ms; --lento: 420ms;
   --curva: cubic-bezier(.2, .7, .2, 1);
+  --curva-saida: cubic-bezier(.4, 0, 1, 1);
+  --curva-mola: cubic-bezier(.34, 1.36, .64, 1);
 
   /* cores: tema claro */
   --papel: #f6f1e7;        /* fundo de leitura */
@@ -127,9 +129,10 @@ img { max-width: 100%; }
   min-height: 36px; padding: 0 var(--e4);
   border: 1px solid var(--linha); border-radius: var(--raio-m);
   background: var(--papel); color: var(--texto);
-  font-weight: 500; cursor: pointer; white-space: nowrap;
-  transition: background var(--rapido), border-color var(--rapido), color var(--rapido);
+  font-weight: 500; cursor: pointer; white-space: nowrap; text-decoration: none;  /* um <a class="botao"> é botão, não link */
+  transition: background var(--rapido), border-color var(--rapido), color var(--rapido), transform var(--rapido) var(--curva), box-shadow var(--rapido);
 }
+.botao:active:not(:disabled) { transform: translateY(1px) scale(.985); }
 .botao:hover { background: var(--papel-2); border-color: var(--texto-4); }
 .botao:disabled { opacity: .5; cursor: not-allowed; }
 .botao.primario { background: var(--acao); border-color: var(--acao); color: var(--acao-texto); }
@@ -144,9 +147,10 @@ img { max-width: 100%; }
 .icone-botao {
   display: inline-grid; place-items: center; width: 32px; height: 32px;
   border: 0; border-radius: var(--raio-p); background: transparent; color: var(--texto-3);
-  cursor: pointer; transition: background var(--rapido), color var(--rapido);
+  cursor: pointer; transition: background var(--rapido), color var(--rapido), transform var(--rapido) var(--curva);
 }
 .icone-botao:hover { background: var(--papel-2); color: var(--texto); }
+.icone-botao:active { transform: scale(.92); }
 .icone-botao svg { width: 17px; height: 17px; }
 .icone-botao.ativo { color: var(--acao); }
 
@@ -182,7 +186,8 @@ img { max-width: 100%; }
 .chave-liga .textos small { color: var(--texto-3); font-size: 12.5px; }
 
 .segmentado { display: inline-flex; padding: 3px; gap: 2px; background: var(--papel-2); border-radius: var(--raio-m); border: 1px solid var(--linha); }
-.segmentado button { border: 0; background: transparent; padding: 5px 12px; border-radius: 7px; cursor: pointer; color: var(--texto-3); font-weight: 500; }
+.segmentado button { border: 0; background: transparent; padding: 5px 12px; border-radius: 7px; cursor: pointer; color: var(--texto-3); font-weight: 500; transition: background var(--rapido), color var(--rapido), box-shadow var(--rapido); }
+.segmentado button:hover { color: var(--texto); }
 .segmentado button[aria-pressed="true"] { background: var(--papel); color: var(--texto); box-shadow: var(--sombra-1); }
 
 /* ---------- etiquetas ---------- */
@@ -199,19 +204,28 @@ img { max-width: 100%; }
 .avisos { position: fixed; z-index: 90; right: 20px; bottom: 20px; display: grid; gap: 8px; max-width: min(420px, calc(100vw - 32px)); }
 .aviso-flutuante {
   padding: 12px 16px; border-radius: var(--raio-m); background: var(--tinta); color: var(--tinta-texto);
-  box-shadow: var(--sombra-2); font-size: 14px; animation: entrar var(--normal) var(--curva);
+  box-shadow: var(--sombra-2); font-size: 14px; animation: aviso-entra var(--normal) var(--curva-mola);
 }
 .aviso-flutuante.erro { background: var(--erro); color: #fff; }
+.aviso-flutuante.saindo { animation: aviso-sai 200ms var(--curva-saida) forwards; }
 @keyframes entrar { from { opacity: 0; transform: translateY(8px); } }
+@keyframes aviso-entra { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+@keyframes aviso-sai { to { opacity: 0; transform: translateX(24px); } }
+@keyframes some { to { opacity: 0; } }
 
 /* ---------- janelas (modais) ---------- */
 .camada:empty { display: none; }
-.camada { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgb(20 18 15 / 0.45); }
+.camada { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgb(20 18 15 / 0.45); animation: camada-entra var(--rapido) ease-out; }
+.camada.fechando { animation: some 170ms var(--curva-saida) forwards; }
+@keyframes camada-entra { from { background: rgb(20 18 15 / 0); } }
 .janela {
   width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto;
   background: var(--papel); border: 1px solid var(--linha); border-radius: var(--raio-g); box-shadow: var(--sombra-2);
-  animation: entrar var(--normal) var(--curva);
+  animation: janela-entra var(--normal) var(--curva);
 }
+.janela.saindo { animation: janela-sai 160ms var(--curva-saida) forwards; pointer-events: none; }
+@keyframes janela-entra { from { opacity: 0; transform: translateY(10px) scale(.975); } }
+@keyframes janela-sai { to { opacity: 0; transform: translateY(6px) scale(.985); } }
 .janela.larga { width: min(860px, 100%); }
 .janela-topo { display: flex; align-items: center; gap: var(--e3); padding: var(--e5) var(--e5) var(--e3); }
 .janela-topo h2 { margin: 0; flex: 1; font-family: var(--serifa); font-weight: 500; font-size: 22px; }
@@ -223,8 +237,12 @@ img { max-width: 100%; }
   position: fixed; z-index: 85; min-width: 220px; max-width: 340px; padding: 6px;
   max-height: min(62vh, 560px); overflow-y: auto;
   background: var(--papel); border: 1px solid var(--linha); border-radius: var(--raio-m); box-shadow: var(--sombra-2);
-  animation: entrar var(--rapido) var(--curva);
+  animation: menu-entra 170ms var(--curva); transform-origin: top left;
 }
+.menu.acima { transform-origin: bottom left; }
+.menu.saindo { animation: some 110ms var(--curva-saida) forwards; pointer-events: none; }
+@keyframes menu-entra { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
+.menu button, .menu .item { transition: background var(--rapido); }
 .menu button, .menu .item {
   display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--raio-p);
   background: transparent; text-align: left; cursor: pointer; color: var(--texto);
@@ -242,5 +260,5 @@ img { max-width: 100%; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
 }

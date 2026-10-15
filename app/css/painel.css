@@ -1,0 +1,97 @@
+/* ---------- o painel do lado direito (Arquivos, Visualizador, Console, Navegador, Tarefas, Prévia) ---------- */
+/* --largura-painel: a largura que a pessoa escolheu arrastando a alça (fica guardada no navegador do app).
+   O padrão é 38% da janela, entre 360 e 1200 px: até uns 2150 px de janela nada muda, e no monitor ultralargo o
+   painel cresce (o código e as planilhas do Visualizador ganham espaço) em vez de parar em 820 px */
+.painel-lateral {
+  position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  width: var(--largura-painel, clamp(360px, 38vw, 1200px));
+  border-left: 1px solid var(--linha); background: var(--papel-2);
+  container-type: inline-size; container-name: painel;
+}
+.painel-lateral[hidden] { display: none; }
+.painel-lateral.entrando { animation: painel-entra var(--normal) var(--curva); }
+.painel-lateral.saindo { animation: painel-sai 180ms var(--curva) forwards; }
+@keyframes painel-entra { from { opacity: 0; transform: translateX(18px); } }
+@keyframes painel-sai { to { opacity: 0; transform: translateX(18px); } }
+
+.painel-topo {
+  display: flex; align-items: center; gap: var(--e1); min-height: 56px; padding: 0 var(--e2) 0 var(--e3);
+  border-bottom: 1px solid var(--linha); background: var(--papel-2);
+}
+.painel-abas { flex: 1; min-width: 0; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.painel-abas::-webkit-scrollbar { display: none; }
+
+/* uma fileira de guias que rola de lado (fileiraDeGuias no painel.js): a borda esmaece do lado em que tem guia
+   escondida, já que a barra de rolagem não aparece. A máscara só usa a transparência, a cor não importa */
+.fileira-guias { position: relative; }
+.fileira-guias.esconde-fim { mask-image: linear-gradient(to right, var(--papel) calc(100% - 32px), transparent); }
+.fileira-guias.esconde-inicio { mask-image: linear-gradient(to left, var(--papel) calc(100% - 32px), transparent); }
+.fileira-guias.esconde-inicio.esconde-fim {
+  mask-image: linear-gradient(to right, transparent, var(--papel) 32px, var(--papel) calc(100% - 32px), transparent);
+}
+.painel-guia {
+  position: relative; display: inline-flex; align-items: center; gap: 7px; flex: none; height: 34px; padding: 0 11px;
+  border: 0; border-radius: var(--raio-p); background: transparent; color: var(--texto-3); cursor: pointer;
+  font-weight: 500; font-size: 13.5px; transition: background var(--rapido), color var(--rapido);
+}
+.painel-guia svg { width: 16px; height: 16px; }
+.painel-guia:hover { background: var(--papel-3); color: var(--texto); }
+.painel-guia[aria-selected="true"] { color: var(--texto); background: var(--papel); box-shadow: var(--sombra-1); }
+.painel-guia[aria-selected="true"] svg { color: var(--acao); }
+
+.painel-corpo { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.painel-aba { flex: 1; min-height: 0; display: flex; flex-direction: column; animation: aba-entra var(--rapido) var(--curva); }
+.painel-aba[hidden] { display: none; }
+@keyframes aba-entra { from { opacity: 0; } }
+
+/* a barrinha de ferramentas de cada aba (busca, botões, endereço) */
+.painel-barra {
+  display: flex; align-items: center; gap: var(--e1); min-height: 44px; padding: 6px var(--e2);
+  border-bottom: 1px solid var(--linha); background: var(--papel-2);
+}
+.painel-barra .espaco { flex: 1; }
+.painel-vazio { flex: 1; display: grid; place-content: center; gap: var(--e3); padding: var(--e6); text-align: center; color: var(--texto-3); }
+.painel-vazio svg { width: 34px; height: 34px; margin: 0 auto; color: var(--texto-4); }
+.painel-vazio h3 { margin: 0; font-family: var(--serifa); font-weight: 500; font-size: 19px; color: var(--texto-2); text-wrap: balance; }
+.painel-vazio p { margin: 0; max-width: 38ch; text-wrap: pretty; }
+
+/* a alça na borda esquerda: arrastar muda a largura, duplo clique volta ao padrão */
+.painel-alca {
+  position: absolute; z-index: 3; inset: 0 auto 0 -4px; width: 8px; cursor: col-resize; touch-action: none;
+}
+.painel-alca::after {
+  content: ""; position: absolute; inset: 0 3px; border-radius: 2px; background: transparent;
+  transition: background var(--rapido);
+}
+.painel-alca:hover::after, .painel-alca:focus-visible::after, .arrastando-painel .painel-alca::after { background: var(--acao); }
+.painel-alca:focus-visible { outline: none; }
+.arrastando-painel, .arrastando-painel * { cursor: col-resize !important; user-select: none !important; }
+.arrastando-painel iframe { pointer-events: none; }
+
+/* os botões do topo da conversa que abrem cada aba */
+.botoes-painel { display: inline-flex; align-items: center; gap: 2px; padding-left: var(--e1); border-left: 1px solid var(--linha); }
+.botoes-painel .icone-botao[aria-pressed="true"] { background: var(--acao-suave); color: var(--acao-forte); }
+/* o botão geral (abre a última aba, como o Ctrl+J): só na conversa estreita, quando os botões das abas somem
+   (o conversa.css esconde os que não estão marcados) e nenhum está marcado, para o painel nunca ficar sem caminho */
+.botoes-painel .icone-botao.painel-geral { display: none; }
+@container conversa (max-width: 440px) {
+  .botoes-painel:not(:has(.icone-botao[aria-pressed="true"])) .icone-botao.painel-geral { display: inline-grid; }
+}
+
+/* a Prévia (página HTML ou desenho SVG que o Claude escreveu) */
+.aba-previa .painel-barra h2 { margin: 0; flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aba-previa iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+.aba-previa pre { flex: 1; margin: 0; overflow: auto; border-radius: 0; border: 0; }
+
+/* telas estreitas: o painel cobre a conversa, como uma folha por cima */
+@media (max-width: 900px) {
+  .painel-lateral { position: fixed; z-index: 75; inset: 0; width: auto; border-left: 0; box-shadow: var(--sombra-2); }
+  .painel-alca { display: none; }
+  .botoes-painel { border-left: 0; padding-left: 0; }
+}
+/* painel estreito: as abas que não estão abertas mostram só o ícone (o nome fica na dica e no nome acessível), para
+   todas caberem; a aberta continua com o nome, até na janela mais estreita (cabe com folga em 420 px) */
+@container painel (max-width: 740px) {
+  .painel-guia:not([aria-selected="true"]) span { display: none; }
+  .painel-guia:not([aria-selected="true"]) { padding: 0 9px; }
+}

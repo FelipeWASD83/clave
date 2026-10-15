@@ -67,7 +67,7 @@ export async function telaRotinas(principal) {
 }
 
 function editarRotina(r, windows, depois) {
-  r = r || { modo: 'chat', quando: { tipo: 'diaria', hora: '08:00' }, modelo: 'claude-sonnet-5-5', esforco: 'medium', teto_usd: 0.5 };
+  r = r || { modo: 'chat', quando: { tipo: 'diaria', hora: '08:00' }, modelo: 'claude-haiku-5-5', esforco: 'medium', teto_usd: 0.5 };
   let pasta = r.pasta || '';
   const nome = el('input', { class: 'entrada', placeholder: t('Ex.: Resumo da manhã') }); nome.value = r.nome || '';
   const prompt = el('textarea', { class: 'area', rows: 4, placeholder: t('O que o Claude deve fazer, do começo ao fim, sem precisar perguntar nada.') }); prompt.value = r.prompt || '';

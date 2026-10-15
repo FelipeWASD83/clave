@@ -73,6 +73,22 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
 - **Modo Code**: o Claude trabalha numa pasta do seu computador, lê e cria
   arquivos, mexe em planilhas e roda comandos para automatizar tarefas. Você
   aprova cada mudança (ou libera de vez), vê o antes e depois e pode desfazer.
+- **O painel do Code**, ao lado da conversa: **Arquivos** (a pasta em árvore,
+  com busca, renomear e Lixeira), um **Visualizador** (código, Markdown, PDF,
+  planilhas, Word, imagens, áudio e vídeo, e o que o Claude mudou), um
+  **Console** com PowerShell de verdade (um comando da resposta do Claude vai
+  para lá com um clique, e a saída volta para o Claude), um **Navegador** e
+  **Tarefas**.
+- **Um navegador que você divide com o Claude**: no modo Code ele abre e lê
+  páginas e tira print e, com o seu OK, clica e digita, para conferir o que
+  construiu num servidor local ou usar um site. Os servidores rodando no seu
+  computador abrem com um clique.
+- **Tarefas em segundo plano**: servidores locais que o Claude deixa rodando,
+  respostas, fluxos, rotinas e downloads numa lista só, com o registro e um
+  botão Parar.
+- **Widgets**: no chat e no Code, o Claude desenha a resposta num cartão:
+  produtos e preços, mapas, recomendações, plantas e desenhos, gráficos,
+  comparações, linhas do tempo e listas para marcar.
 - **Fluxos**: uma tarefa grande vira etapas, cada uma no modelo certo (o Opus
   planeja, o Sonnet faz e testa, o Haiku confere), com etapas em paralelo.
   Fluxo gasta mais, então ele **sempre pede o seu OK** antes, mostrando as
@@ -134,8 +150,11 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   Clave funciona com os dois nomes (/resumo ou /summary, /vendas:proposta ou
   /sales:proposal), e o menu mostra o do seu idioma.
 
-- **Aprender**: lições para quem nunca usou IA, com glossário de termos (API,
-  JSON, Git...) e um ajudante que tira dúvidas de cada lição.
+- **Aprender**: lições para quem nunca usou IA, em nove trilhas (primeiros
+  passos, deixar o Claude do seu jeito, automação com o modo Code, ir além,
+  economizar crédito, a mesa do Code, respostas visuais, usar com segurança e
+  receitas por área), com glossário de termos (API, JSON, Git...), vídeos curtos
+  e um ajudante que tira dúvidas de cada lição.
 - **Tours com setinhas**: na primeira vez, setas apontam cada parte da tela e
   explicam para que serve.
 - **Português do Brasil e inglês**: a interface, as lições, o modelo de pasta e
@@ -183,7 +202,9 @@ A chave fica guardada só no seu computador, criptografada pelo Windows.
 ## Vídeos
 
 Vídeos curtos e narrados, em português e em inglês. Eles também tocam dentro do Clave, nas lições
-(**Aprender**): a lição baixa o vídeo na primeira vez que você dá play.
+(**Aprender**): o Clave baixa os do idioma dele em segundo plano (uns 28 MB) e a lição toca do seu
+computador. Eles não vêm no download do Clave; para baixar só quando você der play, desligue em
+Configurações > Atualizações e sobre.
 
 | Vídeo | O que mostra |
 |---|---|
@@ -212,6 +233,14 @@ teto que você definiu.
   pedem, a não ser que uma regra sua libere aquele comando, e o modo Plano não
   muda nada. Arquivos sensíveis vão para a lista de protegidos: as ferramentas
   de arquivo nunca mexem neles e comando que os cite pede OK.
+- O navegador do modo Code guarda cookies e logins próprios, separados do resto
+  do Clave. Fora do modo Livre, o Claude pergunta antes de usar cada site novo
+  numa tarefa e antes de cada clique ou digitação; ele nunca digita senha,
+  código de acesso nem número de cartão, e trata o que a página diz como dado,
+  nunca como ordem. Sair da conta apaga os dados do navegador.
+- Fotos dos widgets vêm de outros sites, então só carregam quando você clica
+  (uma página poderia usar o endereço de uma foto para levar dados para fora).
+  Os mapas vêm do OpenStreetMap pelo Clave.
 - Fluxos sempre pedem OK. Rotinas nunca perguntam: só fazem o que as suas
   regras já liberam e param no resto.
 - Plugins trazem instruções para o Claude: instale só de quem você confia. O
@@ -240,8 +269,9 @@ a pasta dele, os atalhos e as tarefas das rotinas no Agendador. As conversas
 moram dentro da pasta, então baixe o backup antes (Configurações > Dados e
 backup) se quiser guardar. À mão: apague a pasta do Clave e os dois atalhos.
 
-**Sair da conta** (no mesmo lugar) apaga a chave e as senhas salvas e volta todas
-as configurações ao padrão, mantendo as conversas.
+**Sair da conta** (no mesmo lugar) apaga a chave, as senhas salvas e os logins e
+cookies do navegador do Code, e volta todas as configurações ao padrão, mantendo
+as conversas.
 
 ## Para quem desenvolve
 
@@ -265,7 +295,9 @@ Detalhes técnicos e decisões em [`CLAUDE.pt-BR.md`](CLAUDE.pt-BR.md). Históri
 ## Licença
 
 O código do Clave é livre, sob a licença [MIT](LICENSE). As bibliotecas e
-fontes em `app/vendor/` têm as licenças delas, no arquivo ao lado de cada uma.
+fontes em `app/vendor/` (inclusive o xterm.js e o Leaflet) têm as licenças delas,
+no arquivo ao lado de cada uma. Dados dos mapas © colaboradores do
+OpenStreetMap.
 Os prints em `modelo-de-pasta/.claude/referencias-visuais/prints/` são capturas
 de sites públicos, guardadas só como referência de estudo; os sites e as marcas
 são dos donos deles.

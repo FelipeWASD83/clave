@@ -23,16 +23,18 @@ As suas conversas, configurações, memórias e a chave **não são tocadas**: e
 
 Em **Configurações > Dados e backup**:
 
-- **Baixar backup**: um arquivo com as conversas, os projetos e o histórico de gasto.
+- **Baixar backup das conversas**: um arquivo com as conversas, os projetos, as rotinas e o histórico de gasto.
 - **Importar backup**: traz de volta (num computador novo, por exemplo).
 
-Os arquivos anexados e a chave não vão no backup. A chave você cria de novo no Console; os anexos, mande de novo se precisar.
+Os arquivos anexados, a chave e a [memória](#/aprender/memoria) não vão no backup. A chave você cria de novo no Console; os anexos, mande de novo se precisar. A memória mora na pasta `dados\memoria`: a cópia da pasta `dados`, logo abaixo, leva ela junto.
 
 Para não perder nada, guarde também uma cópia da pasta `dados` do Clave num HD externo ou na nuvem de vez em quando (com o Clave fechado).
+
+E os arquivos do seu trabalho, nas pastas do modo Code? Isso é outra história: veja [Desfazer, backup e Git: a sua rede de segurança](#/aprender/rede-de-seguranca).
 
 ## Sair da conta e desinstalar
 
 Em **Configurações > Atualizações e sobre**, embaixo:
 
-- **Sair da conta**: apaga a chave da API e as senhas salvas (e-mail, GitHub, conectores), volta todas as configurações ao padrão e desliga as rotinas. As conversas, os projetos e a memória ficam. Depois aparecem a apresentação e os tours de novo, como na primeira vez. Serve para passar o computador para outra pessoa ou começar do zero com outra chave.
+- **Sair da conta**: apaga a chave da API, as senhas salvas (e-mail, GitHub, conectores) e os dados do navegador do Code (logins e cookies dos sites), volta todas as configurações ao padrão e desliga as rotinas. As conversas, os projetos e a memória ficam. Depois aparecem a apresentação e os tours de novo, como na primeira vez. Serve para passar o computador para outra pessoa ou começar do zero com outra chave.
 - **Desinstalar**: o Clave fecha e apaga a pasta dele (com as conversas, que moram lá dentro), os atalhos e as tarefas das rotinas no Agendador do Windows. Não dá para desfazer: se quiser guardar as conversas, baixe o backup antes.

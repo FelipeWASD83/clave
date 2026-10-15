@@ -1,0 +1,398 @@
+/* Widgets: produtos, mapas, recomendações, desenhos, gráficos e outros cartões que o Claude monta na conversa. */
+
+/* Paleta dos widgets: os nomes que o Claude usa no campo "cor" (azul, verde...). Tons de tinta sobre papel no tema
+   claro e tons claros no escuro; "acao" é a cor de ação do app e "preto" é a tinta (fica clara no tema escuro). */
+:root {
+  --w-acao: var(--acao);
+  --w-azul: #2f5d8a;
+  --w-verde: #3f7a4a;
+  --w-vermelho: #a8402f;
+  --w-laranja: #b8652a;
+  --w-amarelo: #a8831a;
+  --w-roxo: #6a4c8c;
+  --w-rosa: #a9506f;
+  --w-marrom: #7a5a3c;
+  --w-cinza: #7a7266;
+  --w-preto: var(--texto);
+  --w-mapa-filtro: none;
+  /* capas desenhadas das recomendações: quanto da cor entra (o resto é papel) e a cor das iniciais */
+  --w-capa-forca: 100%;
+  --w-capa-traco: 100%;
+  --w-capa-iniciais: var(--papel);
+  /* fundo das fotos de produto: as lojas fazem as fotos para fundo branco, nos dois temas */
+  --w-foto-fundo: #ffffff;
+}
+/* No escuro, o mapa vira um mapa escuro de verdade (claro e escuro trocados, cores de volta no lugar com o giro de
+   matiz) e as capas ficam em tons fechados, com as iniciais claras. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --w-azul: #7fa9d6; --w-verde: #86c08e; --w-vermelho: #e0806f; --w-laranja: #e2a064; --w-amarelo: #d9bd5c;
+    --w-roxo: #b39ad8; --w-rosa: #dc93ad; --w-marrom: #c9a27e; --w-cinza: #a39a8b;
+    --w-mapa-filtro: invert(1) hue-rotate(180deg) brightness(.9) contrast(.88) saturate(.55) sepia(.12);
+    --w-capa-forca: 50%;
+    --w-capa-traco: 78%;
+    --w-capa-iniciais: var(--texto);
+  }
+}
+:root[data-tema="escuro"] {
+  --w-azul: #7fa9d6; --w-verde: #86c08e; --w-vermelho: #e0806f; --w-laranja: #e2a064; --w-amarelo: #d9bd5c;
+  --w-roxo: #b39ad8; --w-rosa: #dc93ad; --w-marrom: #c9a27e; --w-cinza: #a39a8b;
+  --w-mapa-filtro: invert(1) hue-rotate(180deg) brightness(.9) contrast(.88) saturate(.55) sepia(.12);
+  --w-capa-forca: 50%;
+  --w-capa-traco: 78%;
+  --w-capa-iniciais: var(--texto);
+}
+
+/* ---------- o cartão ---------- */
+.widget {
+  container: widget / inline-size;
+  max-width: 100%; min-width: 0;
+  border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel);
+  overflow: hidden; font-family: var(--sans); font-size: 14px; color: var(--texto);
+}
+.widget-topo { display: flex; align-items: center; gap: 10px; padding: 10px 8px 10px 14px; border-bottom: 1px solid var(--linha); }
+.widget-icone { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--raio-p); background: var(--acao-suave); color: var(--acao-forte); }
+.widget-icone svg { width: 17px; height: 17px; }
+.widget-titulos { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.widget-tipo { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-3); }
+.widget-titulo { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.widget-acoes { flex: none; display: flex; gap: 2px; }
+/* a coluna única não cresce com o conteúdo: uma tabela larga rola dentro do cartão em vez de ser cortada por ele */
+.widget-corpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px; min-width: 0; }
+.widget-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.widget-barra .espaco { flex: 1; }
+.widget-barra .segmentado button { font-size: 13px; padding: 4px 10px; }
+.widget-nota { display: flex; align-items: flex-start; gap: 6px; margin: 0; color: var(--texto-3); font-size: 12.5px; line-height: 1.45; }
+.widget-nota svg { flex: none; width: 14px; height: 14px; margin-top: 2px; }
+.widget-erro { margin: 0; color: var(--erro); }
+
+/* tela cheia (janela grande) */
+.janela.janela-widget { width: min(1240px, 100%); }
+.janela-widget .janela-corpo { padding-bottom: var(--e4); }
+.widget.widget-cheio { border: 0; border-radius: 0; overflow: visible; }
+.widget-cheio .widget-topo { padding: 0 0 8px; border-bottom: 0; }
+.widget-cheio .widget-icone, .widget-cheio .widget-titulos { visibility: hidden; }
+.widget-cheio .widget-corpo { padding: 0; }
+
+/* carregando e erro */
+.widget-carregando, .widget-falhou { display: flex; align-items: center; gap: 10px; padding: 14px; color: var(--texto-3); }
+.widget-falhou { color: var(--erro); background: var(--erro-suave); border-color: transparent; }
+.widget-falhou .widget-icone { background: transparent; color: var(--erro); width: auto; height: auto; }
+.widget-girando {
+  flex: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--linha); border-top-color: var(--acao); animation: widget-girar 900ms linear infinite;
+}
+@keyframes widget-girar { to { transform: rotate(360deg); } }
+
+/* amostra de cor (legendas e dicas) */
+.widget-amostra { flex: none; display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: var(--c, var(--w-acao)); }
+.widget-amostra.grade { background: var(--papel); border: 1px solid var(--texto-4); background-image: linear-gradient(var(--linha) 1px, transparent 1px), linear-gradient(90deg, var(--linha) 1px, transparent 1px); background-size: 5px 5px; }
+.widget-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; color: var(--texto-2); font-size: 12.5px; }
+.widget-legenda-item { display: inline-flex; align-items: center; gap: 6px; }
+.widget-legenda-item b { font-weight: 500; color: var(--texto); }
+
+/* ---------- produtos ---------- */
+.widget-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+/* cada cartão ocupa as mesmas faixas da grade (foto, nome, preço, detalhes, link; --faixas vem do JS) e as divide com
+   os vizinhos pelo subgrid: o preço cai na mesma linha em todos os cartões lado a lado */
+.widget-produto {
+  display: grid; grid-row: span var(--faixas, 3); grid-template-rows: subgrid; row-gap: 8px; align-content: start;
+  padding: 12px; border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel); min-width: 0;
+}
+.widget-produto.mais-barato { border-color: var(--acao); box-shadow: inset 0 0 0 1px var(--acao); background: color-mix(in srgb, var(--acao-suave) 40%, var(--papel)); }
+.widget-produto-nome, .widget-produto-detalhes { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.widget-produto-nome .etiqueta { justify-self: start; }
+.widget-produto h4 { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+.widget-preco { margin: 0; align-self: start; font-family: var(--serifa); font-size: 22px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.widget-loja { margin: 0; color: var(--texto-2); font-size: 13px; }
+.widget-obs { margin: 0; color: var(--texto-3); font-size: 12.5px; line-height: 1.45; }
+.widget-produto-link { justify-self: start; align-self: end; }
+
+/* imagens de fora: uma vaga que só ganha a foto com o clique em "Mostrar imagens" */
+.widget-imagem { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; border-radius: var(--raio-p); background: var(--papel-2); overflow: hidden; color: var(--texto-4); }
+.widget-imagem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--w-foto-fundo); opacity: 0; transition: opacity var(--normal); }
+.widget-imagem.com-imagem img { opacity: 1; }
+.widget-imagem.carregando::after { content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--linha); border-top-color: var(--acao); animation: widget-girar 900ms linear infinite; }
+.widget-imagem.sem-imagem { color: var(--texto-4); }
+.widget-imagem-vazia svg { width: 26px; height: 26px; }
+
+/* ---------- mapa ---------- */
+.widget-mapa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, 240px); gap: 12px; }
+.widget-mapa-area {
+  position: relative; height: 340px; min-width: 0; border: 1px solid var(--linha); border-radius: var(--raio-m);
+  overflow: hidden; background: var(--papel-2); z-index: 0;
+}
+.widget-cheio .widget-mapa-area { height: min(68vh, 680px); }
+.widget-mapa-estado { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px; text-align: center; color: var(--texto-3); }
+.widget-mapa-estado.erro { color: var(--erro); }
+.widget-mapa-estado svg { flex: none; width: 18px; height: 18px; }
+.widget-mapa-dica {
+  position: absolute; z-index: 1000; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 6px 12px; border-radius: 99px;
+  background: var(--tinta); color: var(--tinta-texto); font-size: 12.5px; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity var(--rapido);
+}
+.widget-mapa-dica.visivel { opacity: .92; }
+.widget-mapa-lista { display: grid; align-content: start; gap: 2px; margin: 0; padding: 0; list-style: none; max-height: 340px; overflow-y: auto; }
+.widget-cheio .widget-mapa-lista { max-height: min(68vh, 680px); }
+.widget-mapa-lista li { display: flex; align-items: flex-start; gap: 2px; border-radius: var(--raio-p); }
+.widget-mapa-lista li.ativo { background: var(--acao-suave); }
+.widget-mapa-ponto { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 8px; padding: 7px 6px; border: 0; border-radius: var(--raio-p); background: transparent; text-align: left; cursor: pointer; color: var(--texto); }
+.widget-mapa-ponto:hover { background: var(--papel-2); }
+.widget-mapa-lista li.ativo .widget-mapa-ponto:hover { background: transparent; }
+.widget-mapa-textos { display: grid; gap: 1px; min-width: 0; }
+.widget-mapa-textos b { font-weight: 500; overflow-wrap: anywhere; }
+.widget-mapa-textos small { color: var(--texto-3); font-size: 12.5px; line-height: 1.4; }
+.widget-mapa-lista .icone-botao { flex: none; margin-top: 2px; width: 28px; height: 28px; }
+.widget-num { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--acao); color: var(--acao-texto); font-family: var(--mono); font-size: 11.5px; font-weight: 500; }
+
+/* marcador numerado (alfinete em CSS, nas cores do app) */
+.widget-mapa-area .widget-marcador { background: transparent; border: 0; }
+.widget-mapa-area .widget-marcador span {
+  position: absolute; left: 3px; top: 1px; width: 24px; height: 24px; display: grid; place-items: center; z-index: 0;
+  color: var(--acao-texto); font: 600 11.5px/1 var(--mono);
+}
+/* o alfinete é a gota girada atrás; o número fica de pé por cima */
+.widget-mapa-area .widget-marcador span::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  background: var(--acao); border: 2px solid var(--papel); box-shadow: var(--sombra-1);
+}
+.widget-mapa-area .widget-marcador:hover span::before, .widget-mapa-area .widget-marcador:focus-visible span::before { background: var(--acao-forte); }
+.widget-mapa-area .widget-marcador:focus-visible { outline: none; }
+.widget-mapa-area .widget-marcador:focus-visible span::before { box-shadow: 0 0 0 3px var(--acao-suave), var(--sombra-1); }
+.widget-mapa-area path.widget-rota { stroke: var(--acao); stroke-dasharray: 7 6; stroke-linecap: round; fill: none; }
+.widget-mapa-area path.widget-rota-fundo { stroke: var(--papel); stroke-opacity: .88; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+
+/* o Leaflet nas cores do app. O leaflet.css entra no <head> depois deste arquivo, então as regras que ele também
+   tem levam .leaflet-container junto (uma classe a mais) para ganhar dele. */
+.widget-mapa-area .leaflet-container, .widget-mapa-area.leaflet-container { background: var(--papel-2); font-family: var(--sans); font-size: 12.5px; outline-offset: -2px; }
+.widget-mapa-area .leaflet-tile-pane { filter: var(--w-mapa-filtro); }
+.widget-mapa-area.leaflet-container .leaflet-bar { border: 1px solid var(--linha); box-shadow: var(--sombra-1); border-radius: var(--raio-p); background-clip: border-box; }
+.widget-mapa-area .leaflet-bar a { background: var(--papel); color: var(--texto); border-bottom-color: var(--linha); width: 30px; height: 30px; line-height: 30px; }
+.widget-mapa-area .leaflet-bar a:hover, .widget-mapa-area .leaflet-bar a:focus-visible { background: var(--papel-2); color: var(--texto); }
+.widget-mapa-area .leaflet-bar a.leaflet-disabled { background: var(--papel-2); color: var(--texto-4); }
+.widget-mapa-area .widget-mapa-ajustar { display: grid !important; place-items: center; }
+.widget-mapa-area .widget-mapa-ajustar svg { width: 16px; height: 16px; }
+.widget-mapa-area.leaflet-container .leaflet-control-attribution { background: color-mix(in srgb, var(--papel) 88%, transparent); color: var(--texto-3); font-size: 11px; border-top-left-radius: var(--raio-p); }
+.widget-mapa-area.leaflet-container .leaflet-control-attribution a { color: var(--acao); }
+.widget-mapa-area .leaflet-popup-content-wrapper, .widget-mapa-area .leaflet-popup-tip { background: var(--papel); color: var(--texto); box-shadow: var(--sombra-2); }
+.widget-mapa-area .leaflet-popup-content-wrapper { border-radius: var(--raio-m); border: 1px solid var(--linha); }
+.widget-mapa-area .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.45; }
+.widget-mapa-area .leaflet-container a.leaflet-popup-close-button { color: var(--texto-3); }
+.widget-mapa-area .widget-popup { display: grid; gap: 4px; justify-items: start; }
+.widget-mapa-area .widget-popup b { font-weight: 600; }
+.widget-mapa-area .widget-popup p { margin: 0; color: var(--texto-2); }
+.widget-mapa-area .widget-popup small { color: var(--texto-3); }
+.widget-mapa-area .widget-popup .botao { margin-top: 4px; }
+/* os pontos que ficaram fora do mapa (endereço não achado, limite, sem conexão) */
+.widget-mapa-fora { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel-2); }
+.widget-mapa-fora .widget-nota { color: var(--texto-2); }
+.widget-mapa-fora .widget-nota svg { color: var(--aviso, var(--texto-3)); }
+.widget-mapa-fora ul { margin: 0; padding-left: 26px; color: var(--texto-2); font-size: 12.5px; line-height: 1.5; }
+.widget-mapa-fora b { font-weight: 600; color: var(--texto); overflow-wrap: anywhere; }
+/* "Mostrar imagens de loja.com e outra.com": o nome dos sites pode quebrar linha */
+.botao.widget-botao-imagens { max-width: 100%; height: auto; padding-top: 4px; padding-bottom: 4px; white-space: normal; text-align: start; line-height: 1.3; }
+.botao.widget-botao-imagens span { overflow-wrap: anywhere; }
+.botao.widget-botao-imagens svg { flex: none; }
+
+@container widget (max-width: 600px) {
+  .widget-mapa { grid-template-columns: 1fr; }
+  .widget-mapa-area { height: 280px; }
+  .widget-mapa-lista { max-height: 220px; }
+}
+
+/* ---------- recomendações ---------- */
+.widget-recomendacoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.widget-rec { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1px solid var(--linha); border-radius: var(--raio-m); align-items: start; }
+.widget-rec > .widget-imagem { aspect-ratio: 3 / 4; place-items: stretch; }
+.widget-rec > .widget-imagem img { object-fit: cover; background: var(--papel-2); }
+.widget-capa { position: relative; aspect-ratio: 3 / 4; border-radius: var(--raio-p); overflow: hidden; }
+.widget-rec > .widget-imagem > .widget-capa { width: 100%; height: 100%; }
+.widget-capa-fundo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.widget-capa-iniciais {
+  position: absolute; left: 7px; bottom: 6px; color: var(--w-capa-iniciais); font-family: var(--serifa); font-size: 26px; font-weight: 600;
+  line-height: 1; letter-spacing: -.02em;
+}
+.widget-capa-icone { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--papel); color: var(--texto-2); }
+.widget-capa-icone svg { width: 13px; height: 13px; }
+.widget-rec-info { display: grid; gap: 5px; min-width: 0; }
+.widget-rec h4 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.widget-rec-meta { margin: 0; font-family: var(--mono); font-size: 11.5px; color: var(--texto-3); }
+.widget-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.widget-chips li { padding: 1px 8px; border-radius: 99px; background: var(--papel-2); border: 1px solid var(--linha); color: var(--texto-2); font-size: 12px; }
+.widget-rec-onde { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 13px; color: var(--texto-2); }
+.widget-rec-onde b { font-weight: 500; color: var(--texto); }
+.widget-rec-nota { font-weight: 500; color: var(--aviso); }
+.widget-rec-porque { margin: 2px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--texto-2); }
+.widget-rec-porque b { font-weight: 600; color: var(--texto); }
+
+/* ---------- desenho ---------- */
+.widget-desenho-palco {
+  position: relative; border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel-2);
+  overflow: hidden; cursor: grab; touch-action: none; user-select: none;
+}
+.widget-desenho-palco.arrastando { cursor: grabbing; }
+.widget-desenho-palco:focus-visible { outline: 2px solid var(--acao); outline-offset: 2px; }
+.widget-desenho-svg { display: block; width: 100%; height: auto; max-height: 520px; }
+.widget-cheio .widget-desenho-svg { max-height: min(72vh, 760px); }
+.widget-desenho-botoes {
+  position: absolute; top: 8px; right: 8px; display: grid; gap: 2px; padding: 2px; border: 1px solid var(--linha);
+  border-radius: var(--raio-p); background: var(--papel); box-shadow: var(--sombra-1);
+}
+.widget-desenho-botoes .icone-botao { width: 30px; height: 30px; }
+/* cartão estreito: o desenho ocupa a largura toda, então os botões de zoom saem de cima dele e viram uma fileira no
+   alto do palco (por cima, cobriam o canto do desenho) */
+@container widget (max-width: 600px) {
+  .widget-desenho-palco { display: grid; }
+  .widget-desenho-botoes { position: static; grid-row: 1; justify-self: end; display: flex; margin: 6px 6px 0; }
+  .widget-desenho-svg { grid-row: 2; }
+}
+.widget-desenho-palco .widget-mapa-dica { z-index: 2; }
+.w-plano { fill: var(--papel); }
+.w-contorno { fill: none; stroke: var(--texto-2); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.w-grade { stroke: var(--linha); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.w-grade.forte { stroke: var(--texto-4); stroke-opacity: .55; }
+.w-forma { fill: none; stroke: var(--c, var(--texto)); stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.w-forma.cheia { fill: var(--c, var(--texto)); fill-opacity: .2; }
+.w-traco { stroke-width: 3px; stroke-linecap: round; }
+.w-ponta { fill: var(--c, var(--texto)); stroke: none; }
+.w-cota line { stroke: var(--c, var(--texto-3)); stroke-width: 1.2px; vector-effect: non-scaling-stroke; }
+.w-rotulo {
+  fill: var(--texto); stroke: var(--papel); stroke-width: 4px; paint-order: stroke; stroke-linejoin: round;
+  font-family: var(--sans); font-weight: 500;
+}
+.w-rotulo.colorido { fill: var(--c); }
+.w-rotulo-cota { fill: var(--texto-2); font-family: var(--mono); font-weight: 400; }
+
+/* ---------- gráfico ---------- */
+.widget-grafico { position: relative; min-width: 0; border-radius: var(--raio-p); }
+.widget-grafico:focus-visible { outline: 2px solid var(--acao); outline-offset: 4px; }
+.widget-grafico-desenho { width: 100%; min-width: 0; }
+.widget-grafico-desenho .widget-svg { display: block; max-width: 100%; }
+.widget-grafico-pizza .widget-grafico-desenho .widget-svg { margin: 0 auto; }
+.w-grade { shape-rendering: crispEdges; }
+.w-eixo { stroke: var(--texto-4); stroke-width: 1px; shape-rendering: crispEdges; }
+.w-eixo-texto { fill: var(--texto-3); font-family: var(--sans); font-size: 11.5px; }
+.w-valor { fill: var(--texto-2); font-family: var(--sans); font-size: 11px; font-weight: 500; }
+.w-barra { fill: var(--c); transition: fill-opacity var(--rapido); }
+.widget-grafico:hover .w-barra:not(.ativo), .widget-grafico:focus-visible .w-barra:not(.ativo) { fill-opacity: .55; }
+.widget-grafico .w-barra.ativo { fill-opacity: 1; }
+.w-linha { fill: none; stroke: var(--c); stroke-width: 2.4px; stroke-linejoin: round; stroke-linecap: round; }
+.w-area { fill: var(--c); fill-opacity: .16; stroke: none; }
+.w-ponto { fill: var(--papel); stroke: var(--c); stroke-width: 2px; }
+.w-ponto.ativo { fill: var(--c); }
+.w-guia { stroke: var(--texto-4); stroke-width: 1px; stroke-dasharray: 3 3; }
+.w-alvo { fill: transparent; }
+.w-fatia { fill: var(--c); stroke: var(--papel); stroke-width: 2px; transition: opacity var(--rapido); }
+.widget-grafico:hover .w-fatia:not(.ativo), .widget-grafico:focus-visible .w-fatia:not(.ativo) { opacity: .6; }
+.w-pct { fill: var(--papel); font-family: var(--sans); font-size: 12px; font-weight: 600; pointer-events: none; }
+.w-total { fill: var(--texto); font-family: var(--serifa); font-size: 20px; font-weight: 600; }
+.w-total-rotulo { fill: var(--texto-3); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.widget-dica {
+  position: absolute; z-index: 2; display: grid; gap: 3px; min-width: 120px; max-width: 260px; padding: 8px 10px;
+  border-radius: var(--raio-p); background: var(--tinta); color: var(--tinta-texto); box-shadow: var(--sombra-2);
+  font-size: 12.5px; pointer-events: none;
+}
+.widget-dica b { font-weight: 600; }
+.widget-dica-linha { display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+
+/* a imagem baixada: título e legenda desenhados no próprio SVG (montado fora da tela) */
+.widget-exportando { position: absolute; left: -100000px; top: 0; pointer-events: none; }
+.w-exp-titulo { fill: var(--texto); font-family: var(--sans); font-size: 17px; font-weight: 600; }
+.w-exp-legenda { fill: var(--texto-2); font-family: var(--sans); font-size: 13px; }
+
+/* ---------- comparação ---------- */
+.widget-rolagem { overflow-x: auto; max-width: 100%; min-width: 0; border: 1px solid var(--linha); border-radius: var(--raio-m); }
+.widget-rolagem-caixa { position: relative; min-width: 0; }
+.widget-rolagem-caixa.sobra-direita::after {
+  content: ""; position: absolute; top: 1px; bottom: 1px; right: 1px; width: 28px; pointer-events: none;
+  border-radius: 0 var(--raio-m) var(--raio-m) 0;
+  background: linear-gradient(to left, color-mix(in srgb, var(--texto) 14%, transparent), transparent);
+}
+.widget-rolagem:focus-visible { outline: 2px solid var(--acao); outline-offset: 2px; }
+.widget-tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.widget-tabela th, .widget-tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); text-align: left; vertical-align: top; min-width: 110px; }
+.widget-tabela thead th { position: sticky; top: 0; background: var(--papel-2); font-weight: 600; color: var(--texto); }
+.widget-tabela tbody th, .widget-tabela tfoot th { font-weight: 500; color: var(--texto-2); background: var(--papel); position: sticky; left: 0; z-index: 1; min-width: 120px; }
+.widget-tabela thead th.canto { left: 0; z-index: 2; color: var(--texto-3); font-family: var(--mono); font-size: 11px; font-weight: 400; text-transform: uppercase; letter-spacing: .06em; }
+.widget-tabela tbody tr:last-child > * { border-bottom: 0; }
+.widget-tabela td.melhor { background: var(--acao-suave); color: var(--texto); font-weight: 500; }
+.widget-melhor { display: inline-flex; vertical-align: -2px; margin-left: 6px; color: var(--acao-forte); }
+.widget-junto { white-space: nowrap; }
+.widget-melhor svg { width: 14px; height: 14px; }
+.widget-tabela tfoot > tr > * { border-top: 1px solid var(--linha); border-bottom: 0; background: var(--papel-2); font-size: 12.5px; color: var(--texto-2); }
+.widget-tabela tfoot td.lider { color: var(--acao-forte); font-weight: 600; }
+.widget-sim, .widget-nao { display: inline-flex; vertical-align: -3px; }
+.widget-sim svg, .widget-nao svg { width: 16px; height: 16px; }
+.widget-sim { color: var(--sucesso); }
+.widget-nao { color: var(--erro); }
+.widget-vazio { color: var(--texto-4); }
+
+/* ---------- linha do tempo ---------- */
+.widget-tempo { --tempo-vao: 14px; position: relative; display: grid; gap: var(--tempo-vao); margin: 0; padding: 2px 0 2px 2px; list-style: none; }
+.widget-tempo li { position: relative; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 14px; }
+/* o trilho é um trecho por item, do centro do marcador (11px abaixo do topo) até o centro do próximo: termina no
+   último marcador em vez de descer ao lado do texto do último evento */
+.widget-tempo li:not(:last-child)::before {
+  content: ""; position: absolute; left: 5px; top: 11px; bottom: calc(-1 * (var(--tempo-vao) + 11px)); width: 2px;
+  background: var(--linha); border-radius: 2px;
+}
+.widget-tempo-marca { width: 12px; height: 12px; margin-top: 5px; border-radius: 50%; background: var(--papel); border: 2.5px solid var(--acao); position: relative; z-index: 1; }
+.widget-tempo-texto { display: grid; gap: 2px; min-width: 0; }
+.widget-tempo-data { font-family: var(--mono); font-size: 12px; color: var(--acao-forte); }
+.widget-tempo-texto b { font-weight: 600; overflow-wrap: anywhere; }
+.widget-tempo-texto p { margin: 2px 0 0; color: var(--texto-2); font-size: 13.5px; line-height: 1.5; }
+
+/* ---------- checklist ---------- */
+.widget-progresso { display: flex; align-items: center; gap: 12px; color: var(--texto-2); font-size: 13px; }
+.widget-progresso-texto { flex: none; font-variant-numeric: tabular-nums; }
+.widget-progresso-barra { flex: 1; height: 6px; border-radius: 99px; background: var(--papel-2); border: 1px solid var(--linha); overflow: hidden; }
+.widget-progresso-cheio { display: block; height: 100%; width: 0; background: var(--acao); transition: width var(--normal) var(--curva); }
+/* a margem negativa devolve o recuo do fundo de hover: as caixinhas alinham com o "2 de 5 feitos" de cima */
+.widget-checklist { display: grid; gap: 2px; margin: 0 -8px; padding: 0; list-style: none; }
+.widget-checklist label { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 7px 8px; border-radius: var(--raio-p); cursor: pointer; }
+.widget-checklist label:hover { background: var(--papel-2); }
+.widget-checklist input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.widget-caixa {
+  flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border: 1.5px solid var(--texto-4);
+  border-radius: 5px; background: var(--papel); color: transparent; transition: background var(--rapido), border-color var(--rapido);
+}
+.widget-caixa svg { width: 13px; height: 13px; stroke-width: 3; }
+.widget-checklist input:checked + .widget-caixa { background: var(--acao); border-color: var(--acao); color: var(--acao-texto); }
+.widget-checklist input:focus-visible + .widget-caixa { outline: 2px solid var(--acao); outline-offset: 2px; }
+.widget-item-texto { line-height: 1.45; overflow-wrap: anywhere; }
+.widget-checklist li.feito .widget-item-texto { color: var(--texto-3); text-decoration: line-through; text-decoration-color: var(--texto-4); }
+
+/* ---------- telas estreitas ---------- */
+@container widget (max-width: 420px) {
+  .widget-topo { padding-left: 10px; gap: 8px; }
+  .widget-corpo { padding: 10px; }
+  .widget-rec { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; }
+  .widget-capa-iniciais { font-size: 20px; }
+  .widget-preco { font-size: 20px; }
+  /* a tabela cabe no cartão: as colunas encolhem e o texto quebra dentro da célula */
+  .widget-tabela { font-size: 12.5px; }
+  .widget-tabela th, .widget-tabela td, .widget-tabela tbody th, .widget-tabela tfoot th { min-width: 0; padding: 8px 6px; }
+  .widget-tabela thead th.canto { font-size: 10px; letter-spacing: .04em; }
+}
+
+/* Tela larga (ultrawide, monitor grande): o cartão sai da coluna de leitura e fica até 1200px, centrado nela, com a
+   linha "Mostrou um widget" junto. O texto da resposta continua na largura de ler. Em 1440 nada muda. */
+@container conversa (min-width: 1500px) {
+  .msg-claude .blocos > .widget-vaga, .msg-claude .blocos > .ferramenta[data-nome="mostrar_widget"]:has(+ .widget-vaga) {
+    --w-largura: max(100%, min(1200px, 100cqw - 160px));
+    width: var(--w-largura); margin-inline: calc((100% - var(--w-largura)) / 2);
+  }
+  .widget-vaga .widget-mapa-area { height: 420px; }
+  .widget-vaga .widget-mapa-lista { max-height: 420px; }
+  /* os produtos dividem a largura toda (sem colunas vazias à direita), até uns 380px por cartão */
+  .widget-vaga .widget-produtos { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); max-width: calc(var(--itens, 3) * 390px - 10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-girando, .widget-imagem.carregando::after { animation: none; }
+  .widget-imagem img, .widget-progresso-cheio, .w-barra, .w-fatia, .widget-mapa-dica { transition: none; }
+}
+
+/* o widget que acabou de chegar na resposta entra subindo de leve; reabrindo a conversa ele já aparece no lugar */
+.widget-vaga.ao-vivo > .widget { animation: widget-entra var(--normal) var(--curva); }
+@keyframes widget-entra { from { opacity: 0; transform: translateY(8px) scale(.99); } }

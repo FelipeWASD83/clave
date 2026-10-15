@@ -23,7 +23,7 @@ It will look at the folder and give you the count. Check that it makes sense.
 
 ## 3. Tell it to go ahead
 
-Reply with something like "go ahead". It will ask for permission to create the subfolders and move the files: read the card and click **Allow**. To avoid approving one by one, use **More options > Allow for this task**.
+Reply with something like "go ahead". It will ask for permission to create the subfolders and move the files: read the card and click **Allow**. To avoid approving one by one, use **More options > Allow commands for this task** (a command is what creates the folders and moves the files; on the card for changing a file, the same option is called **Allow for this task**). It lasts until the reply finishes.
 
 ## 4. Check the result
 

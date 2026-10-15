@@ -19,13 +19,17 @@ Na caixa de texto, o primeiro botão escolhe o [modelo](#/aprender/glossario/mod
 
 "Entrada" é o que você manda (mensagem, anexos, conversa anterior); "saída" é o que ele escreve. Um milhão de tokens é muito texto: algo como 700 mil palavras.
 
+Atenção ao Haiku 5.5: quando um pedido passa de 100 mil tokens de entrada (conversa muito longa ou anexo grande), esse pedido inteiro custa 5 vezes mais.
+
 **Regra prática:** comece no Haiku para coisas simples e no Opus para o que importa. Se o Haiku errar, gere outra resposta escolhendo o Opus (menu da setinha circular).
 
 ## O conselheiro de modelo
 
-O Clave começa no **Haiku**, o mais barato. Para você não ficar adivinhando, o próprio Haiku lê a conversa na primeira mensagem e depois a cada 5 e diz qual modelo faz aquela tarefa pelo menor preço: aparece um aviso como "Para esta tarefa, o Sonnet 5.5 deve ir melhor", com o motivo e os botões **Usar** e **Manter**. Cada avaliação custa uma fração de centavo.
+O Clave começa no **Haiku 5.5**, o mais barato. Desde a versão 5.0 ele é o padrão para todo mundo, inclusive para quem já usava o Clave: depois de atualizar, aparece uma vez um aviso com o modelo que você usava antes e os botões **Manter o Haiku** e **Voltar para o de antes**. Para você não ficar adivinhando, o próprio Haiku lê a conversa na primeira mensagem e depois a cada 5 e diz qual modelo faz aquela tarefa pelo menor preço: aparece um aviso como "Para esta tarefa, o Sonnet 5.5 deve ir melhor", com o motivo e os botões **Usar** e **Manter**. Cada avaliação custa uma fração de centavo.
 
 Se preferir, deixe o Clave **trocar sozinho** (Configurações > Modelos > Deixar o Clave trocar o modelo sozinho): ele troca, avisa e mostra um botão para voltar. Numa conversa em que você voltar, ele não troca mais. Dá para desligar o conselheiro ali também.
+
+Para escolher pelo menor preço sem perder qualidade, veja [O modelo certo pelo menor preço](#/aprender/modelo-certo-mais-barato).
 
 ## O raciocínio
 
@@ -40,6 +44,8 @@ No Haiku e no Sonnet dá para **desligar o pensamento** (fica mais rápido). No 
 **Mostrar o raciocínio** exibe um resumo do que ele pensou, numa caixinha que abre e fecha. Não muda o preço.
 
 O **modo rápido** (só no Opus) responde até 2,5 vezes mais rápido, pelo dobro do preço.
+
+Quando vale pagar para ele pensar mais: [Raciocínio: quando vale pagar para ele pensar](#/aprender/raciocinio-sem-desperdicio).
 
 ## E se ele recusar?
 

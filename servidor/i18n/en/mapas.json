@@ -1,0 +1,10 @@
+{
+  "o serviço de endereços respondeu com o erro {codigo}": "the address service answered with error {codigo}",
+  "sem conexão com o serviço de endereços": "no connection to the address service",
+  "o serviço de endereços mandou uma resposta que não deu para ler": "the address service sent an answer that couldn't be read",
+  "Tile inválido: {nome} precisa ser um número inteiro.": "Invalid tile: {nome} must be a whole number.",
+  "Tile inválido: o zoom vai de 0 a {maximo}.": "Invalid tile: the zoom goes from 0 to {maximo}.",
+  "Tile inválido: neste zoom, x e y vão de 0 a {maximo}.": "Invalid tile: at this zoom, x and y go from 0 to {maximo}.",
+  "O OpenStreetMap não mandou este pedaço do mapa (erro {codigo}).": "OpenStreetMap didn't send this piece of the map (error {codigo}).",
+  "Não deu para baixar o mapa agora. Confira a internet.": "Couldn't download the map right now. Check the internet connection."
+}

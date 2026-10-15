@@ -2,7 +2,7 @@
 import { api, acompanhar } from './api.js';
 import { estado, cfg, avisar, atualizarOrcamento, modeloInfo, ouvir, carregarEstado } from './estado.js';
 import { ic } from './icones.js';
-import { el, aviso, copiarTexto, menu, usd, confirmar } from './ui.js';
+import { el, aviso, copiarTexto, menu, usd, confirmar, rolagemSuave } from './ui.js';
 import { criarCompositor, opcoesPadrao, cartaoAnexo } from './compositor.js';
 import { renderizar } from './markdown.js';
 import {
@@ -10,6 +10,8 @@ import {
   preencherResultadoServidor, nota, divisorCompactacao, descreverFerramenta, htmlDiff,
 } from './blocos.js';
 import { abrirPrevia } from './previa.js';
+import { definirContexto, botoesDoPainel } from './painel.js';
+import { renderizarWidget, lembrarWidget } from './widgets.js';
 import { painelUso, painelAmbientes } from './painel-uso.js';
 import { bannerModeloNovo } from './lancamentos.js';
 import { menuConversa } from './lateral.js';
@@ -72,9 +74,10 @@ class TelaConversa {
   async montarNova() {
     this.topo = el('header', { class: 'topo' });
     this.centro = el('div', { class: 'inicio' });
-    this.principal.replaceChildren(el('section', { class: 'conversa' }, this.topo, this.centro));
+    this.principal.replaceChildren(el('section', { class: `conversa modo-${this.modo}` }, this.topo, this.centro));
     const projeto = this.projetoId ? await api(`/projetos/${this.projetoId}`).then((r) => r.projeto).catch(() => null) : null;
     this.desenharTopo(this.modo === 'code' ? t('Novo trabalho no Code') : (projeto ? t('Nova conversa em {nome}', { nome: projeto.nome }) : t('Nova conversa')));
+    this.avisarPainel();
     if (this.modo === 'code') {
       // como no app oficial: começa no último ambiente usado (dá para trocar no painel de ambientes);
       // a lista de pastas recentes muda no servidor a cada trabalho novo, então vem atualizada
@@ -92,6 +95,7 @@ class TelaConversa {
       this.pasta = caminho;
       this.infoPasta = info;
       this.skills = info.skills || [];
+      this.avisarPainel();
       return true;
     } catch (e) {
       if (!silencioso) aviso(e.message, 'erro');
@@ -155,13 +159,14 @@ class TelaConversa {
     this.visao = await api(`/conversas/${this.id}`);
     this.modo = this.visao.conversa.modo;
     this.pasta = this.visao.conversa.pasta;
+    this.avisarPainel();
     this.topo = el('header', { class: 'topo' });
     this.mensagensEl = el('div', { class: 'mensagens' });
     this.rolagem = el('div', { class: 'rolagem' }, el('div', { class: 'coluna' }, this.mensagensEl));
     this.tarefasEl = el('div', { class: 'tarefas', hidden: true });
     this.comp = this.criarCompositor();
     this.comp.elemento.querySelector('.coluna').prepend(this.tarefasEl);
-    this.principal.replaceChildren(el('section', { class: 'conversa' }, this.topo, this.rolagem, this.comp.elemento));
+    this.principal.replaceChildren(el('section', { class: `conversa modo-${this.modo}` }, this.topo, this.rolagem, this.comp.elemento));
     this.mensagensEl.addEventListener('click', (e) => this.cliqueNasMensagens(e));
     this.desenharTopo(this.visao.conversa.titulo || t('Nova conversa'));
     this.desenharMensagens();
@@ -177,7 +182,20 @@ class TelaConversa {
   async recarregar() {
     this.visao = await api(`/conversas/${this.id}`);
     this.desenharTopo(this.visao.conversa.titulo || t('Nova conversa'));
+    // os widgets que já estão na tela (um mapa carregado, um desenho com zoom) continuam os mesmos depois de redesenhar
+    const vivos = new Map([...this.mensagensEl.querySelectorAll('.widget-vaga[data-widget]')]
+      .filter((v) => v.dataset.widget && v.firstChild).map((v) => [v.dataset.widget, v]));
     this.desenharMensagens();
+    for (const nova of this.mensagensEl.querySelectorAll('.widget-vaga[data-widget]')) {
+      const velha = vivos.get(nova.dataset.widget);
+      if (velha) nova.replaceWith(velha);
+    }
+  }
+
+  // o painel lateral (Arquivos, Console, Navegador...) acompanha a conversa e a pasta desta tela
+  avisarPainel() {
+    definirContexto({ modo: this.modo, pasta: this.modo === 'code' ? this.pasta : null, conversaId: this.id });
+    if (this.topo?.isConnected) this.desenharTopo(this.topo.querySelector('h1')?.textContent || '');
   }
 
   desenharTopo(titulo) {
@@ -199,7 +217,7 @@ class TelaConversa {
     this.topo.replaceChildren(
       el('button', { class: 'icone-botao abrir-lateral', type: 'button', 'aria-label': t('Abrir a barra lateral'), html: ic('menu'),
         onclick: () => import('./lateral.js').then((m) => m.alternarLateral()) }),
-      h1, ...extras, ...(mais ? [mais] : []));
+      h1, ...extras, ...(mais ? [mais] : []), botoesDoPainel());
   }
 
   criarCompositor() {
@@ -330,7 +348,10 @@ class TelaConversa {
 
   grupoParaContinuar() {
     const ultimo = this.mensagensEl.lastElementChild;
-    if (ultimo?.classList.contains('msg-claude')) return ultimo.querySelector('.blocos') || ultimo;
+    if (ultimo?.classList.contains('msg-claude')) {
+      ultimo.classList.add('continuando');  // a resposta ainda não terminou: a barra de copiar e refazer espera o fim
+      return ultimo.querySelector('.blocos') || ultimo;
+    }
     const blocos = el('div', { class: 'blocos', style: 'display:grid;gap:12px' });
     const g = el('div', { class: 'msg-claude' }, blocos);
     this.mensagensEl.append(g);
@@ -505,6 +526,7 @@ class TelaConversa {
     const codigo = bloco?.querySelector('pre code')?.textContent || '';
     if (b.dataset.acao === 'copiar-codigo') copiarTexto(codigo, b);
     if (b.dataset.acao === 'previa') abrirPrevia({ codigo, lingua: bloco.dataset.lingua });
+    if (b.dataset.acao === 'console' && this.modo === 'code') import('./painel.js').then((m) => m.abrirPainel('console', { comando: codigo.replace(/\s+$/, '') }));
   }
 
   pertoDoFim() {
@@ -539,7 +561,7 @@ class Vivo {
     this.indicador = null;
     this.agendado = new Set();
     this.fluxos = new Map();      // fluxo -> FluxoVivo
-    this.conexao = acompanhar(execucaoId, (ev) => this.evento(ev));
+    this.conexao = acompanhar(execucaoId, (ev) => this.evento(ev), desde || 0);
   }
 
   parar() { this.conexao?.parar(); }
@@ -665,7 +687,11 @@ class Vivo {
       case 'aprovacao_decidida': {
         const card = this.tela.mensagensEl.querySelector(`[data-id="${CSS.escape(ev.id)}"]:is(.aprovacao, .fluxo)`);
         // o cartão de perguntas respondido vira o resumo das respostas sozinho; só sai se a tarefa parou
-        if (card && !(card.classList.contains('pergunta-card') && ['responder', 'pular'].includes(ev.decisao))) card.remove();
+        if (card && !(card.classList.contains('pergunta-card') && ['responder', 'pular'].includes(ev.decisao))) {
+          card.remove();
+          const det = this.achar(ev.id);
+          if (det) det.hidden = false;
+        }
         break;
       }
       case 'fluxo_inicio': {
@@ -714,11 +740,24 @@ class Vivo {
         det?.definirResultado?.(ev.resumo, ev.erro);
         det?.classList.remove('rodando');
         this.mostrarIndicador();
+        // um comando pode ter criado, movido ou apagado arquivos: a aba Arquivos confere a pasta de novo
+        if (ev.nome === 'rodar_comando') dispatchEvent(new CustomEvent('clave:arquivos-mudaram', { detail: { caminhos: [] } }));
+        if (String(ev.nome || '').startsWith('navegador_')) import('./navegador.js').then((m) => m.marcarClaudeUsando(false));
+        break;
+      }
+      case 'widget': {
+        const det = this.achar(ev.id);
+        lembrarWidget(ev.id, ev.widget);  // o redesenho do fim da resposta não precisa buscar de novo
+        if (det?.companheiro) {
+          det.companheiro.classList.add('ao-vivo');  // só o widget que acabou de chegar entra com animação
+          det.companheiro.replaceChildren(renderizarWidget(ev.widget, { id: ev.id }));
+        }
         break;
       }
       case 'arquivo_mudou': {
         const dets = [...this.alvo.querySelectorAll('.ferramenta')].filter((d) => ['escrever_arquivo', 'editar_arquivo', 'excel_alterar', 'excel_no_app'].includes(d.dataset.nome));
         dets[dets.length - 1]?.definirDiff?.(ev.diff);
+        dispatchEvent(new CustomEvent('clave:arquivos-mudaram', { detail: { caminhos: [ev.caminho] } }));  // a aba Arquivos atualiza
         break;
       }
       case 'tarefas':
@@ -784,7 +823,9 @@ class Vivo {
     else card = cartaoAprovacao(ev, { execucaoId, temPasta: this.tela.modo === 'code' });
     const det = this.achar(ev.id);
     if (det) det.after(card); else this.alvo.append(card);
-    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    // o plano e as perguntas são o próprio cartão (como ao reabrir): a linha da ferramenta volta só quando ele sai
+    if (det && (ev.tipo === 'plano_proposto' || ev.tipo === 'pergunta')) det.hidden = true;
+    card.scrollIntoView({ block: 'nearest', behavior: rolagemSuave() });
     card.querySelector('button.primario')?.focus({ preventScroll: true });
   }
 }

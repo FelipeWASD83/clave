@@ -5,6 +5,7 @@ import { salvarConfig, cfg } from './estado.js';
 import { ic } from './icones.js';
 import { t } from './i18n.js';
 import { el, usd, dataBr, aviso } from './ui.js';
+import { tourVindo } from './tour.js';
 
 const ilustracao = (familia) => el('div', { class: `modelo-arte familia-${familia || 'outro'}` },
   familia ? el('img', { src: `img/modelos/${familia}.svg`, alt: '' }) : el('span', { html: ic('faisca') }));
@@ -101,7 +102,8 @@ export async function apresentarNovidade() {
   const ja = new Set(cfg().modelos_apresentados || []);
   const f = (dados.novos || []).find((m) => !ja.has(m.id));
   if (!f) return;
-  if (document.querySelector('.tour-camada')) await new Promise((r) => addEventListener('clave:tour-fechou', r, { once: true }));
+  // com um tour aberto ou para abrir, o cartão fica para depois: o main.js chama de novo quando o tour fecha
+  if (tourVindo() || document.querySelector('.tour-camada')) return;
   ja.add(f.id);
   salvarConfig({ modelos_apresentados: [...ja] }).catch(() => {});
   apresentarModelo(f, dados.fichas?.length ? dados.fichas : [f], dados.inteligencia || {});

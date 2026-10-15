@@ -132,6 +132,17 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     if _tem_resultado(ultima) and str(conteudo).startswith(("Respostas de quem usa", "Answers from the person")):
         return [{"type": "text", "text": "Combinado, sigo com o que você escolheu. (Demonstração: com a chave de "
                  "verdade, o Claude faria de fato.)"}], "end_turn"
+    # widgets: mapa, produtos, recomendações, planta, gráfico, comparação, linha do tempo e checklist de exemplo
+    if _tem_resultado(ultima) and str(conteudo).startswith(("O widget", "The widget")):
+        return [{"type": "text", "text": "Pronto, está no cartão acima. (Demonstração: com a chave de verdade, os "
+                 "dados viriam de uma pesquisa na web.)"}], "end_turn"
+    if not _tem_resultado(ultima) and "mostrar_widget" in nomes:
+        import widgets
+        entrada = widgets.demo(texto_etapa, nomes)
+        if entrada:
+            return [{"type": "text", "text": "Montei um cartão com isso."},
+                    {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "mostrar_widget",
+                     "input": entrada}], "tool_use"
     if not _tem_resultado(ultima) and "perguntar" in nomes and any(p in texto_etapa.lower() for p in ("pergunte", "ask me")):
         return [{"type": "text", "text": "Antes de começar, preciso de duas escolhas suas."},
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "perguntar",
@@ -146,7 +157,12 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     modo_plano = any(isinstance(b, dict) and str(b.get("text", "")).startswith(("<modo-do-clave>Modo Plano ligado",
                                                                                  "<modo-do-clave>Plan mode is on"))
                      for b in (ultima.get("content") if isinstance(ultima.get("content"), list) else []))
-    if (not _tem_resultado(ultima) and "apresentar_plano" in nomes
+    # "segundo plano" tem "plano" dentro: o pedido de um comando em segundo plano (o demo_bloco lá embaixo) ganha do
+    # plano, menos no modo Plano, em que comando nenhum roda
+    import tarefas
+    pede_segundo_plano = (not modo_plano and not _tem_resultado(ultima)
+                          and tarefas.demo_bloco(texto_etapa, nomes) is not None)
+    if (not _tem_resultado(ultima) and "apresentar_plano" in nomes and not pede_segundo_plano
             and (modo_plano or any(p in texto_etapa.lower() for p in ("planej", "plano", "plan")))):
         return [{"type": "text", "text": "Olhei a pasta. Este é o plano:"},
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "apresentar_plano",
@@ -159,6 +175,17 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     if pensa:
         blocos.append({"type": "thinking", "thinking": "Vou entender o pedido e montar uma resposta curta e "
                        "organizada, com um exemplo de cada formato."})
+    import tarefas  # um servidor de teste de verdade, em segundo plano (pedido com "segundo plano" no Code)
+    bloco = tarefas.demo_bloco(texto, nomes)
+    if bloco:
+        blocos.append({"type": "text", "text": "Vou deixar um servidor de teste rodando em segundo plano."})
+        blocos.append(bloco)
+        return blocos, "tool_use"
+    if "navegador_abrir" in nomes and any(p in texto for p in ("abra no navegador", "open in the browser")):
+        blocos.append({"type": "text", "text": "Vou abrir a página no navegador do painel."})
+        blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "navegador_abrir",
+                       "input": {"url": "https://example.com/"}})
+        return blocos, "tool_use"
     if "mostrar_arquivo" in nomes and any(p in texto for p in ("mostre", "show")):
         blocos.append({"type": "text", "text": "Aqui está o print."})
         blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "mostrar_arquivo",

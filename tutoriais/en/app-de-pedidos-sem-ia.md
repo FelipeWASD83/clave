@@ -3,16 +3,16 @@ titulo: An order app without AI (and almost free)
 trilha: 3. Automation with Code mode
 ordem: 28
 duracao: 12 min
-resumo: Orders that arrive by email become rows in Excel and go to the website, with a program built only once, instead of paying Claude every 15 minutes.
+resumo: Orders that arrive by email become rows in Excel and go to the website, with a program built only once, instead of paying Claude every hour.
 ---
 
-Picture a sales office. Orders arrive by email, someone copies each one into an Excel spreadsheet and then types it all again on the company website. The natural idea is to create a [routine](#/aprender/rotinas) that calls Claude every 15 minutes to do this.
+Picture a sales office. Orders arrive by email, someone copies each one into an Excel spreadsheet and then types it all again on the company website. The natural idea is to create a [routine](#/aprender/rotinas) that calls Claude every hour to do this.
 
 It works, but it's the expensive way. This lesson shows the better way: ask Code mode, **only once**, for a small program that does the job **without AI**. Windows itself runs the program on schedule, and each run costs zero tokens.
 
 ## 1. Why not a routine
 
-A routine every 15 minutes means 96 calls to Claude a day, about 2,900 a month. Each call pays for Claude to read the emails, even when no order came in. And the spending goes on next month, and the month after, forever.
+In Clave, the most frequent routine runs once an hour (**Every N hours**, from 1 to 24). That means 24 calls to Claude a day, about 730 a month. Each call pays for Claude to read the emails, even when no order came in. And the spending goes on next month, and the month after, forever. On top of that, an order can wait up to an hour to go in: checking every 15 minutes only works with a program outside Clave, which is exactly what this lesson builds.
 
 A [script](#/aprender/glossario/script) does the same job by following fixed rules: it finds the email, splits out the fields, writes them to the spreadsheet. It costs only the conversation that built it. After that, it can run all day for free.
 
@@ -165,16 +165,17 @@ Things to watch:
 
 ## 9. What it costs
 
-| | Routine every 15 min | Program without AI |
+| | Routine every hour | Program without AI, every 15 min |
 |---|---|---|
 | To set up | nothing (just writing the request) | one conversation in Code mode, once |
 | Each run | tokens, even with no new order | zero |
-| Runs per month | about 2,900 | about 2,900 |
-| Example, at $0.02 per run | about $58 a month, every month | $0 |
+| Runs per month | about 730 | about 2,900 |
+| An order waits up to | 1 hour | 15 minutes |
+| Example, at $0.02 per run | about $15 a month, every month | $0 |
 | Result | can vary a little | always the same |
 | If the email format changes | adapts on its own | needs an adjustment (another short conversation) |
 
-The $0.02 per run is only an example: the real cost depends on the model and on how many emails it reads. To understand where the spending comes from, see [Tokens, context and spending](#/aprender/contexto-e-gasto).
+The $0.02 per run is only an example (it's the price of an average answer on Sonnet 5.5 with reasoning, in the **Pricing & plans** table): the real cost depends on the model and on how many emails it reads. To understand where the spending comes from, see [Tokens, context and spending](#/aprender/contexto-e-gasto).
 
 ## 10. Before leaving it on automatic
 

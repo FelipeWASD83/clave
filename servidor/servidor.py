@@ -104,23 +104,14 @@ def segredo_sessao() -> str:
 SEGREDO = segredo_sessao()
 
 
-class Erro(Exception):
-    def __init__(self, status: int, mensagem: str):
-        super().__init__(mensagem)
-        self.status = status
-        self.mensagem = mensagem
-
-
-ROTAS: list[tuple[str, re.Pattern, callable]] = []
-
-
-def rota(metodo: str, padrao: str):
-    rx = re.compile("^" + re.sub(r"<(\w+)>", r"(?P<\1>[^/]+)", padrao) + "$")
-
-    def deco(fn):
-        ROTAS.append((metodo, rx, fn))
-        return fn
-    return deco
+from rotas import ROTAS, Erro, rota  # noqa: E402  (as partes novas registram as rotas delas no mesmo lugar)
+# as partes da 5.0 registram as rotas delas ao carregar: abas Arquivos e Visualizador, Console, Navegador e
+# Tarefas, e os widgets (com os mapas)
+import console  # noqa: E402,F401
+import explorador  # noqa: E402,F401
+import navegador  # noqa: E402,F401
+import tarefas  # noqa: E402,F401
+import widgets  # noqa: E402,F401
 
 
 class Manipulador(BaseHTTPRequestHandler):
@@ -394,7 +385,12 @@ def r_config(h: Manipulador):
         if k == "tom":
             v = tom.limpar(v)
         limpo[k] = v
+    antes = config.carregar()
     cfg = config.salvar(limpo)
+    if (cfg.get("idioma") != antes.get("idioma")
+            or (cfg.get("baixar_videos") and not antes.get("baixar_videos"))):
+        import videos
+        videos.baixar_todos(cfg.get("idioma"))  # os vídeos das lições no idioma novo, em segundo plano
     h._json({"cfg": _cfg_publica(cfg), "estilos": config.estilos(cfg), "orcamento": orcamento.situacao()})
 
 
@@ -555,7 +551,9 @@ def r_conversa_editar(h: Manipulador, cid):
 
 @rota("DELETE", "/api/conversas/<cid>")
 def r_conversa_apagar(h: Manipulador, cid):
-    if execucao.ativa(cid):
+    # para o que roda por ela (a resposta, os comandos em segundo plano, os downloads) antes de apagar
+    parou = tarefas.parar_da_conversa(cid, esperar=5)
+    if parou.get("ainda_rodando"):
         raise Erro(409, t("Pare a resposta antes de apagar a conversa."))
     banco.apagar_conversa(cid)
     h._json({"ok": True})
@@ -763,6 +761,10 @@ def r_exportar(h: Manipulador, cid):
                     partes.append(b["text"])
                 elif b.get("type") == "clave_anexo":
                     partes.append(t("[anexo: {nome}]", nome=b.get("nome")))
+                elif b.get("type") == "tool_use" and b.get("name") == "mostrar_widget":
+                    md = widgets.texto_para_exportar(b.get("id", ""))  # o Claude não repete no texto o que o cartão mostra
+                    if md:
+                        partes.append(md)
         if partes:
             linhas += [f"## {quem}", "", "\n\n".join(partes), ""]
     corpo = "\n".join(linhas).encode("utf-8")
@@ -940,7 +942,7 @@ def r_anexo(h: Manipulador, aid):
 def r_video_estado(h: Manipulador, vid):
     import videos
     try:
-        h._json({"pronto": videos.local(vid, h.query().get("lingua")) is not None})
+        h._json(videos.estado(vid, h.query().get("lingua")))
     except ValueError as e:
         raise Erro(400, str(e))
 
@@ -1429,6 +1431,8 @@ def r_sair_da_conta(h: Manipulador):
     config.resetar()
     _modelos_cache.update(em=0, lista=None)
     lancamentos._CACHE_CONTA.unlink(missing_ok=True)  # os modelos da conta da chave antiga
+    # os logins e cookies do navegador do Code também são credenciais (sem a janela do Clave, não há o que limpar)
+    threading.Thread(target=navegador.limpar_dados, daemon=True).start()
     h._json({"ok": True, "rotinas_desligadas": desligadas})
 
 
@@ -1566,6 +1570,9 @@ def r_permissao_testar(h: Manipulador):
                      "Read": ("ler_arquivo", {"caminho": valor}),
                      "Edit": ("escrever_arquivo", {"caminho": valor, "conteudo": ""})}.get(ferr, (None, None))
     if nome is None:
+        if ferr == "Navegador":  # "clicar https://site.com" ou só o endereço (vale abrir)
+            h._json(navegador.testar_regra(ctx.regras, valor, modo))
+            return
         if ferr in ("WebFetch", "WebSearch"):
             r = permissoes.nega(ctx.regras, ferr, valor)
             h._json({"decisao": "negar" if r else "auto", "motivo": r.descrever() if r else
@@ -1833,6 +1840,23 @@ def migrar_web_por_padrao() -> None:
     config.salvar({"busca_web": True, "web_por_padrao_migrada": True})
 
 
+def migrar_haiku_padrao() -> None:
+    """5.0: o Haiku (o mais barato) vira o padrão também de quem já usava. A configuração antiga não diz se o modelo
+    foi escolhido ou só ficou o padrão de antes, então os modelos anteriores ficam em aviso_haiku e a tela pergunta
+    uma vez se a pessoa quer manter o Haiku ou voltar. Conversas e rotinas com modelo próprio não mudam."""
+    cfg = config.carregar()
+    if cfg.get("padrao_haiku_migrado"):
+        return
+    haiku = "claude-haiku-5-5"
+    antes = {k: cfg.get(k) for k in ("modelo_chat", "modelo_code")}
+    novo = {"padrao_haiku_migrado": True}
+    if any(v and v != haiku for v in antes.values()):
+        novo.update({"modelo_chat": haiku, "modelo_code": haiku})
+        if cfg.get("configurado"):  # quem nunca terminou as boas-vindas não escolheu modelo nenhum: sem aviso
+            novo["aviso_haiku"] = antes
+    config.salvar(novo)
+
+
 def main() -> int:
     global _servidor
     ap = argparse.ArgumentParser()
@@ -1847,6 +1871,11 @@ def main() -> int:
     config.DADOS.mkdir(parents=True, exist_ok=True)
     banco.conexao()
     migrar_web_por_padrao()
+    migrar_haiku_padrao()
+    import videos
+    videos.baixar_todos()  # os vídeos das lições que faltam, em segundo plano (aparecem na aba Tarefas)
+    import mapas
+    threading.Thread(target=lambda: (mapas.podar_tiles(), widgets.podar_imagens()), daemon=True).start()  # faxina dos caches
     _servidor = ThreadingHTTPServer(("127.0.0.1", a.porta), Manipulador)
     _servidor.daemon_threads = True
     print(f"Clave {config.VERSAO} em http://127.0.0.1:{a.porta}" + (" (modo demonstração)" if DEMO else ""),

@@ -66,9 +66,10 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
   const regua = el('div', { class: 'regua', title: t('Quanto da memória do modelo esta conversa já ocupa') },
     el('div', { class: 'regua-trilho' }, reguaNivel), reguaTexto, custoTexto);
 
+  // Web, GitHub e a permissão andam juntos: se a barra precisar quebrar linha, os três descem juntos
   const caixa = el('div', { class: 'compositor' }, pendentes, area,
-    el('div', { class: 'compositor-barra' }, chipAnexo, chipModelo, chipEsforco, chipWeb,
-      estado.info?.github?.origem ? chipGit : null, modo === 'code' ? chipPerm : null,
+    el('div', { class: 'compositor-barra' }, chipAnexo, chipModelo, chipEsforco,
+      el('span', { class: 'compositor-grupo' }, chipWeb, estado.info?.github?.origem ? chipGit : null, modo === 'code' ? chipPerm : null),
       el('span', { class: 'espaco' }), botaoEnviar));
   const elemento = el('div', { class: 'compositor-area' }, el('div', { class: 'coluna' }, caixa, regua));
 
@@ -184,6 +185,22 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     botaoEnviar.disabled = !rodando && !area.value.trim() && !anexos.length;
   }
   area.addEventListener('input', () => { ajustarAltura(); sugerirComandos(); });
+
+  // o Console ("Mandar para o Claude") e os Arquivos ("Mencionar na conversa") mandam texto para esta caixa
+  const aoInserir = (e) => {
+    if (!area.isConnected) { removeEventListener('clave:inserir-texto', aoInserir); return; }
+    const texto = String(e.detail?.texto || '');
+    if (!texto) return;
+    const ini = area.selectionStart ?? area.value.length, fim = area.selectionEnd ?? ini;
+    const antes = area.value.slice(0, ini), depois = area.value.slice(fim);
+    const sep = antes && !/\s$/.test(antes) ? (texto.includes('\n') ? '\n' : ' ') : '';
+    area.value = antes + sep + texto + (depois && !/^\s/.test(depois) ? ' ' : '') + depois;
+    const pos = (antes + sep + texto).length;
+    area.focus();
+    area.setSelectionRange(pos, pos);
+    ajustarAltura();
+  };
+  addEventListener('clave:inserir-texto', aoInserir);
 
   area.addEventListener('keydown', (e) => {
     const porCtrl = cfg().enviar_com === 'ctrl_enter';

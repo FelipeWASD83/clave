@@ -3,8 +3,9 @@
 # CLAUDE.md: Clave
 
 App para Windows que usa o Claude pela API da Anthropic, com a chave de quem
-usa. Chat, modo Code (agente numa pasta), fluxos com vários modelos, agentes,
-permissões por regras, plugins, comandos de barra, rotinas, Excel, memória,
+usa. Chat, modo Code (agente numa pasta, com um painel lateral: arquivos,
+visualizador, console, navegador e tarefas em segundo plano), widgets, fluxos com
+vários modelos, agentes, permissões por regras, plugins, comandos de barra, rotinas, Excel, memória,
 teto de gasto, GitHub, lições para iniciantes e atualização pelo GitHub. **Repositório
 público, usado por outras pessoas**: nada pessoal entra no código, nas lições
 nem no modelo de pasta. O teste que confere lê os termos proibidos de
@@ -31,29 +32,47 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   cookie de sessão (`dados/sessao.key`); pedido que muda algo com `Origin`
   diferente é recusado. Isso é o que impede uma página da internet de mandar o
   modo Code rodar comando. **Não afrouxar.** `--sem-senha` existe só para teste
-  e preview.
-- **Fim de vida**: fechar a janela mata a árvore do supervisor (`taskkill /T`).
-  Se a janela morrer à força, o servidor percebe pelo `--pai` em até 3 s e
-  fecha; sem janela por 10 min, fecha também (`--fechar-sem-janela`).
+  e preview. A ponte do navegador do Code (`electron/main.js`) segue a mesma
+  ideia: só 127.0.0.1, porta e token aleatórios passados ao servidor em
+  `CLAVE_PONTE_URL` e `CLAVE_PONTE_TOKEN`, e pedido com cabeçalho `Origin` ou
+  `Host` de fora é recusado. Comandos e consoles nunca herdam as variáveis
+  `CLAVE_*` (o token inclusive).
+- **Fim de vida**: fechar a janela (e o reiniciar da janela) primeiro manda
+  `/api/sair` com o cookie de sessão e espera até 3 s o supervisor sair
+  (`pararServidorComCalma`). Nesse caminho o `atexit` do servidor fecha os
+  consoles e os comandos em segundo plano com cuidado: programas com janela
+  sobrevivem, órfãos e fora do alcance do `/T`. Só depois disso, ou se o pedido
+  falhar, o Electron mata a árvore do supervisor (`taskkill /T /F`). Se a janela
+  morrer à força, o servidor percebe pelo `--pai` em até 3 s e sai com
+  `os._exit` (sem `atexit`: os Job Objects fecham e levam tudo, janelas
+  inclusive); sem janela por 10 min, fecha também (`--fechar-sem-janela`).
 - **Dados**: tudo em `dados/` (fora do git): `clave.db` (SQLite), `config.json`,
   `segredos.json` (chave e tokens com DPAPI do Windows), `memoria/`, `anexos/`,
   `logs/`, `atualizacao/`, `plugins/` (instalados), `fluxos/` (modelos do
   usuário), `servidor.json` (porta do servidor aberto, para o
-  `rodar_rotina.py`). `CLAVE_DADOS` troca a pasta (os testes usam isso).
+  `rodar_rotina.py`), `widgets/` (um JSON por chamada de widget), `cache/`
+  (tiles do mapa, imagens dos widgets, `geocode.json`), `tarefas/` (registros das
+  tarefas em segundo plano), `videos/` (vídeos das lições) e `ponte.json` (o
+  endereço e o token da ponte, só com `CLAVE_TESTE_DEMO=1`, apagado ao sair). Os
+  cookies e o armazenamento do navegador ficam no perfil do Electron (partição
+  `persist:clave-navegador`), não em `dados/`. `CLAVE_DADOS` troca a pasta (os
+  testes usam isso).
 
 ## 2. Mapa do código
 
 | Arquivo | O que faz |
 |---|---|
-| `servidor/servidor.py` | Rotas HTTP, estáticos, prévia (`/previa/<id>` com CSP sandbox), segurança |
+| `servidor/servidor.py` | Rotas HTTP, estáticos, prévia (`/previa/<id>` com CSP sandbox), segurança, as migrações ao subir; importa `console`, `explorador`, `navegador`, `tarefas` e `widgets` para as rotas deles existirem desde o começo |
+| `servidor/rotas.py` | O registro das rotas (`@rota`, `Erro`, `ROTAS`) que o `servidor.py` e o módulo de cada parte dividem; um módulo registra as rotas dele quando é importado |
 | `servidor/execucao.py` | Motor de cada resposta: stream, ferramentas, aprovações, custo, desfazer, títulos |
+| `servidor/provedores.py` | Ferramentas que moram em módulo próprio (`MODULOS`: `widgets`, `navegador`). Cada módulo tem `NOMES`, `oferecer()` (as definições que valem nesta resposta, ou `[]`), `executar()` e, opcional, `definicoes_para_teste()`; o `execucao.py` pergunta a cada módulo |
 | `servidor/pedido.py` | Monta o pedido por modelo e desliga recurso opcional que a API recusar (`dados/compat.json`) |
 | `servidor/modelos.py` | Catálogo: preços (página oficial, 14/10/2026) e o que cada modelo aceita |
 | `servidor/custo.py`, `orcamento.py` | Custo pelo `usage` e o teto do mês (ciclo, alertas, bloqueio) |
 | `servidor/sistema.py` | Prompts de sistema (chat, Code, ajudante das lições, editor de memória) |
 | `servidor/contexto_pasta.py` | CLAUDE.md/AGENTS.md da pasta para cima e skills (pasta, pessoais, do app) |
-| `servidor/ferramentas/code.py` | Ferramentas do modo Code, decisão de permissão (`decidir`, com as regras) e comandos perigosos |
-| `servidor/permissoes.py` | Regras no formato do Claude Code: ler e salvar (app em `cfg["permissoes"]`, pasta em `.claude/settings*.json`), casar comando, caminho e domínio, sugerir regra, filtrar ferramentas de servidor |
+| `servidor/ferramentas/code.py` | Ferramentas do modo Code, decisão de permissão (`decidir`, com as regras), comandos perigosos, comandos em segundo plano (`em_segundo_plano`, `ver_comando`, `parar_comando`), o Job Object de todo comando (`_Job`) e o ambiente dos comandos sem `CLAVE_*` (`_ambiente_comando`) |
+| `servidor/permissoes.py` | Regras no formato do Claude Code: ler e salvar (app em `cfg["permissoes"]`, pasta em `.claude/settings*.json`), casar comando, caminho, domínio e `Navegador(...)` (ação, site e porta, ações também em inglês), sugerir regra, filtrar ferramentas de servidor, e ler host e URL como o navegador lê (`host_canonico`, `url_canonica`, `site_de`) |
 | `servidor/fluxos.py` | Fluxos: proposta (`normalizar`, estimativa, teto), `Rodada` (etapas como conversas escondidas, em grupos paralelos, com `Cofre` de custo) e modelos prontos |
 | `servidor/agentes.py`, `comandos.py`, `plugins.py` | Agentes (`.claude/agents`), comandos de barra (`.claude/commands`, `$ARGUMENTS`) e plugins (`.claude-plugin/plugin.json`, instalação de pasta e do GitHub) |
 | `servidor/precos.py` | Planos de assinatura, perfis de mensagem, custo de uma mensagem, a estimativa "API ou assinatura?" e a projeção do teto |
@@ -71,15 +90,26 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 | `servidor/conselheiro.py` | O conselheiro de modelo: o Haiku lê a conversa na 1ª mensagem e a cada 5 e recomenda o modelo mais barato que faz a tarefa (`recomendar_modelo`, ferramenta forçada) |
 | `servidor/desinstalador.py` | Confere se esta pasta pode se desinstalar sozinha e lança o `desinstalar.ps1` fora da árvore de processos do servidor |
 | `ferramentas/desinstalar.ps1` | Desinstalar, rodando do `%TEMP%` depois que o app fecha: atalhos que apontam para esta pasta, `%APPDATA%\Clave` e a pasta do Clave, atrás de travas de segurança |
-| `servidor/videos.py` | Os vídeos das lições: o arquivo local na cópia de desenvolvimento (`video/saida/`), senão baixado uma vez da release `videos` para `dados/videos`, entregue com Range |
+| `servidor/videos.py` | Os vídeos das lições: o arquivo local na cópia de desenvolvimento (`video/saida/`), senão baixado da release `videos` para `dados/videos` (em segundo plano pelo `baixar_todos()`, ou no play), cada download registrado em Tarefas e com como parar, entregue com Range |
+| `servidor/console.py` | A aba Console: ConPTY por ctypes (um modo simples por pipes quando falha), cada shell num Job Object, a saída guardada em pedaços numerados (os últimos ~2 MB) e lida por SSE a partir de `desde`, até 6 consoles, rotas `/api/consoles`, e `encerrar_job_com_cuidado()` (programas com janela sobrevivem), que o `code.py` também usa |
+| `servidor/explorador.py` | Rotas das abas Arquivos e Visualizador (`/api/arquivos/*`): lista, busca, conteúdo com a codificação achada, bruto com Range e CSP sandbox, planilha, docx, mudanças do Claude pelos checkpoints, criar, renomear, Lixeira (`SHFileOperationW`), abrir e revelar. Nada sai da raiz (`..`, unidade, fluxo do NTFS, junção apontando para fora) e arquivo protegido precisa de `forcar=1` |
+| `servidor/navegador.py` | O navegador do Code: as ferramentas `navegador_*`, a decisão por regra, modo e site por tarefa (`decidir`), o cliente da ponte (`chamar`), o texto da página entre marcas aleatórias, a busca de servidores locais (netstat, tasklist e um GET rápido) e `/api/navegador/estado`, `localhosts` e `limpar` |
+| `servidor/tarefas.py` | O registro da aba Tarefas: `registrar()` para comandos em segundo plano e downloads (registro, endereços locais, parar), mais as respostas, fluxos e rotinas lidos do `execucao`; `parar_da_conversa()`, `conversa_dona()` e `/api/tarefas` |
+| `servidor/widgets.py` | `mostrar_widget`: `normalizar()` dos 8 tipos, um JSON por chamada em `dados/widgets`, o proxy de imagem `/api/widgets/imagem` (trava contra SSRF), `GET` e `PATCH /api/widgets/<tid>`, `texto_para_exportar()` (exportação em Markdown), faxina dos caches e `demo()` para a API falsa |
+| `servidor/mapas.py` | Endereço para coordenada (Nominatim, 1 busca por segundo no app inteiro, cache em disco) e o proxy de tiles do OpenStreetMap `/api/mapa/tile/<z>/<x>/<y>` (cache em disco, no mínimo 7 dias, revalidação com ETag/Last-Modified, faxina) |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP e SMTP com senha de app, ou o Outlook clássico por COM) e Word (.docx com a biblioteca padrão, PDF pelo Word instalado) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Fichas de lançamento dos modelos: o cartão de apresentação (abre uma vez para modelo novo), o banner de modelo novo, os cartões "Modelos", a nota de inteligência e a fonte dela (`_inteligencia`) e os modelos que a conta tem e o Clave ainda não conhece (API de modelos, uma vez por dia) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Tradução da interface (`t()`); o servidor junta os catálogos em `/i18n/en.json` |
-| `app/js/tour.js` | Tours com setinhas (destaque, balão, Voltar/Próximo/Pular), um por tela, mostrado uma vez (`cfg.tours_vistos`) |
+| `app/js/tour.js` | Tours com setinhas (destaque, balão, Voltar/Próximo/Pular), uma lista por tela (o Code mostra `code` e depois `mesa`, o do painel), cada um mostrado uma vez (`cfg.tours_vistos`) |
+| `app/js/painel.js`, `abas.js` | O painel lateral: `registrarAba()`, `abrirPainel(id, args)`, `fecharPainel()`, `alternarAba()`, `ouvirPainel()`, o contexto da conversa (`definirContexto`), a largura e os atalhos (`atalhoDoPainel`). O `abas.js` importa os módulos das abas |
+| `app/js/arquivos.js`, `console.js`, `navegador.js`, `tarefas.js`, `previa.js` | As abas: Arquivos e Visualizador (`abrirArquivo()`), Console (xterm.js), Navegador (comanda a vista do Electron pelo `window.clave.navegador`), Tarefas (mais o `contadorTarefas()` da barra da esquerda e o `observarTarefas()`) e Prévia |
+| `app/js/widgets.js` | Desenha os 8 tipos de widget (`renderizarWidget`, `widgetPorId`, `lembrarWidget`), Copiar como texto, baixar em PNG/SVG e o mapa com o Leaflet |
+| `app/js/aviso-modelo.js` | O aviso único "O padrão agora é o Haiku 5.5" (`cfg.aviso_haiku`): Manter o Haiku ou Voltar para o de antes |
+| `app/vendor/xterm/`, `app/vendor/leaflet/` | xterm.js 6.0.0 com o addon fit 0.11.0 (módulos ES, carregados na primeira vez que o Console abre) e Leaflet 1.9.4 (build em módulo ES), cada um com a LICENSE dele |
 | `app/js/lancamentos.js`, `app/img/modelos/` | Cartão de apresentação, banner de modelo novo e cartões "Modelos"; ilustrações (`<familia>.svg`) e renders (`render-<familia>.jpg`, feitas pelo `ferramentas/gerar_renders.py`) próprias do Clave por família de modelo |
-| `app/js/*.js` | Interface sem build: `conversa.js` (tela e resposta ao vivo), `compositor.js` (caixa de texto e comandos de barra), `fluxo-ui.js` (cartões de aprovação, fluxo, plano, sugestão de outra conversa e avisos), `painel-uso.js` (painéis do início: uso e ambientes), `precos.js`, `fluxos.js`, `permissoes.js`, `plugins.js`, `rotinas.js`, `blocos.js`, `config.js`, `aprender.js`, `minichat.js`... |
+| `app/js/*.js` | Interface sem build: `conversa.js` (tela e resposta ao vivo), `markdown.js` (as respostas; blocos de código ganham Prévia e, no Code, Rodar no console), `compositor.js` (caixa de texto e comandos de barra), `fluxo-ui.js` (cartões de aprovação, fluxo, plano, sugestão de outra conversa e avisos), `painel-uso.js` (painéis do início: uso e ambientes), `precos.js`, `fluxos.js`, `permissoes.js`, `plugins.js`, `rotinas.js`, `blocos.js`, `config.js`, `aprender.js`, `minichat.js`... |
 | `agentes/`, `fluxos/`, `plugins/` | Agentes, fluxos e plugins que vêm com o app (o atualizador troca essas pastas) |
-| `electron/` | Janela, menu de contexto, escolher pasta nativo, abrir links fora |
+| `electron/` | Janela, menu de contexto, escolher pasta nativo, abrir links fora, o fechamento com calma (`pararServidorComCalma`) e o navegador do Code: uma `WebContentsView` na partição `persist:clave-navegador`, a ponte HTTP para o servidor, os scripts que ele injeta num mundo isolado, e o `preload.js` (`window.clave.navegador`) para a aba |
 | `tutoriais/*.md`, `tutoriais/en/*.md` | Lições (cabeçalho: titulo, trilha, ordem, duracao, resumo), mesmo nome de arquivo nos dois idiomas; `glossario.md` alimenta o prompt. Os títulos do glossário em inglês guardam a âncora em português: `## API key {#chave-da-api}` |
 | `modelo-de-pasta/`, `modelo-de-pasta-en/` | O modelo de pasta de trabalho. Em inglês o app copia o português (prints, scripts) e põe por cima os textos traduzidos de `modelo-de-pasta-en/`; `READ-ME-FIRST.md` substitui o `LEIA-PRIMEIRO.md` |
 | `skills/ver-video/` | Skill que vem com o app (`SKILL.md` em inglês, **idêntico** ao de `modelo-de-pasta-en/.claude/skills/ver-video/`; os scripts são iguais aos do modelo em português; teste confere) |
@@ -142,9 +172,20 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   Eles ficam na release `videos`, criada como pré-lançamento para o `releases/latest` (o botão Atualizar) nunca
   pegá-la; vídeo renderizado de novo: `gh release upload videos <arquivo> --clobber`. As lições apontam com
   `video: <id>` no cabeçalho (`<id>.<pt-BR|en>.mp4`), e o README aponta para lá também, com as capas de
-  `video/capas/`.
-- **O Haiku é o modelo padrão desde a 4.3** (só em instalação nova: a configuração salva de quem já usava mantém o
-  modelo). O **conselheiro de modelo** roda antes da resposta na 1ª mensagem de quem usa e a cada 5
+  `video/capas/`. **Desde a 5.0 eles baixam sozinhos**: o `videos.baixar_todos()` roda em segundo plano ao subir o
+  servidor e de novo quando o idioma muda ou o `baixar_videos` é ligado, só no idioma do app (uns 28 MB para os 4
+  vídeos), uma rodada por idioma, nunca na demonstração. Cada download fica registrado em Tarefas e dá para parar por lá (o arquivo pela
+  metade é apagado; a rodada automática não recomeça um vídeo parado até o app reiniciar, o botão da lição sim). Um
+  download que termina antes do `Content-Length` que o GitHub anunciou é erro, nunca vídeo pronto. Com o
+  `baixar_videos` desligado, a lição baixa no play, como antes.
+- **O Haiku é o modelo padrão para todo mundo desde a 5.0** (a 4.3 fez dele o padrão só em instalação nova). A
+  configuração antiga não diz se o modelo foi escolhido ou só ficou o padrão de antes, então o
+  `migrar_haiku_padrao()` (ao subir o servidor, uma vez, marcado por `padrao_haiku_migrado`, que o `resetar()`
+  mantém) troca `modelo_chat` e `modelo_code` para o Haiku quando um deles era outro e, se a configuração já estava
+  pronta (`configurado`), guarda o par antigo em `aviso_haiku`. O `aviso-modelo.js` mostra o aviso uma vez (Manter o
+  Haiku, ou Voltar para o de antes, que devolve o par) e limpa; se a pessoa já escolheu outro modelo, ele some sem
+  aparecer. Conversas e rotinas com modelo próprio não mudam; rotina nova nasce no Haiku. O **conselheiro de
+  modelo** roda antes da resposta na 1ª mensagem de quem usa e a cada 5
   (`(n - 1) % 5 == 0`), só no chat e no Code, nunca em rotina, etapa de fluxo, ajudante de lição, comando ou skill
   com modelo fixo, "gerar outra resposta" ou conversa com `modelo_fixo`. Só sugere, a não ser com
   `trocar_modelo_sozinho` ligado. O conselho fica gravado no `meta.conselho` da mensagem de quem usa (a tela
@@ -159,12 +200,91 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   parte separada por `:` traduzida. A resolução tenta primeiro o nome exato digitado e depois o `canonico()`, então
   uma skill da pessoa com o mesmo nome de uma tradução continua vencendo. Um teste falha quando plugin, comando,
   skill ou fluxo que vem com o Clave fica sem nome em inglês.
+- **O painel lateral é uma moldura; as abas se registram sozinhas.** O `painel.js` não conhece aba nenhuma: cada
+  módulo chama `registrarAba({ id, titulo, icone, modos, atalho, tecla, botao, soDepoisDeAberta, montar })` quando o
+  `abas.js` importa, e a ordem vem do `ORDEM` do `painel.js`. O `montar()` roda na primeira vez que a aba abre e
+  devolve os ganchos (`abrir`, `mostrar`, `esconder`, `contexto`, `redimensionar`). **A aba montada continua viva**
+  quando o painel fecha ou a tela muda: o console guarda os shells e a saída, a vista do navegador a página. As abas
+  conversam por contratos, não importando umas às outras: `clave:inserir-texto` (a caixa de mensagem),
+  `clave:arquivos-mudaram` (a conversa dispara quando uma resposta escreve arquivos, com lista vazia depois de um
+  `rodar_comando`), `abrirArquivo(caminho, { linha })`, `abrirPainel('navegador', { url })` e
+  `abrirPainel('console', { comando })` (escreve o comando e nunca aperta Enter; um bloco de várias linhas entra com
+  Shift+Enter entre elas). No servidor, cada parte registra as rotas no próprio módulo pelo `rotas.rota`, e o
+  `servidor.py` importa os módulos ao subir (senão as rotas só existiriam depois da primeira resposta, quando o
+  `provedores.todos()` importa).
+- **As regras do navegador do Code** (o `navegador.py` decide, o `electron/main.js` guarda as travas que precisam
+  da página):
+  - Ele só existe na janela do Electron (as variáveis da ponte; o modo Edge mostra um aviso), numa partição
+    própria, então os cookies e logins dele nunca se misturam com a sessão do app. Rotina e etapa de fluxo nunca
+    recebem o navegador.
+  - Ordem: `deny` de `Navegador` ou `deny` de `WebFetch(domain:x)` com domínio (um `deny` genérico de WebFetch não
+    barra, senão barraria também os servidores de desenvolvimento em localhost), depois o modo Plano (sem clicar nem
+    digitar), depois as regras `ask`, depois o **site por tarefa**: fora do Livre, a primeira ação num site que não é
+    local mostra "Deixar o Claude usar o site X nesta tarefa?" (permitir só desta vez, nesta tarefa, sempre nesta
+    pasta, ou sempre como `Navegador(site)`); localhost, 127.x e [::1] são livres. Depois, **clicar e digitar pedem
+    OK toda vez** fora do Livre, a não ser que uma regra de permitir diga a ação (`Navegador(clicar:x)`): a regra só
+    do site libera o site, não o clique. Por quê: a trava do site fecha o caminho "abrir o webmail logado, ler e
+    levar para outro site", e um clique não tem desfazer.
+  - Depois de cada ação, o site em que a página ficou (redirecionamento, clique, voltar) passa pelas mesmas regras:
+    negado vira página em branco (`em_branco`), site novo mostra o cartão do site antes de o Claude ver qualquer
+    coisa.
+  - O clique ou a digitação aprovados ficam presos à página (origem e caminho) e ao elemento (papel e nome); a
+    ponte recusa com `pagina_mudou` ou `elemento_mudou`, e sem `esperado` não faz nada. Os números dos elementos de
+    uma leitura moram no mundo isolado (`__claveRefs`), nunca num atributo do DOM que um MutationObserver da página
+    poderia passar para outro elemento.
+  - O texto da página chega ao Claude entre marcas com um código aleatório a cada leitura (a página não forja o
+    fim), e o título vai rotulado como dado da página. Campos de senha, código de acesso e cartão (pelo tipo, nome,
+    autocomplete e rótulo) são recusados pela ponte: quem digita é a pessoa.
+  - O site das regras e a URL da página passam pela mesma leitura do navegador (`permissoes.host_canonico` e
+    `url_canonica`: maiúsculas, ponto no fim, `%xx`, letras largas, IDNA, IPv4 em qualquer forma, usuário e senha
+    tirados) e o navegador abre a URL remontada, então nenhuma diferença de leitor escapa de uma regra.
+  - Certificado de cliente nunca é enviado (`select-client-certificate` com callback vazio; senão o Electron entrega
+    o primeiro certificado do Windows a qualquer site que pedir). Sair da conta e Configurações > Modo Code > Apagar
+    os dados do navegador limpam a partição (ação `limpar` da ponte).
+- **Widgets ficam gravados por chamada** em `dados/widgets/<id do tool_use>.json` (o que foi marcado no checklist
+  também): reabrir a conversa lê por `GET /api/widgets/<tid>`, e a exportação em Markdown escreve o
+  `widgets.texto_para_exportar()` no lugar da chamada. O `normalizar()` confere cada tipo e devolve erro claro ao
+  Claude (link só https, cor só da paleta, preço lido como preço), e o `executar` confere de novo onde a ferramenta
+  foi oferecida (nunca rotina, etapa de fluxo ou ajudante de lição, nem com `widgets_ligados` desligado).
+  - **Imagem de fora só pelo `/api/widgets/imagem`**, uma trava contra SSRF: https na porta padrão, sem usuário na
+    URL, todo IP resolvido público (conferido de novo a cada redirecionamento, no máximo 3, e a conexão vai para o
+    IP conferido), até 5 MB, só PNG, JPEG, WebP e GIF (nunca SVG), guardada 7 dias.
+  - **Foto só carrega com clique** por padrão (`widgets_imagens: "clicar"`): uma página que o Claude leu poderia
+    plantar uma URL de imagem que leva dados da conversa para um servidor, e o botão diz os sites antes de carregar.
+  - **Mapa carrega sem clique** porque os tiles vêm pelo proxy do próprio Clave, de um host fixo, seguindo a política
+    de tiles do OpenStreetMap: User-Agent com o app e o repositório, no mínimo 7 dias em disco, revalidação com
+    ETag/Last-Modified, só os tiles que aparecem na tela. Nominatim: no máximo 1 busca por segundo no app inteiro,
+    com cache (achado 180 dias, não achado 1 dia). Os caches têm faxina (30 dias sem uso, teto de 300 MB para tiles
+    e 200 MB para imagens, nunca um tile com menos de 7 dias).
+- **Comandos em segundo plano e o Job Object.** Todo comando que o `rodar_comando` abre (em primeiro plano ou com
+  `em_segundo_plano`) e todo shell de console (criado suspenso e depois solto) roda num Job Object do Windows com
+  KILL_ON_JOB_CLOSE: se o servidor morrer à força, o Windows fecha o último handle e a árvore inteira morre, então
+  nenhum servidor órfão sobra depois do Clave. A parada normal é com cuidado (`console.encerrar_job_com_cuidado`):
+  morre o que não tem janela visível, programas com janela (com os ajudantes e os ancestrais vivos deles) ficam, e
+  depois o KILL_ON_JOB_CLOSE sai. Vale ao fechar um console, ao parar um comando em segundo plano e no `atexit` do
+  servidor; um comando em primeiro plano parado pelo Parar ou pelo tempo limite ainda mata o job inteiro. Um comando
+  em primeiro plano cujo terminal saiu perde só os processos sem janela que ainda seguravam a saída (com aviso).
+  Comandos em segundo plano: no máximo 5 por conversa (`MAX_SEGUNDO_PLANO`), voltam em poucos segundos com o id, a
+  primeira saída e o endereço local, registrados em `tarefas`; o comando de uma etapa de fluxo é da conversa mãe
+  (`tarefas.conversa_dona`); um processo que sobra depois de o terminal sair (um `Start-Process` escondido) mantém a
+  tarefa rodando. Apagar uma conversa chama `tarefas.parar_da_conversa()` antes. O `BREAKAWAY_OK` só deixa sair
+  processo que pede. **O fechamento com calma no Electron é obrigatório**: o `taskkill /T` sozinho percorre
+  supervisor > servidor > PowerShell > a janela e mata as janelas antes de o servidor poder fazer qualquer coisa.
+- **O console é ConPTY por ctypes**, sem pacote nativo (pywinpty e parecidos são binário nativo novo, que o Smart App
+  Control pode barrar): `CreatePseudoConsole` mais `CreateProcessW` com `PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE`,
+  PowerShell 7 quando o `pwsh.exe` está no PATH, senão o Windows PowerShell. Se o ConPTY falhar, entra um modo
+  simples por pipes (sempre o Windows PowerShell, sem cores, setas, programas interativos nem Ctrl+C, na página de
+  código OEM). O ambiente tira os `CLAVE_*` e o `PYTHONUTF8` que o Electron liga para o servidor (vale o da pessoa,
+  se ela tiver um no Windows). Os comandos do `rodar_comando` mantêm `PYTHONUTF8=1` e `PYTHONIOENCODING=utf-8` de
+  propósito: a saída deles é lida como UTF-8.
 - **Sair da conta mantém os dados e tira as credenciais**: `segredos.apagar_tudo()`, `config.resetar()` (o idioma
-  volta a seguir o Windows, então a apresentação e os tours aparecem), o cache de modelos da conta e as rotinas
-  desligadas e fora do Agendador. Conversas, projetos, memória e anexos ficam. O `resetar()` mantém o que não é
-  preferência: `plugins` (zerar religaria um plugin de terceiro que a pessoa desligou), `ajudantes` (as conversas dos
-  ajudantes das lições ficariam órfãs) e `web_por_padrao_migrada` (a migração da 3.1.0 rodaria de novo e apagaria a
-  escolha de Web de cada conversa).
+  volta a seguir o Windows, então a apresentação e os tours aparecem), o cache de modelos da conta, as rotinas
+  desligadas e fora do Agendador e os dados do navegador do Code (`navegador.limpar_dados()` numa thread: cookies,
+  logins, armazenamento e cache também são credenciais; sem a ponte não há o que limpar). Conversas, projetos,
+  memória e anexos ficam. O `resetar()` mantém o que não é preferência: `plugins` (zerar religaria um plugin de
+  terceiro que a pessoa desligou), `ajudantes` (as conversas dos ajudantes das lições ficariam órfãs),
+  `web_por_padrao_migrada` (a migração da 3.1.0 rodaria de novo e apagaria a escolha de Web de cada conversa) e
+  `padrao_haiku_migrado` (a migração da 5.0 rodaria de novo).
 - **Desinstalar nunca roda numa cópia de desenvolvimento, na demonstração nem fora do lançador**
   (`servidor/desinstalador.py` recusa `.git`, `DEMO` e a falta do `CLAVE_LANCADOR`; os testes sobem o servidor de
   verdade a partir da pasta do Clave, e é isso que impede a suíte de desinstalar uma instalação), só apaga uma pasta
@@ -254,8 +374,22 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 - Testes: `.venv\Scripts\python.exe -m unittest discover -s testes -t testes`
   (o `test_servidor` sobe o servidor de verdade com a API falsa; a API falsa
   também propõe fluxo e plano quando a mensagem pede).
+- Cada parte da 5.0 tem o seu `testes/test_5_0_<parte>.py`: `base` (a migração do Haiku, os vídeos das lições
+  baixando sozinhos, o gancho do `provedores.py`), `integracao` (rotas registradas, ferramentas oferecidas, o aviso
+  do Haiku só para configuração já pronta), `arquivos` (Arquivos e Visualizador; as classes que dirigem um Edge
+  headless ou rodam as funções puras no Node são puladas sem Edge ou Node, e o teste da Lixeira manda itens pequenos
+  `clave-teste-*` para a Lixeira de verdade), `console` (shells ConPTY de verdade numa pasta temporária, janelas que
+  sobrevivem ao fechar), `navegador` (regras, leitura de URL, decisão por modo, as ferramentas contra uma ponte de
+  mentira), `tarefas` (o registro, comandos em segundo plano com processos de verdade, o Job Object, as rotas) e
+  `widgets` (normalização, o proxy de imagem com DNS de mentira, tiles, exportação). Uma parte só:
+  `-p "test_5_0_<parte>.py"`.
 - Janela de verdade: `.venv\Scripts\python.exe testes\testar_janela.py` (abre e
   fecha uma janela; confere pela porta de depuração).
+- Navegador de verdade: `.venv\Scripts\python.exe testes\testar_navegador.py [pasta-para-os-prints] [--en]` abre o
+  Clave no Electron (demonstração, dados e perfil temporários, porta de depuração), serve uma página de teste local e
+  fala com a ponte como o servidor fala: leitura, digitação, recusa de senha e cartão, clique preso à página e ao
+  elemento, a vista dentro do painel, página em branco, apagar os dados, a ponte recusando token errado, `Origin` e
+  `Host`. Uma janela aparece na tela por uns 30 s.
 - Prints de todas as telas: `testes\prints_demo.py <pasta> --porta 8041 [--idioma en]`
   com a demonstração no ar (Edge headless). Tira também os tours (eles abrem sozinhos
   na primeira vez), no idioma escolhido.
@@ -283,3 +417,13 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   sozinho deixou passar um parêntese a mais que quebrou a tela inteira.
 - Fórmulas do openpyxl são em inglês (`SUM`, vírgula); o Excel em português
   mostra `SOMA`.
+- A vista do navegador do Code é mais um alvo `page` do CDP, às vezes listado antes da página do app. Script que
+  dirige o Electron pela porta de depuração escolhe o alvo na porta do servidor (do `dados/servidor.json`), como
+  fazem o `testar_janela.py`, o `prints_janela.py` e o `testar_navegador.py`.
+- Uma página abre no máximo 6 conexões por endereço. Só o console à vista mantém o SSE aberto; os outros alcançam
+  pelo `desde` quando aparecem. Aba nova que recebe fluxo tem de fazer o mesmo, senão o `/eventos` da conversa e os
+  pedidos do app travam.
+- Esconder a vista do navegador movendo para fora da tela do mesmo tamanho, nunca com `setVisible(false)` (a página
+  ficava em branco depois de redimensionar e a primeira captura falhava). Com a janela do Clave coberta ou
+  minimizada, o Chromium para de pintar: o `navegador_print` cai no `Page.captureScreenshot` pelo debugger, e o
+  `testar_navegador.py` deixa a janela dele por cima.

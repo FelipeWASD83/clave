@@ -23,7 +23,7 @@ Ele vai olhar a pasta e devolver a contagem. Confira se faz sentido.
 
 ## 3. Mande fazer
 
-Responda algo como "pode fazer". Ele vai pedir permissão para criar as subpastas e mover os arquivos: leia o cartão e clique em **Permitir**. Para não aprovar um por um, use **Permitir pelo resto da tarefa**.
+Responda algo como "pode fazer". Ele vai pedir permissão para criar as subpastas e mover os arquivos: leia o cartão e clique em **Permitir**. Para não aprovar um por um, use **Mais opções > Permitir comandos nesta tarefa** (quem cria as pastas e move os arquivos é um comando; no cartão de mudar um arquivo, a mesma opção se chama **Permitir nesta tarefa**). Vale até a resposta terminar.
 
 ## 4. Confira
 

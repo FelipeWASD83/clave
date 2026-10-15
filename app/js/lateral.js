@@ -4,6 +4,7 @@ import { estado, ouvir, avisar, carregarConversas } from './estado.js';
 import { ic } from './icones.js';
 import { el, menu, confirmar, perguntarTexto, aviso, grupoData, usd, dataBr } from './ui.js';
 import { abrirAtualizacao } from './atualizar.js';
+import { contadorTarefas } from './tarefas.js';
 import { t } from './i18n.js';
 
 let raiz, lista, tinteiro, seloAtualizar;
@@ -29,13 +30,15 @@ export function montarLateral(alvo) {
 
   raiz.replaceChildren(
     el('div', { class: 'lateral-topo' },
-      el('a', { class: 'marca', href: '#/novo' }, el('img', { src: 'img/icone.svg', alt: '' }), el('b', { texto: 'Clave' })),
+      // a marca sem o quadrado de fundo do ícone da janela: no tema escuro a barra é mais escura que o quadrado
+      el('a', { class: 'marca', href: '#/novo' }, el('img', { src: 'img/marca.svg', alt: '' }), el('b', { texto: 'Clave' })),
       el('button', { class: 'icone-botao', type: 'button', title: t('Recolher a barra (Ctrl+B)'), 'aria-label': t('Recolher a barra'), html: ic('painel'), onclick: alternarLateral })),
     el('div', { class: 'lateral-acoes' },
       el('button', { class: 'nova-conversa', type: 'button', onclick: () => { location.hash = '#/novo'; } },
         el('span', { html: ic('mais') }), t('Nova conversa'), el('span', { class: 'atalho', texto: 'Ctrl Shift O' })),
       el('button', { class: 'nova-conversa', type: 'button', onclick: () => { location.hash = '#/code'; } },
-        el('span', { html: ic('terminal') }), t('Novo trabalho no Code'))),
+        el('span', { html: ic('terminal') }), t('Novo trabalho no Code')),
+      contadorTarefas()),  // "N rodando": some quando não tem nada em segundo plano
     el('div', { class: 'navegacao' },
       el('a', { href: '#/projetos', dados: { secao: 'projetos' } }, el('span', { html: ic('camadas') }), t('Projetos')),
       el('a', { href: '#/fluxos', dados: { secao: 'fluxos' } }, el('span', { html: ic('fluxo') }), t('Fluxos e agentes')),

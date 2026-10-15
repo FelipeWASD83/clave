@@ -2,7 +2,7 @@
 import { api } from './api.js';
 import { cartoesModelos } from './lancamentos.js';
 import { ic } from './icones.js';
-import { el, usd, dataBr, aviso, numero, frase } from './ui.js';
+import { el, usd, dataBr, aviso, numero, frase, rolagemSuave } from './ui.js';
 import { t, localidade } from './i18n.js';
 
 // funções: a tradução roda na hora de desenhar, não quando o módulo carrega
@@ -113,7 +113,7 @@ export async function telaPrecos(principal) {
       el('p', { texto: t('Quanto custa cada modelo, quanto você deve gastar no mês e se a API sai mais barata que a assinatura do Claude para o seu jeito de usar.') }))),
 
     el('div', { class: 'secao-titulo secao-com-link' }, el('span', { texto: t('Modelos') }),
-      el('a', { href: '#/precos', texto: t('Comparar modelos'), onclick: (e) => { e.preventDefault(); document.getElementById('preco-de-cada-modelo')?.scrollIntoView({ behavior: 'smooth' }); } })),
+      el('a', { href: '#/precos', texto: t('Comparar modelos'), onclick: (e) => { e.preventDefault(); document.getElementById('preco-de-cada-modelo')?.scrollIntoView({ behavior: rolagemSuave() }); } })),
     vagaModelos,
 
     el('div', { class: 'uso-topo' },

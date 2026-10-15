@@ -6,6 +6,17 @@ Abre uma janela na tela por alguns segundos e fecha sozinho.
 """
 from __future__ import annotations
 
+def _da_janela(url: str, dados: str) -> bool:
+    """A página do Clave, e não a do navegador embutido do Code (que também é uma página e pode estar em 127.0.0.1)."""
+    import json as _json
+    from pathlib import Path as _Path
+    try:
+        porta = _json.loads((_Path(dados) / "servidor.json").read_text(encoding="utf-8"))["porta"]
+        return url.startswith(f"http://127.0.0.1:{porta}/")
+    except (OSError, ValueError, KeyError):
+        return "127.0.0.1" in url
+
+
 import base64
 import importlib.util
 import json
@@ -41,7 +52,7 @@ def main() -> int:
         for _ in range(120):
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{PORTA_DEPURACAO}/json", timeout=2) as r:
-                    paginas = [p for p in json.loads(r.read()) if p.get("type") == "page" and "127.0.0.1" in p.get("url", "")]
+                    paginas = [p for p in json.loads(r.read()) if p.get("type") == "page" and _da_janela(p.get("url", ""), dados)]
                 if paginas:
                     alvo = paginas[0]
                     break

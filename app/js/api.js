@@ -42,8 +42,9 @@ export async function enviarArquivo(arquivo, caminho = '/anexos') {
 }
 
 // Lê os eventos de uma execução (texto chegando, ferramentas, custo). Reconecta se a conexão cair.
-export function acompanhar(execucaoId, aoEvento) {
-  let desde = 0, parado = false, controle = null;
+// inicio: o primeiro evento que a tela ainda não mostrou (ao reabrir a conversa, o que já está salvo não se repete)
+export function acompanhar(execucaoId, aoEvento, inicio = 0) {
+  let desde = inicio, parado = false, controle = null;
   async function ciclo() {
     while (!parado) {
       controle = new AbortController();

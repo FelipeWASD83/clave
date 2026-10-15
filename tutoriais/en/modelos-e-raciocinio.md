@@ -19,13 +19,17 @@ In the text box, the first button picks the [model](#/aprender/glossario/modelo)
 
 "Input" is what you send (message, attachments, the earlier conversation); "output" is what it writes. A million tokens is a lot of text: something like 700,000 words.
 
+Watch out with Haiku 5.5: when a request goes over 100,000 input tokens (a very long chat or a big attachment), that whole request costs 5 times more.
+
 **Rule of thumb:** start on Haiku for simple things and on Opus for what matters. If Haiku gets it wrong, generate another answer and pick Opus (circular arrow menu).
 
 ## The model advisor
 
-Clave starts on **Haiku**, the cheapest one. So you don't have to guess, Haiku itself reads the chat at the first message and then every 5 and says which model does that task for the lowest price: a note shows up like "For this task, Sonnet 5.5 should do better", with the reason and the **Use** and **Keep** buttons. Each check costs a fraction of a cent.
+Clave starts on **Haiku 5.5**, the cheapest one. Since version 5.0 it's the default for everyone, including people who already used Clave: after updating, a notice shows up once with the model you used before and the **Keep Haiku** and **Go back to the previous one** buttons. So you don't have to guess, Haiku itself reads the chat at the first message and then every 5 and says which model does that task for the lowest price: a note shows up like "For this task, Sonnet 5.5 should do better", with the reason and the **Use** and **Keep** buttons. Each check costs a fraction of a cent.
 
 If you prefer, let Clave **switch on its own** (Settings > Models > Let Clave switch the model on its own): it switches, tells you and shows a button to go back. In a chat where you go back, it stops switching. You can turn the advisor off there too.
+
+To choose by the lowest price without losing quality, see [The right model for the lowest price](#/aprender/modelo-certo-mais-barato).
 
 ## Reasoning
 
@@ -40,6 +44,8 @@ On Haiku and Sonnet you can **turn thinking off** (it gets faster). On Opus and 
 **Show reasoning** displays a summary of what it thought, in a little box that opens and closes. It doesn't change the price.
 
 **Fast mode** (Opus only) answers up to 2.5 times faster, at double the price.
+
+When it's worth paying for it to think more: [Reasoning: when it's worth paying for it to think](#/aprender/raciocinio-sem-desperdicio).
 
 ## What if it refuses?
 

@@ -6,7 +6,9 @@ modo de permissão escolhido na conversa.
 """
 from __future__ import annotations
 
+import atexit
 import base64
+import codecs
 import difflib
 import fnmatch
 import os
@@ -23,6 +25,7 @@ import anexos
 import banco
 import contexto_pasta
 import permissoes
+import tarefas
 from ferramentas import email as femail, excel, word
 from i18n import t
 
@@ -192,11 +195,35 @@ FERRAMENTAS = {
         "rodar_comando",
         "Roda um comando no terminal do computador (PowerShell no Windows) dentro da pasta de trabalho e devolve "
         "a saída. Use para rodar scripts, testes, git, instalar dependências e automatizar tarefas. "
-        "Não use para ler ou editar arquivos: para isso existem ferramentas próprias.",
+        "Não use para ler ou editar arquivos: para isso existem ferramentas próprias. "
+        "Para servidores e programas que ficam rodando (como npm run dev ou python -m http.server), use "
+        "em_segundo_plano: o comando continua rodando depois da resposta, você acompanha com ver_comando e "
+        "encerra com parar_comando. Não use Start-Process para deixar um servidor rodando: a saída dele não chega "
+        "até você; use em_segundo_plano.",
         {"comando": {"type": "string"},
          "descricao": {"type": "string", "description": "Uma frase curta, em português simples, do que o comando faz."},
-         "tempo_limite_s": {"type": "integer", "description": "Segundos até desistir (padrão 120, máximo 600)."}},
+         "tempo_limite_s": {"type": "integer", "description": "Segundos até desistir (padrão 120, máximo 600)."},
+         "em_segundo_plano": {"type": "boolean", "description": (
+             "true para servidores e programas que continuam rodando (npm run dev, python -m http.server, um "
+             "watch). Devolve em poucos segundos com o id, a primeira saída e o endereço local, se aparecer; o "
+             "comando segue rodando até alguém parar ou o Clave fechar (no máximo 5 por conversa). O tempo "
+             "limite não vale aqui. Programas com janela que ele abrir (o navegador, um editor) continuam abertos "
+             "quando ele para.")}},
         ["comando", "descricao"], "comando"),
+    "ver_comando": _ferramenta(
+        "ver_comando",
+        "Mostra a saída mais recente de um comando que você deixou rodando em segundo plano nesta conversa "
+        "(rodar_comando com em_segundo_plano) e diz se ele ainda está rodando.",
+        {"id": {"type": "string", "description": "O id que rodar_comando devolveu (comando-...)."},
+         "linhas": {"type": "integer", "description": "Quantas linhas do fim da saída mostrar (padrão 60, máximo 400)."}},
+        ["id"], "leitura"),
+    "parar_comando": _ferramenta(
+        "parar_comando",
+        "Encerra um comando que você deixou rodando em segundo plano nesta conversa, junto com os processos sem "
+        "janela que ele abriu; programas com janela (o navegador, um editor) continuam abertos. Pare quando não "
+        "precisar mais dele (um servidor de teste, por exemplo).",
+        {"id": {"type": "string", "description": "O id que rodar_comando devolveu (comando-...)."}},
+        ["id"], "leitura"),
     "mostrar_arquivo": _ferramenta(
         "mostrar_arquivo",
         "Mostra um arquivo da pasta para a pessoa, dentro da conversa: imagens (prints, gráficos, fotos), víd"
@@ -649,9 +676,175 @@ _PREFIXO_PS = ("$ProgressPreference='SilentlyContinue';"
                "$OutputEncoding=[System.Text.UTF8Encoding]::new($false);")
 
 
-def _matar(proc: subprocess.Popen) -> None:
+# ---------------- Job Object: a árvore inteira de um comando morre junto ----------------
+# Todo comando roda dentro de um Job Object do Windows com KILL_ON_JOB_CLOSE: parar, estourar o tempo ou o Clave
+# morrer à força (o Windows fecha o handle e mata o job) derruba o comando e tudo o que ele abriu, inclusive o neto
+# que segurava a saída e deixava a thread de leitura presa para sempre. Parar um comando em segundo plano e o Clave
+# fechar do jeito normal são com cuidado (console.encerrar_job_com_cuidado): morre o que não tem janela, e programas
+# com janela que o comando abriu (o navegador de um vite --open, um editor) continuam abertos. BREAKAWAY_OK deixa sair
+# do job só quem pede isso explicitamente ao criar o processo (sem ele, esse programa nem abriria).
+_JOB_KILL_ON_CLOSE = 0x2000
+_JOB_BREAKAWAY_OK = 0x0800
+
+if sys.platform == "win32":
+    import ctypes
+    from ctypes import wintypes
+
+    _k32 = ctypes.WinDLL("kernel32", use_last_error=True)  # instância própria: os argtypes não vazam para outros módulos
+
+    class _IoCounters(ctypes.Structure):
+        _fields_ = [(n, ctypes.c_ulonglong) for n in ("ReadOperationCount", "WriteOperationCount",
+                                                      "OtherOperationCount", "ReadTransferCount",
+                                                      "WriteTransferCount", "OtherTransferCount")]
+
+    class _LimitesBasicos(ctypes.Structure):
+        _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64), ("PerJobUserTimeLimit", ctypes.c_int64),
+                    ("LimitFlags", wintypes.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                    ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", wintypes.DWORD),
+                    ("Affinity", ctypes.c_size_t), ("PriorityClass", wintypes.DWORD),
+                    ("SchedulingClass", wintypes.DWORD)]
+
+    class _LimitesEstendidos(ctypes.Structure):
+        _fields_ = [("BasicLimitInformation", _LimitesBasicos), ("IoInfo", _IoCounters),
+                    ("ProcessMemoryLimit", ctypes.c_size_t), ("JobMemoryLimit", ctypes.c_size_t),
+                    ("PeakProcessMemoryUsed", ctypes.c_size_t), ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+    class _ListaPids(ctypes.Structure):
+        _fields_ = [("NumberOfAssignedProcesses", wintypes.DWORD), ("NumberOfProcessIdsInList", wintypes.DWORD),
+                    ("ProcessIdList", ctypes.c_size_t * 1024)]
+
+    _k32.CreateJobObjectW.argtypes = (ctypes.c_void_p, wintypes.LPCWSTR)
+    _k32.CreateJobObjectW.restype = wintypes.HANDLE
+    _k32.SetInformationJobObject.argtypes = (wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD)
+    _k32.SetInformationJobObject.restype = wintypes.BOOL
+    _k32.QueryInformationJobObject.argtypes = (wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+                                               ctypes.POINTER(wintypes.DWORD))
+    _k32.QueryInformationJobObject.restype = wintypes.BOOL
+    _k32.AssignProcessToJobObject.argtypes = (wintypes.HANDLE, wintypes.HANDLE)
+    _k32.AssignProcessToJobObject.restype = wintypes.BOOL
+    _k32.TerminateJobObject.argtypes = (wintypes.HANDLE, wintypes.UINT)
+    _k32.TerminateJobObject.restype = wintypes.BOOL
+    _k32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    _k32.CloseHandle.restype = wintypes.BOOL
+    _k32.OpenThread.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    _k32.OpenThread.restype = wintypes.HANDLE
+    _k32.CancelSynchronousIo.argtypes = (wintypes.HANDLE,)
+    _k32.CancelSynchronousIo.restype = wintypes.BOOL
+
+
+def _cancelar_leitura(leitor: threading.Thread, prazo: float = 3.0) -> bool:
+    """Destrava a thread que lê a saída de um comando quando quem segura o cano é um programa com janela que fica
+    aberto (o PowerShell passa a saída adiante para o que ele abre): o CancelSynchronousIo faz o ReadFile dela voltar
+    com erro e a leitura acaba. Devolve se a thread terminou."""
+    if not leitor.is_alive():
+        return True
+    if sys.platform != "win32" or not getattr(leitor, "native_id", None):
+        return False
+    h = _k32.OpenThread(0x0001, False, leitor.native_id)  # THREAD_TERMINATE: o que o CancelSynchronousIo pede
+    if not h:
+        return False
+    try:
+        fim = time.time() + prazo
+        while leitor.is_alive() and time.time() < fim:
+            _k32.CancelSynchronousIo(h)  # sem leitura pendente agora, não faz nada: tenta de novo
+            leitor.join(0.1)
+    finally:
+        _k32.CloseHandle(h)
+    return not leitor.is_alive()
+
+
+class _Job:
+    """Um Job Object do Windows. Fora do Windows (ou se a criação falhar) criar() devolve None e vale o taskkill."""
+
+    def __init__(self, handle):
+        self.h = handle
+        self._trava = threading.Lock()
+
+    @classmethod
+    def criar(cls) -> "_Job | None":
+        if sys.platform != "win32":
+            return None
+        h = _k32.CreateJobObjectW(None, None)
+        if not h:
+            return None
+        job = cls(h)
+        if not job._limites(_JOB_KILL_ON_CLOSE | _JOB_BREAKAWAY_OK):
+            _k32.CloseHandle(h)
+            return None
+        return job
+
+    def _limites(self, flags: int) -> bool:
+        info = _LimitesEstendidos()
+        info.BasicLimitInformation.LimitFlags = flags
+        return bool(_k32.SetInformationJobObject(self.h, 9, ctypes.byref(info), ctypes.sizeof(info)))
+
+    def colocar(self, proc: subprocess.Popen) -> bool:
+        """Põe o processo no job. Chamado logo depois do Popen: o PowerShell leva uns décimos de segundo para
+        carregar antes de rodar o comando, então nada que o comando abre nasce fora do job."""
+        with self._trava:
+            return bool(self.h) and bool(_k32.AssignProcessToJobObject(self.h, int(proc._handle)))
+
+    def matar(self) -> None:
+        with self._trava:
+            if self.h:
+                _k32.TerminateJobObject(self.h, 1)
+
+    def encerrar_com_cuidado(self, raizes=()) -> list[int]:
+        """Mata o que não tem janela (o terminal, um servidor) e deixa as janelas que o comando abriu; fechar o job
+        depois não leva as janelas junto. Devolve os pids dos donos de janela que ficaram."""
+        import console
+        with self._trava:
+            if not self.h:
+                return []
+            try:
+                return console.encerrar_job_com_cuidado(self.h, raizes)
+            except Exception:  # noqa: BLE001 (o cuidado falhou: tudo morre, como antes)
+                _k32.TerminateJobObject(self.h, 1)
+                return []
+
+    def pids(self) -> list[int]:
+        with self._trava:
+            if not self.h:
+                return []
+            lista = _ListaPids()
+            if not _k32.QueryInformationJobObject(self.h, 3, ctypes.byref(lista), ctypes.sizeof(lista), None):
+                return []
+            return [int(lista.ProcessIdList[i]) for i in range(min(lista.NumberOfProcessIdsInList, 1024))]
+
+    def restantes(self, raizes=()) -> list[int]:
+        """Os processos que ainda estão no job, fora o terminal e os consoles escondidos (que saem sozinhos)."""
+        import console
+        raizes = {int(r) for r in raizes if r}
+        return [p for p in self.pids() if p not in raizes
+                and console._nome_do_processo(p) not in console.AJUDANTES_DE_CONSOLE]
+
+    def soltar(self) -> None:
+        """Fecha o job sem matar quem sobrou (uma janela que o comando abriu de propósito, com Start-Process)."""
+        with self._trava:
+            if self.h:
+                self._limites(_JOB_BREAKAWAY_OK)
+                _k32.CloseHandle(self.h)
+                self.h = None
+
+    def fechar(self) -> None:
+        """Fecha o job: o que ainda estiver nele morre (KILL_ON_JOB_CLOSE)."""
+        with self._trava:
+            if self.h:
+                _k32.CloseHandle(self.h)
+                self.h = None
+
+
+def _matar(proc: subprocess.Popen, cuidado: bool = False) -> list[int]:
+    """Derruba o comando e tudo o que ele abriu (pelo job; sem job, pelo taskkill da árvore). Com cuidado, os
+    programas com janela que ele abriu ficam abertos; devolve os pids dos donos dessas janelas."""
+    job = getattr(proc, "_clave_job", None)
+    if job is not None:
+        if cuidado:
+            return job.encerrar_com_cuidado({proc.pid})
+        job.matar()
+        return []
     if proc.poll() is not None:
-        return
+        return []
     try:
         if sys.platform == "win32":
             subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True,
@@ -660,36 +853,70 @@ def _matar(proc: subprocess.Popen) -> None:
             proc.kill()
     except OSError:
         pass
+    return []
 
 
-def _f_rodar_comando(e, ctx: Contexto):
-    comando = e["comando"]
-    limite = max(5, min(600, int(e.get("tempo_limite_s") or 120)))
-    args = _shell()
-    if sys.platform == "win32":
-        args.append(_PREFIXO_PS + comando)
-    else:
-        args.append(comando)
-    env = dict(os.environ)
+# variáveis que não chegam aos comandos: as do Clave (CLAVE_*: a pasta de dados, o lançador e o token da ponte do
+# navegador, que daria a qualquer comando o controle do navegador do app) e as que mudariam um programa do Electron
+# aberto dali (o VS Code de um "code .", por exemplo); o mesmo filtro do console (console._ambiente)
+_FORA_DO_AMBIENTE = ("ELECTRON_RUN_AS_NODE", "ELECTRON_NO_ATTACH_CONSOLE", "__PYVENV_LAUNCHER__")
+
+
+def _ambiente_comando(sem_buffer: bool = False) -> dict[str, str]:
+    env = {k: v for k, v in os.environ.items()
+           if not k.upper().startswith("CLAVE_") and k.upper() not in _FORA_DO_AMBIENTE}
+    # A saída do comando é lida como UTF-8 (o _PREFIXO_PS faz o mesmo com o PowerShell): sem isto, um script de
+    # Python escrevendo num cano usa a página de código do Windows e os acentos chegam trocados ao Claude
+    # (test_code.TestAmbiente confere). Diferente do console, que é da pessoa e não lê nada.
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
+    if sem_buffer:  # o Python segura a saída quando ela vai para um cano: em segundo plano ela tem de chegar já
+        env["PYTHONUNBUFFERED"] = "1"
+    return env
+
+
+def _iniciar_shell(comando: str, ctx: Contexto, *, sem_buffer: bool = False, **extra) -> subprocess.Popen:
+    args = _shell()
+    args.append((_PREFIXO_PS + comando) if sys.platform == "win32" else comando)
+    env = _ambiente_comando(sem_buffer)
     flags = 0x08000000 if sys.platform == "win32" else 0  # CREATE_NO_WINDOW
     try:
         proc = subprocess.Popen(args, cwd=str(ctx.raiz), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, env=env, creationflags=flags)
+                                stderr=subprocess.STDOUT, env=env, creationflags=flags, **extra)
     except OSError as erro:
         raise ErroFerramenta(t("Não deu para iniciar o terminal: {erro}", erro=erro))
+    job = _Job.criar()
+    if job is not None and not job.colocar(proc):
+        job.fechar()  # o processo já tinha terminado (ou não deu): sem job, vale o taskkill
+        job = None
+    proc._clave_job = job
+    return proc
+
+
+def _f_rodar_comando(e, ctx: Contexto):
+    if e.get("em_segundo_plano"):
+        return _rodar_em_segundo_plano(e, ctx)
+    comando = e["comando"]
+    limite = max(5, min(600, int(e.get("tempo_limite_s") or 120)))
+    proc = _iniciar_shell(comando, ctx)
+    job = proc._clave_job
     ctx.processo = proc
     partes: list[bytes] = []
 
+    cano = getattr(proc.stdout, "raw", proc.stdout)  # leitura crua: destravar no meio não perde o que já veio
+
     def ler():
-        for bloco in iter(lambda: proc.stdout.read(4096), b""):
-            partes.append(bloco)
+        try:
+            for bloco in iter(lambda: cano.read(65536), b""):
+                partes.append(bloco)
+        except (OSError, ValueError):  # a leitura foi destravada (_cancelar_leitura): o que veio até aqui fica
+            pass
 
     leitor = threading.Thread(target=ler, daemon=True)
     leitor.start()
     inicio = time.time()
     motivo = ""
+    sobrou = ""
     while proc.poll() is None:
         if ctx.parar.is_set():
             motivo = t("parado pelo usuário")
@@ -705,18 +932,296 @@ def _f_rodar_comando(e, ctx: Contexto):
     except subprocess.TimeoutExpired:
         _matar(proc)
     leitor.join(timeout=3)
+    if leitor.is_alive() and job is not None:
+        # O comando acabou, mas deixou um processo segurando a saída. Sem janela (um servidor, um neto), ele morre
+        # junto (antes a leitura ficava presa para sempre). Com janela (um programa que o comando abriu para a
+        # pessoa usar), ele continua aberto e quem para é a leitura.
+        job.encerrar_com_cuidado({proc.pid})
+        leitor.join(timeout=5)
+        if leitor.is_alive():
+            _cancelar_leitura(leitor)
+        elif not motivo:
+            sobrou = t("Aviso: o comando deixou um processo rodando que segurava a saída, e o Clave encerrou esse processo junto. Para deixar um servidor ou programa rodando, use em_segundo_plano.")
     if not leitor.is_alive():
         proc.stdout.close()
     elif not motivo:
-        # um processo que o comando deixou em segundo plano segura a saída: devolve o que veio até aqui
+        # sem job (fora do Windows): devolve o que veio até aqui
         motivo = t("o comando deixou um processo rodando em segundo plano")
+    if job is not None:
+        job.soltar()  # quem não segurava a saída (uma janela aberta com Start-Process) continua aberto
     ctx.processo = None
     saida = b"".join(partes).decode("utf-8", errors="replace").replace("\r\n", "\n")
     cab = t("Código de saída: {codigo}", codigo=proc.returncode)
     if motivo:
         cab += t(" (interrompido: {motivo})", motivo=motivo)
     corpo = _limitar(saida.strip()) if saida.strip() else t("(sem saída)")
-    return f"{cab}\n{corpo}"
+    return f"{cab}\n{corpo}" + (f"\n\n{sobrou}" if sobrou else "")
+
+
+# ---------------- comandos em segundo plano ----------------
+
+MAX_SEGUNDO_PLANO = 5        # por conversa
+ESPERA_SEGUNDO_PLANO = 6.0   # segundos que a ferramenta espera a saída assentar ou um endereço aparecer
+VER_RESTANTES = 1.0          # segundos entre uma olhada e outra nos processos que sobraram depois do terminal sair
+
+
+@dataclass
+class _Fundo:
+    tarefa: object
+    proc: subprocess.Popen
+    job: object
+    conversa_id: str
+    parado: bool = False
+    leitor: threading.Thread | None = None
+    terminal_saiu: bool = False   # o terminal saiu, mas sobraram processos no job (um Start-Process, por exemplo)
+    restantes: int = 0            # quantos processos sobraram (fora os consoles escondidos)
+    janelas: list = field(default_factory=list)   # os programas com janela que ficaram abertos ao parar
+    acordar: threading.Event = field(default_factory=threading.Event)
+
+    @property
+    def rodando(self) -> bool:
+        return self.tarefa.rodando
+
+
+_fundos: dict[str, _Fundo] = {}
+_trava_fundos = threading.Lock()
+_atexit_registrado = [False]
+
+
+def _acompanhar_restantes(f: _Fundo, codigo) -> None:
+    """O terminal saiu, mas pode ter deixado processos no job (Start-Process -WindowStyle Hidden escapa da saída):
+    a tarefa continua aberta, avisa no registro quantos são e espera eles terminarem ou alguém parar."""
+    if f.job is None or f.parado:
+        return
+    restantes = f.job.restantes({f.proc.pid})
+    if not restantes:
+        return
+    f.restantes = len(restantes)
+    f.terminal_saiu = True
+    f.tarefa.saida("\n" + t("[O terminal do comando saiu com o código {codigo}, mas {n} processo(s) que ele abriu continuam rodando. A tarefa segue aberta até eles terminarem ou alguém parar.]",
+                            codigo=codigo, n=len(restantes)) + "\n")
+    f.tarefa.atualizar(detalhe=t("{n} processo(s) que o comando abriu continuam rodando", n=len(restantes)))
+    while not f.parado:
+        f.acordar.wait(VER_RESTANTES)
+        if f.parado:
+            break
+        restantes = f.job.restantes({f.proc.pid})
+        if not restantes:
+            break
+        if len(restantes) != f.restantes:
+            f.restantes = len(restantes)
+            f.tarefa.atualizar(detalhe=t("{n} processo(s) que o comando abriu continuam rodando", n=len(restantes)))
+    f.restantes = 0
+
+
+def _ler_fundo(f: _Fundo) -> None:
+    dec = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    try:
+        while True:
+            bloco = f.proc.stdout.read(65536)
+            if not bloco:
+                break
+            f.tarefa.saida(dec.decode(bloco))
+        f.tarefa.saida(dec.decode(b"", final=True))
+    except (OSError, ValueError):
+        pass
+    finally:
+        try:
+            codigo = f.proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:  # a saída fechou mas o terminal não: derruba (as janelas ficam)
+            _matar(f.proc, cuidado=True)
+            try:
+                codigo = f.proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                codigo = None
+        try:
+            f.proc.stdout.close()
+        except OSError:
+            pass
+        f.tarefa.codigo = codigo
+        try:
+            _acompanhar_restantes(f, codigo)
+        except Exception:  # noqa: BLE001 (acompanhar é extra: a tarefa termina de qualquer jeito)
+            import traceback
+            traceback.print_exc()
+        if f.parado:
+            detalhe = t("Parado antes de terminar")
+            if f.janelas:
+                detalhe += " " + t("({n} programa(s) com janela continuam abertos)", n=len(f.janelas))
+            f.tarefa.terminar("parada", detalhe)
+        else:
+            f.tarefa.terminar("concluida" if codigo == 0 else "erro", t("Terminou com o código {codigo}", codigo=codigo))
+        if f.job is not None:
+            if f.parado:
+                f.job.fechar()  # o encerramento com cuidado já tirou o KILL_ON_JOB_CLOSE: as janelas ficam
+            else:
+                f.job.soltar()
+
+
+def _destravar_depois(f: _Fundo, espera: float = 1.5) -> None:
+    """Depois de parar: se um programa com janela que ficou aberto herdou o cano da saída, a leitura não vê o fim
+    sozinha. Espera um pouco e destrava, para a tarefa terminar como parada (num fio à parte: quem para não espera)."""
+    leitor = f.leitor
+    if leitor is None:
+        return
+
+    def destravar():
+        leitor.join(espera)
+        if leitor.is_alive():
+            _cancelar_leitura(leitor)
+    threading.Thread(target=destravar, daemon=True, name=f"destravar-{f.tarefa.id}").start()
+
+
+def _parar_fundo(tid: str) -> bool:
+    """Para um comando em segundo plano: o terminal e o que ele abriu sem janela morrem; janelas ficam abertas."""
+    f = _fundos.get(tid)
+    if f is None or not f.rodando:
+        return False
+    f.parado = True
+    f.janelas = list(_matar(f.proc, cuidado=True) or [])
+    f.acordar.set()
+    _destravar_depois(f)
+    return True
+
+
+def encerrar_segundo_plano() -> None:
+    """Para todos os comandos em segundo plano (o Clave fechando do jeito normal), com o mesmo cuidado de parar_comando:
+    as janelas que eles abriram ficam abertas. Fechar à força derruba tudo: o Windows fecha o handle do job quando o
+    processo do Clave morre, e o KILL_ON_JOB_CLOSE ainda está lá."""
+    with _trava_fundos:
+        fundos = list(_fundos.values())
+    for f in fundos:
+        if f.rodando:
+            f.parado = True
+            try:
+                f.janelas = list(_matar(f.proc, cuidado=True) or [])
+            except Exception:  # noqa: BLE001 (na saída do Clave, um comando não pode impedir o resto)
+                pass
+            f.acordar.set()
+            _destravar_depois(f)
+
+
+def _rodar_em_segundo_plano(e, ctx: Contexto):
+    comando = e["comando"]
+    dono = tarefas.conversa_dona(ctx.conversa_id)  # a etapa de um fluxo trabalha para a conversa principal
+    with _trava_fundos:
+        for tid in [k for k, f in _fundos.items() if not f.rodando and tarefas.pegar(k) is None]:
+            _fundos.pop(tid, None)  # a tarefa já saiu da lista: esquece o processo
+        ativos = [f for f in _fundos.values() if f.conversa_id == dono and f.rodando]
+        if len(ativos) >= MAX_SEGUNDO_PLANO:
+            lista = ", ".join(f.tarefa.id for f in ativos)
+            raise ErroFerramenta(t("Esta conversa já tem {n} comandos rodando em segundo plano, o máximo. Pare um com parar_comando antes de começar outro ({lista}).",
+                                   n=len(ativos), lista=lista))
+        proc = _iniciar_shell(comando, ctx, sem_buffer=True, bufsize=0)
+        holder = {}
+        titulo = " ".join(str(e.get("descricao") or "").split()) or comando
+        tarefa = tarefas.registrar("comando", titulo[:120], conversa_id=dono,
+                                   parar=lambda: _parar_fundo(holder["id"]))
+        holder["id"] = tarefa.id
+        tarefa.comando = comando
+        tarefa.pasta = str(ctx.raiz)
+        f = _Fundo(tarefa=tarefa, proc=proc, job=proc._clave_job, conversa_id=dono)
+        _fundos[tarefa.id] = f
+    if not _atexit_registrado[0]:
+        _atexit_registrado[0] = True
+        atexit.register(encerrar_segundo_plano)
+    f.leitor = threading.Thread(target=_ler_fundo, args=(f,), daemon=True, name=f"fundo-{tarefa.id}")
+    f.leitor.start()
+
+    # espera a saída assentar, um endereço aparecer ou o comando terminar (o que vier primeiro)
+    inicio = time.time()
+    while time.time() - inicio < ESPERA_SEGUNDO_PLANO:
+        if not tarefa.rodando or ctx.parar.is_set():
+            break
+        if tarefa.urls:
+            time.sleep(0.3)  # o resto da linha e as linhas logo depois do endereço
+            break
+        if f.terminal_saiu:  # o terminal já saiu: a saída do que sobrou não passa por aqui
+            break
+        if tarefa.bytes_saida and time.time() - tarefa.ultima_saida >= 1.5:
+            break
+        time.sleep(0.1)
+    if ctx.parar.is_set() and tarefa.rodando:
+        # a pessoa apertou Parar enquanto o comando começava: ele não fica rodando sozinho depois da resposta
+        _parar_fundo(tarefa.id)
+        f.leitor.join(timeout=8)
+        return t("A resposta foi interrompida enquanto o comando começava, então parei o comando {id}.", id=tarefa.id)
+    if not tarefa.rodando:
+        f.leitor.join(timeout=2)
+    saida = tarefa.registro(80).strip()
+    if not tarefa.rodando:
+        corpo = _limitar(saida) if saida else t("(o comando terminou sem nenhuma saída)")
+        return (t("O comando terminou logo, com o código {codigo}; nada ficou rodando (id {id}).",
+                  codigo=tarefa.codigo, id=tarefa.id) + "\n" + t("Saída:") + "\n" + corpo)
+    corpo = _limitar(saida) if saida else t("(ainda sem saída)")
+    partes = [t("Comando rodando em segundo plano (id {id}). Ele continua rodando depois desta resposta, aparece na aba Tarefas e o Clave encerra ele quando fechar.",
+                id=tarefa.id)]
+    if f.terminal_saiu:
+        partes.append(t("O terminal do comando já saiu, mas {n} processo(s) que ele abriu continuam rodando dentro dele (um Start-Process, por exemplo). A saída deles não chega aqui; o Clave acompanha esses processos e encerra eles com parar_comando.",
+                        n=f.restantes))
+    if tarefa.urls:
+        partes.append(t("Endereço local encontrado na saída: {urls}", urls=", ".join(tarefa.urls)))
+    partes.append(t("Saída até agora:") + "\n" + corpo)
+    partes.append(t("Para ver a saída mais recente, use ver_comando com este id; para encerrar, parar_comando."))
+    return "\n".join(partes)
+
+
+def _fundo_da_conversa(e, ctx: Contexto) -> _Fundo:
+    tid = str(e.get("id") or "").strip()
+    dono = tarefas.conversa_dona(ctx.conversa_id)
+    f = _fundos.get(tid)
+    if f is None or f.conversa_id != dono:
+        with _trava_fundos:
+            meus = [x.tarefa for x in _fundos.values() if x.conversa_id == dono]
+        lista = ", ".join(f"{x.id} ({t('rodando') if x.rodando else t('terminado')})" for x in meus) or t("nenhum")
+        raise ErroFerramenta(t("Não achei um comando em segundo plano com o id \"{id}\" nesta conversa. Os desta conversa: {lista}.",
+                               id=tid, lista=lista))
+    return f
+
+
+def _duracao(segundos: float) -> str:
+    s = int(max(0, segundos))
+    if s < 60:
+        return t("{n} s", n=s)
+    if s < 3600:
+        return t("{m} min {s} s", m=s // 60, s=f"{s % 60:02d}")
+    return t("{h} h {m} min", h=s // 3600, m=f"{(s % 3600) // 60:02d}")
+
+
+def _f_ver_comando(e, ctx: Contexto):
+    f = _fundo_da_conversa(e, ctx)
+    tf = f.tarefa
+    linhas = max(1, min(400, int(e.get("linhas") or 60)))
+    if tf.rodando and f.terminal_saiu:
+        estado = t("o terminal saiu, mas {n} processo(s) que ele abriu continuam rodando, há {tempo}",
+                   n=f.restantes, tempo=_duracao(time.time() - tf.inicio))
+    elif tf.rodando:
+        estado = t("ainda rodando, há {tempo}", tempo=_duracao(time.time() - tf.inicio))
+    elif tf.status == "parada":
+        estado = t("parado")
+    else:
+        estado = t("terminou com o código {codigo}", codigo=tf.codigo)
+    partes = [t("Comando {id}: {estado}.", id=tf.id, estado=estado), t("Comando: {comando}", comando=tf.comando)]
+    if tf.urls:
+        partes.append(t("Endereço local: {urls}", urls=", ".join(tf.urls)))
+    saida = tf.registro(linhas).strip()
+    partes.append(t("Últimas {n} linhas da saída:", n=linhas) + "\n" + (_limitar(saida) if saida else t("(sem saída)")))
+    return "\n".join(partes)
+
+
+def _f_parar_comando(e, ctx: Contexto):
+    f = _fundo_da_conversa(e, ctx)
+    if not f.rodando:
+        return t("O comando {id} já tinha terminado.", id=f.tarefa.id)
+    _parar_fundo(f.tarefa.id)
+    if f.leitor is not None:
+        f.leitor.join(timeout=8)
+    if f.rodando:
+        return t("Pedi para o comando {id} parar, mas ele ainda não terminou. Confira com ver_comando.", id=f.tarefa.id)
+    if f.janelas:
+        return t("Parei o comando {id} e o que ele abriu sem janela; {n} programa(s) com janela que ele abriu continuam abertos.",
+                 id=f.tarefa.id, n=len(f.janelas))
+    return t("Parei o comando {id} e tudo o que ele abriu.", id=f.tarefa.id)
 
 
 def _f_excel_ler(e, ctx: Contexto):

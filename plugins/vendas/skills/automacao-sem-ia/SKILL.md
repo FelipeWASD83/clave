@@ -7,7 +7,7 @@ description: Use when the person wants something done repeatedly (every day, eve
 
 Write everything the person reads in their language. This needs Code mode (a working folder); in chat, explain the plan and ask the person to open Code mode in the folder where the automation will live.
 
-**Why:** a Clave routine calls Claude on every run. Checking every 15 minutes is 96 calls a day, about 2,900 a month, and each one pays for the instructions and for what it reads, even when nothing new arrived. A program with fixed rules does the same job in seconds for zero tokens. Show the person this comparison in plain words before building. If you put a money value on it, use the prices on Clave's Pricing & plans page and say it is an estimate.
+**Why:** a Clave routine calls Claude on every run, and it runs at most once an hour ("Every N hours", from 1 to 24). Checking every hour is 24 calls a day, about 730 a month, and each one pays for the instructions and for what it reads, even when nothing new arrived. Checking every 15 minutes is not possible with a routine at all. A program with fixed rules, run by the Windows Task Scheduler, does the same job in seconds for zero tokens, as often as needed. Show the person this comparison in plain words before building. If you put a money value on it, use the prices on Clave's Pricing & plans page and say it is an estimate.
 
 ## 1. Understand the repeated task
 Ask, at most 4 things at a time:
@@ -22,7 +22,7 @@ Write it back in one line and confirm it: "Every 15 min: new e-mails in the Pedi
 - **Predictable input** (a form, a system notification, a fixed subject, an export, the same supplier's PDF, a CSV): no AI. Rules do it: column names, fixed positions, regular expressions.
 - **Free text that varies a lot** (clients writing orders their own way, complaints to classify): say clearly that rules will miss cases, and offer:
   1. **Hybrid:** the program does everything predictable and sends only what the rules can't read to the cheapest model in Clave's list (Haiku), through the API with the `anthropic` package, a short prompt and a daily call limit written in the program. The API key goes to the Credential Manager like any password.
-  2. **Review list:** the program puts what it can't read in an "A revisar" folder or sheet; a person handles it, or a Clave routine once a day (1 call a day instead of 96).
+  2. **Review list:** the program puts what it can't read in an "A revisar" folder or sheet; a person handles it, or a Clave routine once a day (1 call a day instead of 24 for an hourly routine).
   3. **Fix the source:** ask the senders to use a form or a spreadsheet template. Often the best fix.
 - Never use AI just to check whether something new arrived: that is exactly what the program does for free.
 

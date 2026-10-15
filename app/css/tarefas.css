@@ -1,0 +1,127 @@
+/* Aba Tarefas: o que está rodando em segundo plano (respostas, fluxos, rotinas, comandos e downloads).
+   Só as variáveis do base.css: elas já trocam no tema escuro. */
+
+/* o título começa na mesma linha do "Rodando agora" logo abaixo (12 px da seção + 4 px do rótulo) */
+.aba-tarefas .painel-barra { padding-left: var(--e4); }
+.aba-tarefas .painel-barra h2 { margin: 0; font-size: 14.5px; font-weight: 600; }
+.tarefas-resumo { color: var(--acao-forte); }
+
+.tarefas-erro {
+  margin: var(--e2) var(--e3) 0; padding: var(--e2) var(--e3); border-radius: var(--raio-p);
+  background: var(--erro-suave); color: var(--erro); font-size: 13px;
+}
+.tarefas-corpo { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.tarefas-carregando { margin: 0; padding: var(--e6) var(--e4); text-align: center; color: var(--texto-3); }
+
+.tarefas-secao { padding: var(--e3) var(--e3) var(--e2); }
+.tarefas-secao + .tarefas-secao { border-top: 1px solid var(--linha); }
+.tarefas-secao h3 {
+  display: flex; align-items: baseline; gap: var(--e2); margin: 0 0 var(--e2) var(--e1);
+  font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--texto-3);
+}
+.tarefas-secao h3 small { font-family: var(--sans); font-size: 12px; letter-spacing: 0; text-transform: none; color: var(--texto-4); }
+.tarefas-nada { margin: 0 0 var(--e1) var(--e1); color: var(--texto-3); font-size: 13.5px; }
+.tarefas-itens { display: grid; gap: var(--e2); }
+
+/* ---------- um cartão por tarefa ---------- */
+.tarefa {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: var(--e3); padding: var(--e3);
+  border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel); box-shadow: var(--sombra-1);
+}
+.tarefa[data-status="concluida"], .tarefa[data-status="parada"] { box-shadow: none; background: transparent; }
+.tarefa-icone {
+  position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--papel-2); color: var(--texto-3);
+}
+.tarefa-icone svg { width: 16px; height: 16px; }
+.tarefa[data-status="rodando"] .tarefa-icone { background: var(--acao-suave); color: var(--acao-forte); }
+.tarefa[data-status="esperando"] .tarefa-icone { background: var(--aviso-suave); color: var(--aviso); }
+.tarefa[data-status="erro"] .tarefa-icone { background: var(--erro-suave); color: var(--erro); }
+/* rodando: um anel girando em volta do ícone */
+.tarefa[data-status="rodando"] .tarefa-icone::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%;
+  border: 2px solid transparent; border-top-color: var(--acao); animation: tarefa-gira 1.1s linear infinite;
+}
+@keyframes tarefa-gira { to { transform: rotate(360deg); } }
+
+.tarefa-corpo { min-width: 0; display: grid; gap: 5px; }
+.tarefa-topo { display: flex; align-items: flex-start; gap: var(--e2); }
+.tarefa-titulo {
+  flex: 1; min-width: 0; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--texto);
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.tarefa-status {
+  flex: none; padding: 1px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 500; white-space: nowrap;
+  background: var(--papel-2); color: var(--texto-2); border: 1px solid var(--linha);
+}
+.tarefa[data-status="rodando"] .tarefa-status { background: var(--acao-suave); color: var(--acao-forte); border-color: transparent; }
+.tarefa[data-status="esperando"] .tarefa-status { background: var(--aviso-suave); color: var(--aviso); border-color: transparent; }
+.tarefa[data-status="concluida"] .tarefa-status { background: var(--sucesso-suave); color: var(--sucesso); border-color: transparent; }
+.tarefa[data-status="erro"] .tarefa-status { background: var(--erro-suave); color: var(--erro); border-color: transparent; }
+
+.tarefa-meta {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; min-width: 0;
+  font-family: var(--mono); font-size: var(--t-meta); color: var(--texto-3);
+}
+.tarefa-meta .ponto { color: var(--texto-4); }
+.tarefa-tempo { font-variant-numeric: tabular-nums; }
+.tarefa-conversa { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--sans); }
+.tarefa-detalhe { margin: 0; font-size: 13px; color: var(--texto-2); overflow-wrap: anywhere; }
+.tarefa[data-status="erro"] .tarefa-detalhe { color: var(--erro); }
+.tarefa-comando {
+  display: block; padding: 3px 7px; border-radius: var(--raio-p); background: var(--papel-2); color: var(--texto-2);
+  font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* progresso: etapas do fluxo ou porcentagem do download */
+.tarefa-progresso { display: flex; align-items: center; gap: var(--e2); }
+.tarefa-barra { flex: 1; height: 4px; border-radius: 99px; background: var(--papel-3); overflow: hidden; }
+.tarefa-barra span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--acao); transition: width var(--normal) var(--curva); }
+.tarefa[data-status="erro"] .tarefa-barra span { background: var(--erro); }
+.tarefa[data-status="concluida"] .tarefa-barra span { background: var(--sucesso); }
+.tarefa-progresso-texto { flex: none; font-family: var(--mono); font-size: 11.5px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+
+/* endereços locais de um servidor que o comando subiu */
+.tarefa-urls { display: grid; gap: 4px; }
+.tarefa-url {
+  display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; padding: 5px 8px;
+  border: 1px solid var(--linha); border-radius: var(--raio-p); background: var(--papel-2); color: var(--texto);
+  cursor: pointer; text-align: left; transition: border-color var(--rapido), background var(--rapido);
+}
+.tarefa-url:hover { border-color: var(--acao); background: var(--acao-suave); }
+.tarefa-url svg { flex: none; width: 15px; height: 15px; color: var(--acao); }
+.tarefa-url-texto { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarefa-url-acao { flex: none; font-size: 12px; font-weight: 500; color: var(--acao-forte); }
+
+.tarefa-acoes { display: flex; flex-wrap: wrap; gap: 2px; margin: 2px 0 0 -8px; }
+.tarefa-acoes .botao.pequeno { min-height: 28px; padding: 0 8px; gap: 6px; }
+.tarefa-acoes .botao svg { width: 14px; height: 14px; }
+
+/* o registro: o fim da saída, como num terminal */
+.tarefa-registro { display: grid; gap: 4px; }
+.tarefa-registro-aviso { margin: 0; font-size: 12px; color: var(--texto-3); }
+.tarefa-registro-texto {
+  margin: 0; max-height: 260px; overflow: auto; padding: var(--e2) var(--e3); border-radius: var(--raio-p);
+  border: 1px solid var(--codigo-borda); background: var(--codigo-fundo); color: var(--codigo-texto);
+  font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* ---------- o contador da barra lateral (fica na tinta escura) ---------- */
+.contador-tarefas {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-height: 32px; padding: 0 10px;
+  border: 1px solid var(--tinta-3); border-radius: var(--raio-p); background: var(--tinta-2); color: var(--tinta-texto);
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: background var(--rapido), border-color var(--rapido);
+}
+.contador-tarefas:hover { background: var(--tinta-3); border-color: var(--tinta-texto-3); }
+.contador-tarefas-anel {
+  flex: none; width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--tinta-3); border-top-color: var(--tinta-acao); animation: tarefa-gira 1.1s linear infinite;
+}
+.contador-tarefas-texto { font-variant-numeric: tabular-nums; }
+
+/* com movimento reduzido, nada gira: o anel fica parado e a cor já diz que está rodando */
+@media (prefers-reduced-motion: reduce) {
+  .tarefa[data-status="rodando"] .tarefa-icone::after, .contador-tarefas-anel { animation: none; }
+  .tarefa-barra span { transition: none; }
+}

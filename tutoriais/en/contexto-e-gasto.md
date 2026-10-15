@@ -21,7 +21,7 @@ The **gauge** below the text box shows how much of the [context window](#/aprend
 
 Two things help on their own:
 
-- **Cache**: the repeated beginning of the conversation costs up to 20 times less. It's on by default.
+- **Cache**: the repeated beginning of the conversation costs 10 to 40 times less, depending on the model. It lasts 5 minutes after it was last used: replying within that time keeps the discount. It's on by default.
 - **Automatic summary**: when the conversation passes a certain size (150 thousand tokens, by default), Anthropic summarizes the beginning so it fits and gets cheaper. A line saying "The conversation was summarized here" appears.
 
 Even so, the best saving is a simple one: **new subject, new chat**.
@@ -46,10 +46,12 @@ On the new chat screen, the **Your usage** panel shows the tokens you've already
 Approximate values, just to give you an idea:
 
 - a short question on Haiku: less than $0.001;
-- an average answer on Sonnet: around $0.01;
+- an average answer on Sonnet, with reasoning: around $0.02;
 - analyzing a 20-page PDF on Opus: around $0.10 to $0.30;
 - a big task in Code mode (many steps): from $0.20 to a few dollars.
 
 ```experimentar
 Explain in a simple way why a very long conversation with an AI gets more expensive with every answer.
 ```
+
+Want to spend less? The saving track starts at [Where your credit goes](#/aprender/para-onde-vai-o-credito).

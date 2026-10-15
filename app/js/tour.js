@@ -31,6 +31,14 @@ const TOURS = {
     { alvo: '[data-tour="permissao"]', titulo: t('Permissões'), texto: t('Quanta liberdade ele tem: Perguntar, Aceitar edições, Plano (só lê e apresenta o plano) ou Livre.') },
     { alvo: '.contexto-code', titulo: t('O que ele sabe da pasta'), texto: t('Regras da pasta (CLAUDE.md) e skills que ele vai seguir.') },
   ],
+  // 5.0: o painel do lado direito do Code
+  mesa: () => [
+    { alvo: '.botoes-painel', titulo: t('O painel do Code'), texto: t('Abre ao lado da conversa, com a largura que você quiser (arraste a borda). Ctrl + J abre e fecha.') },
+    { alvo: '.botoes-painel [data-aba="arquivos"]', titulo: t('Arquivos'), texto: t('A pasta inteira: abra qualquer arquivo no visualizador, renomeie, crie ou mande para a Lixeira.') },
+    { alvo: '.botoes-painel [data-aba="console"]', titulo: t('Console'), texto: t('O PowerShell de verdade, já na pasta. O botão "Mandar para o Claude" leva o resultado para a conversa.') },
+    { alvo: '.botoes-painel [data-aba="navegador"]', titulo: t('Navegador'), texto: t('Você e o Claude usam o mesmo. O botão Locais abre os sites que estão rodando no seu computador. Para clicar ou digitar num site, ele pede OK.') },
+    { alvo: '.botoes-painel [data-aba="tarefas"]', titulo: t('Tarefas'), texto: t('O que está rodando em segundo plano: respostas, fluxos, rotinas, servidores e downloads, com o botão Parar.') },
+  ],
   precos: () => [
     { alvo: '.cartoes-modelos', titulo: t('Os modelos'), texto: t('Para que serve cada um. Clique num cartão para ver o que mudou e o preço.') },
     { alvo: '.uso-topo .uso-painel', titulo: t('Sua projeção'), texto: t('No ritmo dos últimos dias, quanto o mês vai fechar e quando o teto acaba.') },
@@ -42,16 +50,30 @@ const TOURS = {
   ],
 };
 
-// qual tour cada tela tem (a primeira visita mostra)
-const DA_TELA = { novo: 'geral', code: 'code', precos: 'precos', fluxos: 'fluxos' };
+// os tours de cada tela, na ordem (cada visita mostra o primeiro que a pessoa ainda não viu)
+const DA_TELA = { novo: ['geral'], code: ['code', 'mesa'], precos: ['precos'], fluxos: ['fluxos'] };
 
 let aberto = null;
+let agendado = false;
+
+// Um tour aberto ou para abrir: o cartão do modelo novo espera ele fechar (main.js chama de novo no clave:tour-fechou).
+export function tourVindo() { return Boolean(aberto) || agendado; }
+
+// Com uma janela aberta (o aviso do Haiku, o cartão do modelo), o tour espera ela fechar para não abrir por cima.
+function quandoSemJanela(fn) {
+  const camada = document.getElementById('camada');
+  if (!camada || !camada.children.length) { fn(); return; }
+  const obs = new MutationObserver(() => { if (!camada.children.length) { obs.disconnect(); fn(); } });
+  obs.observe(camada, { childList: true });
+}
 
 export function tourDaTela(tela) {
-  const id = DA_TELA[tela];
-  if (!id || aberto || !cfg().configurado || (cfg().tours_vistos || []).includes(id)) return;
+  const vistos = cfg().tours_vistos || [];
+  const id = (DA_TELA[tela] || []).find((x) => !vistos.includes(x));
+  if (!id || aberto || agendado || !cfg().configurado) return;
   if (id !== 'geral' && !(cfg().tours_vistos || []).includes('geral')) return;  // o geral vem primeiro
-  setTimeout(() => iniciarTour(id), 700);  // espera a tela terminar de desenhar
+  agendado = true;
+  setTimeout(() => quandoSemJanela(() => { agendado = false; iniciarTour(id); }), 700);  // espera a tela terminar de desenhar
 }
 
 export async function refazerTours() {

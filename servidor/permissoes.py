@@ -10,6 +10,15 @@ Uma regra é `Ferramenta` ou `Ferramenta(padrão)`:
     Agent(nome)               usar um agente nos fluxos
     Fluxo                     propor fluxos (só "negar" tem efeito: fluxo sempre pede OK)
     GitHub(nome)              ferramentas do GitHub que publicam algo
+    Navegador(exemplo.com)    o navegador do Code naquele site ("*.exemplo.com" vale o site e os subdomínios)
+    Navegador(clicar:x.com)   só uma ação do navegador (abrir, ler, print, rolar, voltar, clicar, digitar, ou em
+                              inglês open, read, print, scroll, back, click, type); "clicar:*" vale em qualquer site
+    Navegador(localhost:5173) com porta, só aquela porta; sem porta, qualquer uma
+
+O site das regras e o das páginas passam pela mesma leitura que o navegador faz (host_canonico): minúsculas, sem
+ponto no fim, %2e e letras largas desfeitos, IDN em punycode, IPv4 em qualquer forma (127.1, 2130706433, 0x7f000001)
+em decimal com pontos e IPv6 comprimido entre colchetes. Assim "https://exemplo.com./" não escapa de uma regra
+"Navegador(exemplo.com)".
 
 A ordem é a do Claude Code: negar, depois perguntar, depois permitir; a primeira
 que casar decide, venha de onde vier. Os escopos são o app (config do Clave), a
@@ -18,10 +27,13 @@ arquivos do Claude Code) e a tarefa (só enquanto a resposta roda).
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import re
 import sys
+import unicodedata
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -39,7 +51,20 @@ CONHECIDAS = {
     "Edit": "Edit", "Write": "Edit", "MultiEdit": "Edit", "NotebookEdit": "Edit",
     "WebFetch": "WebFetch", "WebSearch": "WebSearch",
     "Agent": "Agent", "Task": "Agent", "Fluxo": "Fluxo", "GitHub": "GitHub", "Email": "Email",
+    "Navegador": "Navegador",
 }
+
+# as ações do navegador do Code, como aparecem nas regras (navegador_clicar -> "clicar")
+ACOES_NAVEGADOR = ("abrir", "ler", "print", "rolar", "voltar", "clicar", "digitar")
+# os mesmos nomes em inglês, aceitos nas regras (viram o nome em português)
+ACOES_NAVEGADOR_EN = {"open": "abrir", "read": "ler", "print": "print", "scroll": "rolar", "back": "voltar",
+                      "click": "clicar", "type": "digitar"}
+
+
+def acao_navegador(palavra: str) -> str | None:
+    """'clicar' ou 'click' -> 'clicar'; qualquer outra coisa -> None."""
+    p = str(palavra or "").strip().lower()
+    return p if p in ACOES_NAVEGADOR else ACOES_NAVEGADOR_EN.get(p)
 
 # ferramenta do Clave -> (ferramenta do Claude Code, campos que dizem o alvo)
 ALVOS = {
@@ -115,11 +140,31 @@ def validar(texto: str) -> str | None:
             return t("Para conector, use mcp__nome-do-conector ou mcp__nome-do-conector__ferramenta.")
         return None
     if nome not in CONHECIDAS:
-        return t("\"{nome}\" não é uma ferramenta conhecida. Use Bash, Read, Edit, WebFetch, WebSearch, Agent, Fluxo, GitHub ou mcp__conector.", nome=nome)
+        return t("\"{nome}\" não é uma ferramenta conhecida. Use Bash, Read, Edit, WebFetch, WebSearch, Agent, Fluxo, GitHub, Email, Navegador ou mcp__conector.", nome=nome)
     padrao = m.group(2)
     if CONHECIDAS[nome] == "WebFetch" and padrao and not padrao.strip().startswith("domain:"):
         return t("Para páginas da web, use WebFetch(domain:exemplo.com).")
+    if CONHECIDAS[nome] == "Navegador" and padrao and padrao.strip() not in ("", "*"):
+        return _erro_padrao_navegador(padrao)
     return None
+
+
+def _erro_padrao_navegador(padrao: str) -> str | None:
+    if _padrao_navegador(padrao) is not None:
+        return None
+    acoes = ", ".join(ACOES_NAVEGADOR)
+    acoes_en = ", ".join(ACOES_NAVEGADOR_EN)
+    m = re.match(r"^\s*([^:/\[\]\s]*):", padrao or "")
+    if m and not m.group(1):
+        return t("Falta a ação antes dos dois-pontos. Use, por exemplo, Navegador(clicar:exemplo.com). As ações são: {acoes} (ou, em inglês, {acoes_en}).",
+                 acoes=acoes, acoes_en=acoes_en)
+    if m and re.fullmatch(r"[A-Za-z]+", m.group(1)) and m.group(1).lower() not in ("http", "https", "domain"):
+        resto = (padrao or "").split(":", 1)[1]
+        if not re.match(r"\s*\d+\s*(/|$)", resto):  # "localhost:5173" é site com porta, não ação
+            return t("\"{acao}\" não é uma ação do navegador. As ações são: {acoes} (ou, em inglês, {acoes_en}).",
+                     acao=m.group(1), acoes=acoes, acoes_en=acoes_en)
+    return t("Para o navegador, use Navegador(exemplo.com), Navegador(clicar:exemplo.com) ou Navegador(clicar:localhost:5173). As ações são: {acoes} (ou, em inglês, {acoes_en}).",
+             acoes=acoes, acoes_en=acoes_en)
 
 
 # ---------------- de onde vêm as regras ----------------
@@ -353,16 +398,283 @@ def _algum_pai(pd: str, alvo: str, flags) -> bool:
     return False
 
 
+# ---------------- endereços lidos como o navegador lê (WHATWG URL) ----------------
+# A regra e a página precisam falar do mesmo site. Um leitor de URL diferente do navegador (urllib, regex) deixa
+# passar "https://exemplo.com\@outro.com/" (o Chromium abre exemplo.com), "exemplo%2ecom", "ｅｘｅｍｐｌｏ.com",
+# "exemplo.com." e "127.1". Aqui o endereço é lido como o Chromium lê, e o navegador.py abre o endereço remontado
+# a partir destas partes: o que foi conferido é o que abre.
+
+_PROIBIDOS_NO_HOST = set("#/:<>?@[\\]^|%")   # mais controle, espaço e DEL (WHATWG: forbidden domain code point)
+_PONTOS = {"。": ".", "．": ".", "｡": "."}
+
+
+def _termina_em_numero(h: str) -> bool:
+    partes = h.split(".")
+    if partes[-1] == "" and len(partes) > 1:
+        partes.pop()
+    ultima = partes[-1]
+    return bool(re.fullmatch(r"[0-9]+|0x[0-9a-f]*", ultima))
+
+
+def _ipv4(h: str) -> str | None:
+    """O IPv4 do WHATWG (as mesmas formas que o inet_aton aceita): 127.1, 2130706433, 0x7f000001, 0177.0.0.1."""
+    partes = h.split(".")
+    if partes[-1] == "" and len(partes) > 1:
+        partes.pop()
+    if len(partes) > 4:
+        return None
+    nums = []
+    for p in partes:
+        if p.startswith("0x"):
+            base, dig, rx = 16, p[2:], r"[0-9a-f]*"
+        elif len(p) > 1 and p.startswith("0"):
+            base, dig, rx = 8, p[1:], r"[0-7]+"
+        else:
+            base, dig, rx = 10, p, r"[0-9]+"
+        if not re.fullmatch(rx, dig):
+            return None
+        nums.append(int(dig, base) if dig else 0)
+    if any(n > 255 for n in nums[:-1]) or nums[-1] >= 256 ** (5 - len(nums)):
+        return None
+    valor = nums[-1] + sum(n * 256 ** (3 - i) for i, n in enumerate(nums[:-1]))
+    return ".".join(str((valor >> s) & 255) for s in (24, 16, 8, 0))
+
+
+def host_canonico(host: str) -> str | None:
+    """O host como o navegador entende: minúsculo, sem ponto no fim, %xx desfeito, NFKC, IDN em punycode, IPv4 em
+    decimal com pontos, IPv6 comprimido entre colchetes. None quando o navegador recusaria."""
+    h = str(host or "")
+    if not h:
+        return None
+    if h.startswith("["):
+        if not h.endswith("]") or "%" in h:
+            return None
+        try:
+            return f"[{ipaddress.IPv6Address(h[1:-1]).compressed}]"
+        except ValueError:
+            return None
+    try:
+        h = urllib.parse.unquote_to_bytes(h).decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    h = unicodedata.normalize("NFKC", "".join(_PONTOS.get(c, c) for c in h))
+    if not h.isascii():
+        try:
+            import idna  # IDNA 2008 com UTS 46 sem a transição, como o Chromium
+            h = idna.encode(h, uts46=True, transitional=False).decode("ascii")
+        except Exception:  # noqa: BLE001 (idna.IDNAError, UnicodeError...): tenta o IDNA 2003 da biblioteca padrão
+            try:
+                h = h.encode("idna").decode("ascii")
+            except UnicodeError:
+                return None
+    h = h.lower()
+    if any(ord(c) <= 0x20 or ord(c) == 0x7F or c in _PROIBIDOS_NO_HOST for c in h):
+        return None
+    h = h.rstrip(".")
+    if not h or h.startswith(".") or ".." in h:
+        return None
+    if _termina_em_numero(h):
+        return _ipv4(h)
+    return h
+
+
+def partes_url(url: str) -> tuple[str, str, int, str] | None:
+    """(esquema, host, porta, caminho) de um endereço http ou https lido como o navegador lê: barra invertida vale
+    barra, o host é o que vem depois do último @, porta padrão quando não tem. None quando não é http(s) válido."""
+    s = re.sub(r"[\t\n\r]", "", str(url or "")).strip("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f"
+                                                          "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b"
+                                                          "\x1c\x1d\x1e\x1f ")
+    m = re.match(r"^([A-Za-z][A-Za-z0-9+.-]*):(.*)$", s, re.S)
+    if not m or m.group(1).lower() not in ("http", "https"):
+        return None
+    esquema = m.group(1).lower()
+    resto = m.group(2).lstrip("/\\")
+    fim = min((i for i in (resto.find(c) for c in "/\\?#") if i >= 0), default=len(resto))
+    autoridade, caminho = resto[:fim], resto[fim:]
+    host_porta = autoridade.rsplit("@", 1)[-1]
+    if host_porta.startswith("["):
+        j = host_porta.find("]")
+        if j < 0:
+            return None
+        host_txt, depois = host_porta[:j + 1], host_porta[j + 1:]
+        if depois and not depois.startswith(":"):
+            return None
+        porta_txt = depois[1:]
+    else:
+        host_txt, _, porta_txt = host_porta.partition(":")
+    if porta_txt and not re.fullmatch(r"[0-9]+", porta_txt):
+        return None
+    porta = int(porta_txt) if porta_txt else (80 if esquema == "http" else 443)
+    if porta > 65535:
+        return None
+    host = host_canonico(host_txt)
+    if not host:
+        return None
+    corte = min((i for i in (caminho.find("?"), caminho.find("#")) if i >= 0), default=len(caminho))
+    caminho = caminho[:corte].replace("\\", "/") + caminho[corte:]
+    caminho = re.sub(r"[\x00-\x20\x7f]", lambda c: "%%%02X" % ord(c.group()), caminho)
+    return esquema, host, porta, caminho
+
+
+def url_canonica(url: str) -> str | None:
+    """O endereço remontado das partes que as regras conferem (sem usuário e senha): é este que o navegador abre."""
+    p = partes_url(url)
+    if not p:
+        return None
+    esquema, host, porta, caminho = p
+    padrao = 80 if esquema == "http" else 443
+    if not caminho.startswith("/"):
+        caminho = "/" + caminho
+    return f"{esquema}://{host}{'' if porta == padrao else f':{porta}'}{caminho}"
+
+
+def _com_esquema(url: str) -> str:
+    """'exemplo.com' e 'localhost:5173' ganham http:// para serem lidos; 'mailto:x' e 'about:blank' não."""
+    s = str(url or "").strip()
+    if re.match(r"^https?:", s, re.I):
+        return s
+    if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:(?![0-9])", s):
+        return ""
+    return "http://" + s if s else ""
+
+
+def site_de(url: str) -> tuple[str, int] | None:
+    """(host, porta) de um endereço ou de 'host[:porta]'; None quando não é um site http(s)."""
+    p = partes_url(_com_esquema(url))
+    return (p[1], p[2]) if p else None
+
+
+def host_de(url: str) -> str:
+    """https://www.exemplo.com:8080/x -> www.exemplo.com, já na forma canônica (o que as regras comparam)."""
+    s = site_de(url)
+    return s[0] if s else ""
+
+
+def alvo_navegador(acao: str, url: str) -> str:
+    """O que as regras do navegador comparam: 'ação:host:porta' (clicar:exemplo.com:443), ou 'ação:' sem site."""
+    s = site_de(url)
+    return f"{acao}:{s[0]}:{s[1]}" if s else f"{acao}:"
+
+
+def _ler_alvo(valor: str) -> tuple[str, str, int | None]:
+    acao, _, resto = str(valor or "").partition(":")
+    if resto.startswith("["):
+        j = resto.find("]")
+        host, porta = (resto[:j + 1], resto[j + 2:]) if j >= 0 else (resto, "")
+    else:
+        h, sep, p = resto.rpartition(":")
+        host, porta = (h, p) if sep and re.fullmatch(r"[0-9]+", p) else (resto, "")
+    return acao, (host_canonico(host) or "") if host else "", int(porta) if porta.isdigit() else None
+
+
+def _site_da_regra(texto: str) -> tuple[str, int | None] | None:
+    """'exemplo.com', '*.exemplo.com', 'localhost:5173', 'https://x.com/caminho', '[::1]:3000' -> (host, porta)."""
+    d = texto.strip()
+    if d.startswith("domain:"):
+        d = d[len("domain:"):].strip()
+    d = re.sub(r"^[a-z][a-z0-9+.-]*://", "", d)
+    d = re.split(r"[/\\?#]", d, maxsplit=1)[0].rsplit("@", 1)[-1]
+    if d in ("", "*"):
+        return "*", None
+    if d.startswith("["):
+        j = d.find("]")
+        if j < 0:
+            return None
+        host_txt, depois = d[:j + 1], d[j + 1:]
+        if depois and not depois.startswith(":"):
+            return None
+        porta_txt = depois[1:]
+    else:
+        host_txt, _, porta_txt = d.partition(":")
+    if porta_txt and (not re.fullmatch(r"[0-9]+", porta_txt) or int(porta_txt) > 65535):
+        return None
+    porta = int(porta_txt) if porta_txt else None
+    if host_txt == "*":
+        return "*", porta
+    curinga = host_txt.startswith("*.")
+    host = host_canonico(host_txt[2:] if curinga else host_txt)
+    if not host or "*" in host:  # curinga só no começo: "*.exemplo.com"
+        return None
+    return ("*." + host if curinga else host), porta
+
+
+def _padrao_navegador(padrao: str) -> tuple[str | None, str, int | None] | None:
+    """'clicar:exemplo.com' -> ('clicar', 'exemplo.com', None); 'click:localhost:5173' -> ('clicar', 'localhost', 5173);
+    'exemplo.com' -> (None, 'exemplo.com', None); 'digitar' -> ('digitar', '*', None). Aceita domain:, http://,
+    porta e caminho (o caminho não conta). None quando não dá para entender: ação desconhecida ("apagar:x.com"),
+    ação vazia (":x.com") ou site inválido."""
+    p = re.sub(r"\s*:\s*", ":", (padrao or "").strip().lower())  # "click : x.com" é o mesmo que "click:x.com"
+    if p in ("", "*"):
+        return None, "*", None
+    if acao_navegador(p):
+        return acao_navegador(p), "*", None
+    acao = None
+    m = re.match(r"^([^:/\[\]\s]*):(.*)$", p, re.S)
+    if m:
+        palavra, resto = m.group(1), m.group(2)
+        eh_url = palavra in ("http", "https") or resto.startswith("//")
+        eh_porta = bool(re.match(r"\s*[0-9]+\s*(/|$)", resto))
+        if not eh_url and not eh_porta and palavra != "domain":
+            if palavra == "*":
+                acao = None
+            elif acao_navegador(palavra):
+                acao = acao_navegador(palavra)
+            else:
+                return None  # ação vazia ou desconhecida: não vira um site chamado "click"
+            p = resto.strip()
+    site = _site_da_regra(p)
+    if site is None:
+        return None
+    return acao, site[0], site[1]
+
+
 def casa_dominio(padrao: str | None, url_ou_dominio: str) -> bool:
     if padrao is None:
         return True
     if not padrao.startswith("domain:"):
         return False
-    dom = padrao[len("domain:"):].strip().lower()
-    host = re.sub(r"^[a-z]+://", "", url_ou_dominio.lower()).split("/")[0].split(":")[0]
+    regra = _site_da_regra(padrao[len("domain:"):])
+    host = host_de(url_ou_dominio)
+    if regra is None or not host:
+        return False
+    dom = regra[0]
+    if dom == "*":
+        return True
     if dom.startswith("*."):
-        return host.endswith(dom[1:])
+        return host == dom[2:] or host.endswith(dom[1:])
     return host == dom
+
+
+def casa_navegador(padrao: str | None, valor: str) -> bool:
+    """valor é "ação:host:porta" (clicar:exemplo.com:443, de alvo_navegador). "*.exemplo.com" vale o próprio site
+    e os subdomínios; uma porta na regra só vale para aquela porta."""
+    if padrao is None:
+        return True
+    lido = _padrao_navegador(padrao)
+    if lido is None:
+        return False
+    acao_regra, dom, porta_regra = lido
+    acao, host, porta = _ler_alvo(valor)
+    if acao_regra and acao_regra != acao:
+        return False
+    if porta_regra is not None and porta_regra != porta:
+        return False
+    if dom == "*":
+        return True
+    if not host:
+        return False
+    if dom.startswith("*."):
+        return host == dom[2:] or host.endswith(dom[1:])
+    return host == dom
+
+
+def acao_da_regra_navegador(regra: Regra) -> str | None:
+    """A ação escrita numa regra do navegador (clicar em Navegador(clicar:x.com)), ou None quando vale para todas."""
+    nome, padrao = analisar(regra.texto)
+    if nome != "Navegador" or padrao is None:
+        return None
+    lido = _padrao_navegador(padrao)
+    return lido[0] if lido else None
 
 
 def casa(regra: Regra, ferramenta: str, valor, base: Path | None) -> bool:
@@ -380,6 +692,8 @@ def casa(regra: Regra, ferramenta: str, valor, base: Path | None) -> bool:
         return casa_caminho(padrao, Path(valor), base or Path.cwd())
     if ferramenta in ("WebFetch", "WebSearch"):
         return casa_dominio(padrao, str(valor))
+    if ferramenta == "Navegador":
+        return casa_navegador(padrao, str(valor))
     return padrao is None or casa_comando(padrao, str(valor))
 
 
@@ -416,6 +730,10 @@ def alvos(nome: str, entrada: dict, resolver) -> list[tuple[str, object]]:
     """O que uma ferramenta do Clave vai tocar, no vocabulário das regras."""
     if nome.startswith(("github_",)):
         return [("GitHub", nome)]
+    if nome.startswith("navegador_"):
+        # "url" é o endereço que a ação vai tocar: o que navegador_abrir recebe, ou a página aberta (o navegador.py
+        # põe ali antes de decidir). O valor leva a porta, para "Navegador(localhost:5173)" não valer na 3000.
+        return [("Navegador", alvo_navegador(nome[len("navegador_"):], (entrada or {}).get("url", "")))]
     if nome not in ALVOS:
         return []
     ferr, campos = ALVOS[nome]
@@ -460,6 +778,9 @@ def sugerir(nome: str, entrada: dict, ctx) -> str | None:
         return f"{ferr}(/{_posix_abs(pai)}/**)"
     if nome.startswith("github_"):
         return f"GitHub({nome})"
+    if nome.startswith("navegador_"):
+        acao, host = nome[len("navegador_"):], host_de((entrada or {}).get("url", ""))
+        return f"Navegador({acao}:{host})" if host else f"Navegador({acao})"
     return None
 
 

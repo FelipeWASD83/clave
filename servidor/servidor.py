@@ -845,7 +845,9 @@ def r_aprovar(h: Manipulador, eid):
         raise Erro(404, t("Execução não encontrada."))
     decisao = d.get("decisao")
     validas = ("permitir", "permitir_sempre", "permitir_tarefa", "permitir_pasta", "permitir_app", "recusar",
-               "executar_perguntar", "executar_aceitar", "executar_livre")
+               "executar_perguntar", "executar_aceitar", "executar_livre",
+               "pode_ir", "mudar", "nao_fazer",  # o plano fora do modo Plano
+               "responder", "pular")  # o cartão de perguntas
     if decisao not in validas:
         raise Erro(400, t("Decisão inválida."))
     bruto = d.get("dados") if isinstance(d.get("dados"), dict) else {}
@@ -859,6 +861,11 @@ def r_aprovar(h: Manipulador, eid):
                            for e in bruto["etapas"][:fluxos.MAX_ETAPAS] if isinstance(e, dict)]
     if isinstance(bruto.get("teto_usd"), (int, float)):
         dados["teto_usd"] = float(bruto["teto_usd"])
+    if isinstance(bruto.get("respostas"), list):
+        dados["respostas"] = [{"escolhas": [e[:100] for e in (r.get("escolhas") if isinstance(r.get("escolhas"), list) else [])[:4]
+                                            if isinstance(e, str)],
+                               "outra": str(r.get("outra") or "")[:1000]}
+                              for r in bruto["respostas"][:4] if isinstance(r, dict)]
     if not ex.decidir(str(d.get("id")), decisao, str(d.get("texto") or "")[:2000], dados):
         raise Erro(409, t("Essa ação não está mais esperando resposta."))
     h._json({"ok": True})
@@ -920,6 +927,54 @@ def r_anexo(h: Manipulador, aid):
     if reg["tipo"] == "application/pdf":
         tipo = "application/pdf"
     h._bytes(dados, tipo, cab=cab)
+
+
+@rota("GET", "/api/videos/<vid>/estado")
+def r_video_estado(h: Manipulador, vid):
+    import videos
+    try:
+        h._json({"pronto": videos.local(vid, h.query().get("lingua")) is not None})
+    except ValueError as e:
+        raise Erro(400, str(e))
+
+
+@rota("POST", "/api/videos/<vid>/baixar")
+def r_video_baixar(h: Manipulador, vid):
+    """Baixa o vídeo da lição da release "videos" do GitHub, uma vez só."""
+    import videos
+    try:
+        videos.baixar(vid, h.query().get("lingua"))
+    except ValueError as e:
+        raise Erro(502, str(e))
+    h._json({"pronto": True})
+
+
+@rota("GET", "/api/videos/<vid>")
+def r_video(h: Manipulador, vid):
+    import videos
+    try:
+        arq = videos.local(vid, h.query().get("lingua"))
+    except ValueError as e:
+        raise Erro(400, str(e))
+    if not arq:
+        raise Erro(404, t("Este vídeo ainda não foi baixado."))
+    total = arq.stat().st_size
+    cab = {"Cache-Control": "max-age=86400", "X-Content-Type-Options": "nosniff", "Accept-Ranges": "bytes"}
+    m = re.match(r"bytes=(\d*)-(\d*)$", h.headers.get("Range") or "")
+    ini, fim, status = 0, total - 1, 200
+    if m and (m.group(1) or m.group(2)):
+        if m.group(1):
+            ini, fim = int(m.group(1)), min(int(m.group(2) or total - 1), total - 1)
+        else:  # bytes=-N: os últimos N
+            ini = max(0, total - int(m.group(2)))
+        if ini > fim or ini >= total:
+            return h._bytes(b"", "video/mp4", status=416, cab={**cab, "Content-Range": f"bytes */{total}"})
+        status = 206
+        cab["Content-Range"] = f"bytes {ini}-{fim}/{total}"
+    with open(arq, "rb") as f:
+        f.seek(ini)
+        dados = f.read(fim - ini + 1)
+    h._bytes(dados, "video/mp4", status=status, cab=cab)
 
 
 @rota("POST", "/api/anexos/<aid>/abrir")

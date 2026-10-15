@@ -6,9 +6,39 @@ import { ic } from './icones.js';
 import { el } from './ui.js';
 import { renderizar } from './markdown.js';
 import { criarMiniChat } from './minichat.js';
-import { t } from './i18n.js';
+import { t, idioma } from './i18n.js';
 
 let cache = null;
+
+// O vídeo da lição: na primeira vez ele é baixado do GitHub (não vem dentro do app) e fica guardado no computador.
+function playerVideo(vid) {
+  const lingua = encodeURIComponent(idioma());
+  const caixa = el('div', { class: 'video-licao' });
+  const mostrar = (tocar = false) => {
+    const v = el('video', { src: `/api/videos/${vid}?lingua=${lingua}`, controls: true, preload: 'metadata', playsinline: true });
+    caixa.replaceChildren(v);
+    if (tocar) v.play().catch(() => {});
+  };
+  const baixar = async (botao) => {
+    botao.disabled = true;
+    botao.innerHTML = `${ic('progresso')}${t('Baixando o vídeo…')}`;
+    try {
+      await api(`/videos/${vid}/baixar?lingua=${lingua}`, { metodo: 'POST' });
+      mostrar(true);
+    } catch (e) {
+      caixa.replaceChildren(el('p', { class: 'ajuda', texto: t('Não deu para baixar o vídeo agora: {erro}', { erro: e.message }) }),
+        el('button', { class: 'botao pequeno', type: 'button', texto: t('Tentar de novo'), onclick: (ev) => baixar(ev.currentTarget) }));
+    }
+  };
+  api(`/videos/${vid}/estado?lingua=${lingua}`).then((r) => {
+    if (r.pronto) return mostrar();
+    const botao = el('button', { class: 'botao primario', type: 'button', html: `${ic('olho')}${t('Assistir ao vídeo')}` });
+    botao.addEventListener('click', () => baixar(botao));
+    caixa.replaceChildren(el('div', { class: 'video-capa' }, botao,
+      el('small', { class: 'ajuda', texto: t('Na primeira vez o Clave baixa o vídeo do GitHub (alguns MB) e guarda neste computador.') })));
+  }).catch(() => caixa.remove());
+  return caixa;
+}
 
 export function ancora(texto) {
   return texto.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -43,7 +73,7 @@ export async function telaAprender(principal) {
         return el('a', { class: `cartao ${feito ? 'feito' : ''}`, href: `#/aprender/${tut.slug}` },
           el('span', { class: 'licao-num', texto: String(n).padStart(2, '0') }),
           el('h3', { texto: tut.titulo }), el('p', { texto: tut.resumo }),
-          el('span', { class: 'meta', texto: [tut.duracao, feito ? t('feita') : ''].filter(Boolean).join(' · ') }));
+          el('span', { class: 'meta', texto: [tut.duracao, tut.video ? t('com vídeo') : '', feito ? t('feita') : ''].filter(Boolean).join(' · ') }));
       })))))));
   return {};
 }
@@ -79,6 +109,7 @@ export async function telaLicao(principal, slug, alvo) {
     el('a', { class: 'botao pequeno fantasma voltar', href: '#/aprender', html: `${ic('esq')}${t('Todas as lições')}` }),
     el('div', { class: 'meta', texto: [lic.trilha, lic.duracao].filter(Boolean).join(' · ') }),
     el('h1', { texto: lic.titulo }),
+    lic.video ? playerVideo(lic.video) : null,
     corpo,
     ajudante.elemento,
     el('div', { class: 'leitor-rodape' },

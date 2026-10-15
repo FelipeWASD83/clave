@@ -31,6 +31,16 @@ Quando ele pede permissão, aparece um cartão mostrando **exatamente** o que va
 
 **Leia antes de aprovar.** Se não entender o comando, recuse e pergunte "o que esse comando faz?".
 
+## O plano antes da tarefa grande
+
+Antes de mexer em muita coisa (três arquivos ou mais, mover ou renomear arquivos, reorganizar uma pasta), o Claude mostra um cartão **Posso fazer assim?** com o plano, e só começa depois da sua resposta:
+
+- **Pode ir**: ele executa, e as permissões continuam valendo como sempre.
+- **Mudar o plano**: escreva o que quer diferente no campo e ele refaz o plano.
+- **Não fazer**: ele para e pergunta o que você prefere.
+
+Isso vale em qualquer modo. Se preferir que ele vá direto, desligue em **Configurações > Modo Code > Pedir OK antes de tarefas grandes**.
+
 ## Desfazer
 
 Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou mudou naquela resposta voltam a ser como eram. (Comandos que apagam ou mexem fora da pasta não têm como ser desfeitos: por isso eles sempre pedem OK.)

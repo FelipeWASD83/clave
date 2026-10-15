@@ -43,6 +43,7 @@ const NOMES_FERRAMENTA = {
   github_criar_pr: (e) => ['ramo', t('Abrir pull request'), `${e.repo}: ${e.titulo}`],
   executar_fluxo: (e) => ['fluxo', t('Propôs um fluxo'), e.titulo || ''],
   apresentar_plano: () => ['lista', t('Apresentou o plano'), ''],
+  perguntar: () => ['chat', t('Fez uma pergunta'), ''],
   sugerir_conversa: (e) => ['mais_tarefa', t('Sugeriu outra conversa'), e.titulo || ''],
 };
 
@@ -272,13 +273,17 @@ export function renderizarBloco(b, porId, resultados) {
         import('./fluxo-ui.js').then((m) => caixa.replaceWith(m.cartaoSugestao({ id: b.id, ...b.input })));
         return caixa;
       }
-      if (b.name === 'executar_fluxo' || b.name === 'apresentar_plano') {
-        // o cartão do fluxo (ou do plano) no lugar do bloco de ferramenta; carregado sob demanda
-        const caixa = el('div', { class: 'cartao-carregando', dados: { toolId: b.id } });
+      if (b.name === 'executar_fluxo' || b.name === 'apresentar_plano' || b.name === 'perguntar') {
+        // o cartão do fluxo (do plano ou das perguntas) no lugar do bloco de ferramenta; carregado sob demanda
         const r = resultados?.get(b.id);
+        // ainda esperando a resposta: o cartão vivo aparece sozinho (sem isso, ao reabrir a conversa, eram dois)
+        if ((b.name === 'perguntar' || b.name === 'apresentar_plano') && !r) return null;
+        const caixa = el('div', { class: 'cartao-carregando', dados: { toolId: b.id } });
+        const texto = r ? textoResultado(r.content) : '';
         import('./fluxo-ui.js').then((m) => {
           caixa.replaceWith(b.name === 'executar_fluxo' ? m.cartaoFluxoSalvo(b.id)
-            : m.cartaoPlanoSalvo(b.input, r ? textoResultado(r.content) : ''));
+            : b.name === 'perguntar' ? m.cartaoPerguntaSalva(b.input, texto)
+              : m.cartaoPlanoSalvo(b.input, texto));
         });
         return caixa;
       }

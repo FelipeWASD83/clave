@@ -107,6 +107,14 @@ GUARDA = ("window.__erros = []; const _e = console.error; console.error = (...a)
           "addEventListener('error', (ev) => window.__erros.push(ev.message));")
 
 
+def recarregar(a: "Aba", espera=2.0):
+    """Recarrega a página. Neste PC o antivírus segura, no Edge de teste, a resposta em fluxo enquanto ela espera
+    um clique (aprovação, plano, pergunta): o cartão não chega ao vivo. Ao recarregar, a conversa traz o cartão
+    pendente por um pedido comum. No app e no navegador do dia a dia o fluxo chega na hora."""
+    a.ws.cmd("Page.reload")
+    time.sleep(espera)
+
+
 def main():
     SAIDA.mkdir(parents=True, exist_ok=True)
     edge = cap.subir_edge()
@@ -158,6 +166,8 @@ def main():
         a.print("11c-conectores")
         a.ir("#/config/aparencia", 1.0)
         a.print("11d-aparencia")
+        a.ir("#/config/code", 1.0)
+        a.print("11g-code")
         # 4.1: o jeito de falar e o exemplo no Haiku (na demonstração, a API de mentira repete as escolhas)
         a.ir("#/config/personalizacao", 1.0)
         a.js("(() => { const s = document.querySelectorAll('.linha-tom select'); s[0].value = 'sincero'; s[0].dispatchEvent(new Event('change')); })()", 0.5)
@@ -185,14 +195,16 @@ def main():
         a.print("35-comandos-de-barra")
         a.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}))", 0.2)
         a.ir("#/novo", 1.2)
-        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = %s; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()" % json.dumps(M("fluxo")), 5.0)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = %s; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()" % json.dumps(M("fluxo")), 3.0)
+        recarregar(a)
         a.print("36-fluxo-proposta")
         a.js("document.querySelector('.fluxo.proposta button.primario')?.click()", 6.0)
         a.js("document.querySelector('.fluxo .fluxo-etapa.viva')?.setAttribute('open', '')", 0.5)
         a.print("37-fluxo-concluido")
         cid = a.js(f"fetch('/api/conversas',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{modo:'code',pasta:{json.dumps(pasta)}}})}}).then(r=>r.json()).then(d=>d.conversa.id)")
         a.ir(f"#/c/{cid}", 1.5)
-        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = %s; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()" % json.dumps(M("crie")), 3.5)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = %s; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()" % json.dumps(M("crie")), 3.0)
+        recarregar(a)
         a.js("(() => { const b = [...document.querySelectorAll('.aprovacao button')].find(x => x.textContent.startsWith(%s)); b?.click(); })()" % json.dumps(T("Mais opções")), 0.6)
         a.js("(() => { const i = [...document.querySelectorAll('.menu button, .menu [role=menuitem]')].find(x => x.textContent.includes(%s)); i?.click(); })()" % json.dumps(T("Sempre nesta pasta…")), 0.6)
         a.print("38-aprovacao-com-regra")
@@ -201,7 +213,8 @@ def main():
         a.ir(f"#/c/{cid}", 1.5)
         a.js("(() => { const c = [...document.querySelectorAll('.compositor .chip')].find(x => x.textContent.includes(%s)); c?.click(); })()" % json.dumps(T("Perguntar")), 0.4)
         a.js("(() => { const i = [...document.querySelectorAll('.menu button, .menu [role=menuitem]')].find(x => x.textContent.startsWith(%s)); i?.click(); })()" % json.dumps(T("Plano")), 0.3)
-        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = %s; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()" % json.dumps(M("plano")), 3.5)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = %s; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()" % json.dumps(M("plano")), 3.0)
+        recarregar(a)
         a.print("39-plano")
         a.js("[...document.querySelectorAll('.fluxo.plano button')].find(x => x.textContent === %s)?.click()" % json.dumps(T("Continuar planejando")), 2.0)
         # 2.1: preços e planos, painel de uso, ambientes do Code e a sugestão de outra conversa

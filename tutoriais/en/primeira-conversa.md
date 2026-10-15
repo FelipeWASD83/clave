@@ -23,6 +23,10 @@ Click the paperclip, drag the file into the text box, or paste an image (Ctrl + 
 - **Excel spreadsheets** (.xlsx): "which months did I spend the most?". See the lesson [Excel with Claude](#/aprender/excel).
 - **Text and code**: .txt, .csv, .md, .py and others.
 
+## When Claude asks
+
+Sometimes a piece of information only you have is missing (the tone of an invitation, the format of a report). Then a card shows up with the question and options to click; the one it recommends comes first. Pick one, or write another answer in the field, and click **Answer**: it goes on from there. **Skip** lets it go on with the option it would recommend.
+
 ## Didn't like the answer?
 
 - **Ask for changes** in the same conversation: "shorter", "in bullet points", "more formal".

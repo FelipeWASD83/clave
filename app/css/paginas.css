@@ -30,6 +30,10 @@
 .leitor .voltar { margin-bottom: 18px; }
 .leitor h1 { font-family: var(--serifa); font-weight: 400; font-size: 40px; line-height: 1.12; margin: 6px 0 18px; }
 .leitor .resposta { font-size: 17.5px; }
+/* o vídeo da lição, logo abaixo do título */
+.video-licao { margin: 0 0 24px; }
+.video-licao video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--raio-m); background: var(--tinta); }
+.video-capa { display: grid; justify-items: start; gap: 8px; padding: 18px 20px; border: 1px dashed var(--linha); border-radius: var(--raio-m); background: var(--papel-2); }
 .experimentar {
   margin: 0 0 1.1em; padding: 14px 16px; border-radius: var(--raio-m); background: var(--acao-suave);
   border: 1px solid transparent; display: grid; gap: 10px; font-family: var(--sans);

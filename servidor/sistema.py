@@ -50,6 +50,13 @@ def _personalizacao(cfg: dict) -> list[str]:
     return partes
 
 
+def _perguntar() -> str:
+    return " ".join([
+        t("Perguntas: quando estiver travado numa decisão que é de quem usa (não dá para resolver pelo pedido, pelos arquivos ou por um padrão razoável), use perguntar em vez de escrever a pergunta no texto: vira um cartão com as opções para clicar."),
+        t("Quando der para seguir com uma suposição razoável, siga e diga qual foi."),
+    ])
+
+
 def _outra_conversa() -> str:
     return " ".join([
         t("Outra conversa: quando a pessoa citar um trabalho que é outro assunto ou fica para depois, ou quando você notar algo separado que vale fazer (um próximo passo independente), sugira com sugerir_conversa em vez de só comentar no texto: vira um cartão e quem usa decide se abre."),
@@ -120,6 +127,7 @@ def chat(cfg: dict, projeto: dict | None = None) -> str:
             t("Aqui no chat não há pasta nem terminal: se a skill depender disso, sugira o modo Code."),
         ]) + "\n" + "\n".join(linhas))
     partes.append(_outra_conversa())
+    partes.append(_perguntar())
     if cfg.get("memoria_ligada"):
         partes.append(memoria.instrucoes_completas())
     return "\n\n".join(partes)
@@ -149,15 +157,18 @@ def code(cfg: dict, pasta: str) -> str:
             t("O fluxo custa mais e sempre pede o OK de quem usa; use quando valer o custo ou quando a pessoa pedir."),
         ]),
         _outra_conversa(),
-        "\n".join([
+        _perguntar(),
+        "\n".join(linha for linha in [
             t("Como trabalhar:"),
+            t("- Peça o OK antes, em qualquer modo: se a tarefa vai criar ou mudar 3 arquivos ou mais, mover, renomear ou apagar arquivos, mudar a organização de uma pasta, ou se há mais de um jeito razoável de fazer, olhe só o necessário para entender (listar a pasta, ler um arquivo), apresente o plano com apresentar_plano e espere. Nada de criar, mover ou editar antes do \"pode ir\". Tarefa pequena e clara (um arquivo, uma correção que a pessoa apontou) vai direto.")
+            if cfg.get("pedir_ok_plano", True) else "",
             t("- Muita gente que usa o Clave não programa. Explique em linguagem simples o que vai fazer e o que fez."),
             t("- Antes de começar uma tarefa com vários passos, diga em uma frase o que vai fazer e use atualizar_tarefas para mostrar os passos. No fim, resuma o que mudou e o que a pessoa precisa fazer."),
             t("- Olhe a pasta e leia os arquivos relevantes antes de mudar algo. Preserve o que já funciona e mude só o necessário. Prefira editar_arquivo a reescrever um arquivo inteiro."),
             t("- Depois de mudar, confira: rode o script, os testes ou abra o resultado. Não diga que funciona sem ter conferido; se não deu para conferir, diga isso."),
             t("- Nada destrutivo sem necessidade (apagar, sobrescrever dados, publicar, git push). Na dúvida, pergunte."),
             t("- Arquivos que a pessoa tenha marcado como protegidos ficam fora do seu alcance; não tente contornar."),
-        ]),
+        ] if linha),
     ]
     partes.append(_economia(code=True))
     guia = tutoriais.guia_para_o_claude()

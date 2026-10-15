@@ -54,14 +54,82 @@ MARCA_MODO, FIM_MARCA_MODO = "<modo-do-clave>", "</modo-do-clave>"
 
 PLANO = {
     "name": "apresentar_plano",
-    "description": ("Apresenta o plano a quem usa quando ele estiver pronto, no modo Plano. A pessoa vê um "
-                    "cartão com o plano e escolhe executar (e com qual permissão) ou continuar planejando. "
-                    "Se aprovar, o modo muda e você segue executando o plano na mesma resposta."),
+    "description": ("Apresenta um plano a quem usa e espera a decisão. No modo Plano, use quando o plano estiver "
+                    "pronto: a pessoa escolhe executar (e com qual permissão) ou continuar planejando, e se aprovar "
+                    "você segue executando na mesma resposta. Nos outros modos, use antes de começar uma tarefa "
+                    "grande (vários arquivos, mudança de estrutura, algo difícil de desfazer, ou quando há mais de um "
+                    "caminho razoável): a pessoa responde pode ir, pede uma mudança ou diz para não fazer. Tarefa "
+                    "pequena e clara vai direto, sem plano."),
     "eager_input_streaming": True,
     "input_schema": {"type": "object", "properties": {
         "plano": {"type": "string", "description": "O plano em Markdown: o que vai mudar, em quais arquivos, em que ordem, e como vai conferir, no idioma em que a pessoa escreve"}},
         "required": ["plano"]},
 }
+
+
+PERGUNTAR = {
+    "name": "perguntar",
+    "description": ("Faz de 1 a 4 perguntas a quem usa num cartão com opções para clicar (e um campo para escrever "
+                    "outra resposta), e espera. Use só quando estiver travado numa decisão que é da pessoa e que não "
+                    "dá para resolver pelo pedido, pelos arquivos ou por um padrão razoável. Ponha primeiro a opção "
+                    "que você recomenda, com \"(recomendado)\" no fim do rótulo. Não pergunte o que dá para supor, "
+                    "não pergunte se pode continuar (para isso existe o plano) e não repita as perguntas no texto."),
+    "eager_input_streaming": True,
+    "input_schema": {"type": "object", "properties": {
+        "perguntas": {"type": "array", "description": "De 1 a 4 perguntas", "items": {
+            "type": "object", "properties": {
+                "pergunta": {"type": "string", "description": "A pergunta completa, terminando com ponto de interrogação, no idioma em que a pessoa escreve"},
+                "titulo": {"type": "string", "description": "Um rótulo curtíssimo para a pergunta (até 14 caracteres), como \"Formato\" ou \"Pasta\""},
+                "opcoes": {"type": "array", "description": "De 2 a 4 respostas possíveis, a recomendada primeiro", "items": {
+                    "type": "object", "properties": {
+                        "rotulo": {"type": "string", "description": "A resposta, em poucas palavras"},
+                        "descricao": {"type": "string", "description": "O que acontece se a pessoa escolher esta (uma frase)"}},
+                    "required": ["rotulo"]}},
+                "varias": {"type": "boolean", "description": "true quando dá para marcar mais de uma opção"}},
+            "required": ["pergunta", "opcoes"]}}},
+        "required": ["perguntas"]},
+}
+
+
+def normalizar_perguntas(entrada: dict) -> list[dict]:
+    """As perguntas como o cartão mostra; ValueError com o que corrigir quando vierem erradas."""
+    pergs = entrada.get("perguntas") if isinstance(entrada, dict) else None
+    if isinstance(pergs, dict):
+        pergs = [pergs]
+    if not isinstance(pergs, list) or not pergs:
+        raise ValueError(t("Mande de 1 a 4 perguntas no campo perguntas."))
+    saida = []
+    for p in pergs[:4]:
+        if not isinstance(p, dict):
+            continue
+        texto = " ".join(str(p.get("pergunta") or "").split())[:400]
+        opcoes = []
+        for o in (p.get("opcoes") or [])[:4]:
+            if isinstance(o, str):
+                o = {"rotulo": o}
+            if isinstance(o, dict) and str(o.get("rotulo") or "").strip():
+                opcoes.append({"rotulo": " ".join(str(o["rotulo"]).split())[:100],
+                               "descricao": " ".join(str(o.get("descricao") or "").split())[:300]})
+        if not texto or len(opcoes) < 2:
+            raise ValueError(t("Cada pergunta precisa do texto e de 2 a 4 opções."))
+        saida.append({"pergunta": texto, "titulo": " ".join(str(p.get("titulo") or "").split())[:24],
+                      "opcoes": opcoes, "varias": bool(p.get("varias"))})
+    if not saida:
+        raise ValueError(t("Mande de 1 a 4 perguntas no campo perguntas."))
+    return saida
+
+
+def texto_respostas(perguntas: list[dict], respostas: list) -> str:
+    """O resultado que volta para o modelo (e que o cartão salvo mostra): cada pergunta com a resposta."""
+    partes = [t("Respostas de quem usa:")]
+    for i, p in enumerate(perguntas):
+        r = respostas[i] if i < len(respostas) and isinstance(respostas[i], dict) else {}
+        validas = {o["rotulo"] for o in p["opcoes"]}
+        escolhas = [e for e in (r.get("escolhas") or []) if e in validas]
+        outra = " ".join(str(r.get("outra") or "").split())
+        itens = escolhas + ([t("Outra: {resposta}", resposta=outra)] if outra else [])
+        partes.append(f"**{p['pergunta']}**\n{', '.join(itens) if itens else t('(sem resposta)')}")
+    return "\n\n".join(partes)
 
 
 SUGERIR = {
@@ -284,7 +352,8 @@ class Execucao:
                 liberadas = set(SEMPRE).union(*(POR_CAPACIDADE[c] for c in pode if c in POR_CAPACIDADE))
                 defs = [d for d in defs if d["name"] in liberadas]
             ferramentas_cliente += defs
-            if op.get("permissao") == "plano" and not etapa and not op.get("rotina"):
+            if (not etapa and not op.get("rotina")
+                    and (op.get("permissao") == "plano" or cfg.get("pedir_ok_plano", True))):
                 ferramentas_cliente.append(dict(PLANO))
         elif modo == "chat":
             self.skills_chat = [s for s in contexto_pasta.skills(None)]
@@ -301,6 +370,7 @@ class Execucao:
             ferramentas_cliente.append(fluxos.definicao(str(pasta) if pasta else None))
         if modo in ("chat", "code") and not etapa and not op.get("rotina"):
             ferramentas_cliente.append(dict(SUGERIR))
+            ferramentas_cliente.append(dict(PERGUNTAR))
         ferramentas_cliente = i18n.traduzir_ferramentas(ferramentas_cliente)
         mcp = []
         for m in (cfg.get("conectores_mcp") or []) if modo in ("chat", "code") and not etapa else []:
@@ -543,6 +613,9 @@ class Execucao:
         if nome == "apresentar_plano":
             return self._plano(tid, entrada or {})
 
+        if nome == "perguntar":
+            return self._perguntar(tid, entrada or {})
+
         if nome == "sugerir_conversa":
             return self._sugerir(tid, entrada or {}, modo)
 
@@ -753,8 +826,12 @@ class Execucao:
 
     def _plano(self, tid: str, entrada: dict) -> dict:
         nome = "apresentar_plano"
-        d = self._pedir_aprovacao(tid, nome, entrada, "plano", None, extra={"plano": str(entrada.get("plano") or "")},
+        modo_atual = self.op.get("permissao") or "perguntar"
+        d = self._pedir_aprovacao(tid, nome, entrada, "plano", None,
+                                  extra={"plano": str(entrada.get("plano") or ""), "modo": modo_atual},
                                   tipo="plano_proposto")
+        if modo_atual != "plano":
+            return self._plano_fora_do_modo_plano(tid, d)
         novo = MODOS_PERMISSAO.get(d or "")
         if not novo:
             texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""
@@ -769,6 +846,40 @@ class Execucao:
         self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False,
                      "resumo": t("plano aprovado ({modo})", modo=t(NOMES_MODO[novo]))})
         return _res(tid, t("Plano aprovado por quem usa. O modo de permissão agora é {modo}: execute o plano, passo a passo, conferindo o resultado no fim.", modo=t(NOMES_MODO[novo])))
+
+    def _plano_fora_do_modo_plano(self, tid: str, d: str) -> dict:
+        """O "posso fazer?" antes de uma tarefa grande: o modo de permissão não muda, só a decisão volta."""
+        nome = "apresentar_plano"
+        texto = ((self.aprovacoes.get(tid) or {}).get("texto") or "").strip()
+        if d == "pode_ir":
+            self._log(nome, "plano", "permitir", "voce")
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": t("plano aprovado")})
+            return _res(tid, t("Plano aprovado por quem usa. Execute o plano, passo a passo, conferindo o resultado no fim.")
+                        + (t(" Comentário: {comentario}", comentario=texto) if texto else ""))
+        if d == "mudar":
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": t("pediu mudança")})
+            return _res(tid, t("Quem usa quer mudar o plano antes de você começar.")
+                        + (t(" Comentário: {comentario}", comentario=texto) if texto else t(" Pergunte o que mudar no plano."))
+                        + t(" Ajuste e apresente de novo; não comece antes do OK."))
+        self._log(nome, "plano", "recusar", "voce")
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": t("não fazer")})
+        return _res(tid, t("Quem usa não quer que esse plano seja feito. Não comece; pergunte o que a pessoa prefere."))
+
+    def _perguntar(self, tid: str, entrada: dict) -> dict:
+        nome = "perguntar"
+        try:
+            perguntas = normalizar_perguntas(entrada)
+        except ValueError as e:
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": str(e)})
+            return _res(tid, t("Pergunta inválida: {erro} Corrija e pergunte de novo.", erro=e), True)
+        d = self._pedir_aprovacao(tid, nome, entrada, "pergunta", None, extra={"perguntas": perguntas}, tipo="pergunta")
+        if d != "responder":
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": t("sem resposta")})
+            return _res(tid, t("Quem usa preferiu não responder agora. Siga com a opção que você recomendaria e diga qual escolheu."))
+        respostas = ((self.aprovacoes.get(tid) or {}).get("dados") or {}).get("respostas") or []
+        texto = texto_respostas(perguntas, respostas)
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": texto[:300]})
+        return _res(tid, texto)
 
     def _sugerir(self, tid: str, entrada: dict, modo: str) -> dict:
         nome = "sugerir_conversa"

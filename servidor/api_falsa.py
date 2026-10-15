@@ -116,7 +116,25 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
                            "por_que": "É um trabalho separado deste e fica melhor numa conversa própria."}}], "tool_use"
     if _tem_resultado(ultima) and str(conteudo).startswith(("A sugestão apareceu", "The suggestion appeared")):
         return [{"type": "text", "text": "Se quiser, é só abrir pelo cartão."}], "end_turn"
-    if not _tem_resultado(ultima) and "apresentar_plano" in nomes:
+    if _tem_resultado(ultima) and str(conteudo).startswith(("Respostas de quem usa", "Answers from the person")):
+        return [{"type": "text", "text": "Combinado, sigo com o que você escolheu. (Demonstração: com a chave de "
+                 "verdade, o Claude faria de fato.)"}], "end_turn"
+    if not _tem_resultado(ultima) and "perguntar" in nomes and any(p in texto_etapa.lower() for p in ("pergunte", "ask me")):
+        return [{"type": "text", "text": "Antes de começar, preciso de duas escolhas suas."},
+                {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "perguntar",
+                 "input": {"perguntas": [
+                     {"pergunta": "Em que formato você quer o relatório?", "titulo": "Formato",
+                      "opcoes": [{"rotulo": "Planilha do Excel (recomendado)", "descricao": "Dá para filtrar e somar depois."},
+                                 {"rotulo": "Documento do Word", "descricao": "Bom para imprimir e mandar por e-mail."},
+                                 {"rotulo": "Só aqui na conversa", "descricao": "Mais rápido, sem arquivo."}]},
+                     {"pergunta": "Quais meses entram?", "titulo": "Período", "varias": True,
+                      "opcoes": [{"rotulo": "Agosto"}, {"rotulo": "Setembro"}, {"rotulo": "Outubro"}]}]}}], "tool_use"
+    # o plano aparece no modo Plano (o aviso escondido vai junto da mensagem) ou quando o pedido fala em plano
+    modo_plano = any(isinstance(b, dict) and str(b.get("text", "")).startswith(("<modo-do-clave>Modo Plano ligado",
+                                                                                 "<modo-do-clave>Plan mode is on"))
+                     for b in (ultima.get("content") if isinstance(ultima.get("content"), list) else []))
+    if (not _tem_resultado(ultima) and "apresentar_plano" in nomes
+            and (modo_plano or any(p in texto_etapa.lower() for p in ("planej", "plano", "plan")))):
         return [{"type": "text", "text": "Olhei a pasta. Este é o plano:"},
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "apresentar_plano",
                  "input": {"plano": "1. Criar o arquivo exemplo-do-plano.txt\n2. Conferir que ele existe"}}], "tool_use"
@@ -150,8 +168,9 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
         blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "listar_pasta",
                        "input": {}})
         return blocos, "tool_use"
-    if "título curto" in str(corpo.get("system", "")):
-        return [{"type": "text", "text": "Conversa de demonstração"}], "end_turn"
+    if any(p in str(corpo.get("system", "")) for p in ("título curto", "short title")):
+        en = "short title" in str(corpo.get("system", ""))
+        return [{"type": "text", "text": "Demo conversation" if en else "Conversa de demonstração"}], "end_turn"
     sistema_txt = str(corpo.get("system", ""))
     if not nomes and any(m in sistema_txt for m in ("<jeito_de_falar>", "<way_of_talking>")):
         # o "Ver um exemplo" da personalização: mostra que as escolhas chegaram ao pedido

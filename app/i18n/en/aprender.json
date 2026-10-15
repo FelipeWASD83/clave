@@ -19,5 +19,10 @@
   "Abrir no Code com este pedido": "Open in Code with this request",
   "Mandar para uma conversa nova": "Send to a new chat",
   "Refazer os tours": "Take the tours again",
-  "Mostra de novo as setinhas que explicam cada parte do app": "Shows again the arrows that explain each part of the app"
+  "Mostra de novo as setinhas que explicam cada parte do app": "Shows again the arrows that explain each part of the app",
+  "Baixando o vídeo…": "Downloading the video…",
+  "Não deu para baixar o vídeo agora: {erro}": "Couldn't download the video right now: {erro}",
+  "Assistir ao vídeo": "Watch the video",
+  "Na primeira vez o Clave baixa o vídeo do GitHub (alguns MB) e guarda neste computador.": "The first time, Clave downloads the video from GitHub (a few MB) and keeps it on this computer.",
+  "com vídeo": "with video"
 }

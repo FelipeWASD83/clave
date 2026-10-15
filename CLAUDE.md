@@ -76,6 +76,7 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
 | `servidor/compactar.py` | `/compact`: on-demand compaction (beta `compact-2026-09-04`); the block becomes a `compactacao` message and the request starts from it |
 | `servidor/importar.py` | Import from Claude or ChatGPT: the request to paste there, reading the reply (sections and one entry per line) and applying it |
 | `servidor/tom.py` | The way of talking (base tone and the Less, Default, More controls): the sentence for each choice in the system prompt and the example on Haiku |
+| `servidor/videos.py` | The lesson videos: the local file in the development copy (`video/saida/`), otherwise downloaded once from the `videos` release into `dados/videos`, served with Range |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP and SMTP with an app password, or the classic Outlook by COM) and Word (.docx with the standard library, PDF through the installed Word) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Model launch cards: the presentation card (opens once for a new model), the "new model" banner, the "Models" cards, the intelligence score and its source (`_inteligencia`) and models the account has that Clave doesn't know yet (Models API, once a day) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Interface translation (`t()`); the server merges the catalogs into `/i18n/en.json` |
@@ -136,6 +137,23 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
   `<jeito_de_falar>`; everything on Default sends exactly the old prompt (a test checks it). What the person wrote in
   "How you want the answers" wins over the controls. There is no Professional or Efficient tone because the Formal
   and Concise styles already cover them.
+- **`perguntar` and the plan outside Plan mode go through the approval path** (`_pedir_aprovacao`, decisions
+  `responder`/`pular` and `pode_ir`/`mudar`/`nao_fazer`), so they wait, survive a reload (`aprovacoes_pendentes`)
+  and never exist in routines or workflow steps. `apresentar_plano` is offered in every Code mode while
+  `pedir_ok_plano` is on, with one description for all modes (the tool list does not change when the mode does).
+  Haiku only presented the plan once the system prompt gave concrete criteria (3 files or more, moving, renaming
+  or deleting, reorganizing a folder): keep them concrete.
+- **The videos never ship inside the app.** Each MP4 is several MB and the Update button would download all of
+  them on every version. They live in the `videos` release, created as a pre-release so `releases/latest` (the
+  Update button) never picks it; re-rendered video: `gh release upload videos <file> --clobber`. Lessons point to
+  them with `video: <id>` in the front matter (`<id>.<pt-BR|en>.mp4`).
+- **Every release also carries `clave.zip`** (same package, fixed name, folder `clave/`), so
+  `releases/latest/download/clave.zip` is always the newest version. The short link `tinyurl.com/instalar-clave`
+  points there; it is what the repository owner sends in the one-line PowerShell install. The Update button takes
+  the first `.zip` and finds the app folder by `versao.json`, so either package works for it.
+- **The screenshot script reloads before photographing a card that waits for a click** (`testes/prints_demo.py`,
+  `recarregar`): on this PC the antivirus holds the streamed reply in the test Edge until it ends, so a waiting
+  card never arrives live there. The app and the in-app browser get it right away.
 - **Official `anthropic` SDK at a pinned version** (`requirements.txt`). Windows
   Smart App Control can block a new version of a package with a native part
   (`pydantic_core`, `jiter`). Only update after testing the import on Windows.

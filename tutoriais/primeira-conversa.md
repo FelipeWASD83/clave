@@ -23,6 +23,10 @@ Clique no clipe, arraste o arquivo para a caixa de texto ou cole uma imagem (Ctr
 - **Planilhas do Excel** (.xlsx): "quais meses eu gastei mais?". Veja a lição [Excel com o Claude](#/aprender/excel).
 - **Textos e códigos**: .txt, .csv, .md, .py e outros.
 
+## Quando o Claude pergunta
+
+Às vezes falta uma informação que só você tem (o tom de um convite, o formato de um relatório). Aí aparece um cartão com a pergunta e opções para clicar; a que ele recomenda vem primeiro. Marque, ou escreva outra resposta no campo, e clique em **Responder**: ele continua dali. **Pular** deixa ele seguir com a opção que recomendaria.
+
 ## Não gostou da resposta?
 
 - **Peça ajustes** na própria conversa: "mais curto", "em tópicos", "mais formal".

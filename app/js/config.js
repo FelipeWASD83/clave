@@ -318,6 +318,7 @@ const SECOES = {
           ['aceitar_edicoes', t('Aceitar edições: só pede OK para comandos')],
           ['plano', t('Plano: só lê e propõe')],
           ['livre', t('Livre: faz tudo (menos apagar ou publicar)')]])),
+        liga('pedir_ok_plano', t('Pedir OK antes de tarefas grandes'), t('Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer "pode ir", em qualquer modo. Vale para as conversas novas.')),
         liga('carregar_claude_md', t('Ler as regras da pasta (CLAUDE.md e AGENTS.md)'), t('Como no Claude Code: as regras escritas na pasta e nas pastas acima dela valem para o Claude.')),
         campo(t('Arquivos e pastas protegidos'), prot, t('Um por linha (ex.: .env, *.key, segredos/**). As ferramentas de arquivo nunca leem nem mudam o que combina com estes padrões, e um comando que cite um deles sempre pede o seu OK.'))),
       secao(t('Regras de permissão'), t('Para liberar ou bloquear ações específicas (um comando, uma pasta, um site), sem mudar o modo inteiro. Mesmo formato do Claude Code.'),

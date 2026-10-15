@@ -2,6 +2,22 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 4.2.0 (15/10/2026)
+
+**Novo**
+
+- **O Claude pergunta com um cartão**: quando ele trava numa decisão que é sua, aparece um cartão com até 4
+  perguntas e opções para clicar (uma ou várias, e um campo para outra resposta), e ele segue a partir da sua
+  resposta. "Pular" deixa ele seguir com a opção que recomendaria. Funciona no chat e no Code; as rotinas não
+  perguntam, porque não tem ninguém para responder.
+- **"Posso fazer assim?"**: no Code, em qualquer modo, antes de uma tarefa grande (vários arquivos, mover ou
+  renomear arquivos, algo difícil de desfazer) o Claude mostra o plano e espera "Pode ir", "Mudar o plano" ou
+  "Não fazer". O modo Plano continua como era. Dá para desligar em Configurações > Modo Code.
+
+**Corrigido**
+
+- Ao reabrir uma conversa que esperava a sua decisão sobre um plano, o plano aparecia duas vezes.
+
 ## 4.1.0 (15/10/2026)
 
 **Novo**

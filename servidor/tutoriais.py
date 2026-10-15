@@ -53,6 +53,7 @@ def listar(lingua: str | None = None) -> list[dict]:
             "ordem": int(meta.get("ordem", "99") or 99),
             "duracao": meta.get("duracao", ""),
             "resumo": meta.get("resumo", ""),
+            "video": meta.get("video", ""),
         })
     itens.sort(key=lambda li: (li["ordem"], li["slug"]))
     return itens
@@ -116,4 +117,4 @@ def ler(slug: str, lingua: str | None = None) -> dict | None:
         return None
     meta, texto = _ler(arq)
     return {"slug": slug, "titulo": meta.get("titulo", slug), "trilha": meta.get("trilha", ""),
-            "duracao": meta.get("duracao", ""), "texto": texto}
+            "duracao": meta.get("duracao", ""), "video": meta.get("video", ""), "texto": texto}

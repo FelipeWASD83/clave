@@ -105,6 +105,7 @@ PADRAO = {
         ".ssh/**", ".aws/**", ".git/**",
     ],
     "carregar_claude_md": True,
+    "pedir_ok_plano": True,  # antes de tarefa grande, o Claude mostra o plano e espera o OK (em qualquer modo)
     # GitHub
     "github_origem": "",
     "github_ferramentas": False,

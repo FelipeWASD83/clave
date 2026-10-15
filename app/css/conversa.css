@@ -368,6 +368,22 @@ input.entrada.mini[type="number"] { width: 84px; }
 .sugestao-pedido { margin-top: 8px; padding: 10px 12px; border-radius: var(--raio-m); background: var(--papel-2); font-size: 14px; }
 .sugestao-conversa .aprovacao-botoes .meta { margin-right: auto; }
 
+/* ---------- perguntas do Claude ---------- */
+.fluxo.pergunta-card:not(.salvo) { border-color: var(--acao); box-shadow: 0 0 0 3px var(--acao-suave); }
+.perguntas { display: grid; gap: var(--e4); padding: 4px 16px 14px; border-top: 1px solid var(--linha); }
+.pergunta { border: 0; margin: 0; padding: 10px 0 0; display: grid; gap: 8px; min-width: 0; }
+.pergunta legend { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 0; font-size: 15px; }
+.pergunta legend b { font-weight: 600; color: var(--texto); }
+.pergunta-opcoes { display: grid; gap: 6px; }
+.pergunta-opcao { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border: 1px solid var(--linha); border-radius: var(--raio-m); cursor: pointer; transition: border-color var(--rapido), background var(--rapido); }
+.pergunta-opcao:hover { background: var(--papel-2); }
+.pergunta-opcao:has(input:checked) { border-color: var(--acao); background: var(--acao-suave); }
+.pergunta-opcao input { margin: 3px 0 0; accent-color: var(--acao); flex: none; }
+.pergunta-opcao .textos { display: grid; gap: 2px; min-width: 0; }
+.pergunta-opcao .textos b { font-weight: 500; }
+.pergunta-opcao .textos small { color: var(--texto-3); font-size: 13px; }
+.pergunta > .entrada { padding: 7px 12px; }
+
 /* ---------- tours com setinhas ---------- */
 .tour-camada { position: fixed; inset: 0; z-index: 1000; }
 .tour-camada.sem-alvo { background: rgb(15 14 12 / .55); }

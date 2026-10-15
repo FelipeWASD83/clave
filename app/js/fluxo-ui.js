@@ -379,13 +379,28 @@ export function cartaoPlano(ev, { execucaoId }) {
   const corpo = el('div', { class: 'resposta plano-corpo' });
   renderizar(corpo, ev.plano || ev.entrada?.plano || '', { final: true });
   const comentario = el('input', { class: 'entrada', placeholder: t('O que mudar no plano? (opcional)') });
+  let card;
   async function decidir(decisao) {
     try {
       await api(`/execucoes/${execucaoId}/aprovar`, { metodo: 'POST', corpo: { id: ev.id, decisao, texto: comentario.value } });
       card.remove();
     } catch (e) { aviso(e.message, 'erro'); }
   }
-  const card = el('div', { class: 'fluxo plano', dados: { id: ev.id }, role: 'group', 'aria-label': t('Plano para aprovar') },
+  if (ev.modo && ev.modo !== 'plano') {
+    // o "posso fazer?" antes de uma tarefa grande: o modo de permissão continua o mesmo
+    card = el('div', { class: 'fluxo plano', dados: { id: ev.id }, role: 'group', 'aria-label': t('Plano para aprovar') },
+      el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('lista') }),
+        el('div', {}, el('small', { class: 'sobre', texto: t('Plano') }), el('b', { texto: t('Posso fazer assim?') }))),
+      corpo,
+      el('div', { class: 'aprovacao-botoes' },
+        el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('certo')}${t('Pode ir')}`, onclick: () => decidir('pode_ir') }),
+        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Não fazer'), onclick: () => decidir('nao_fazer') })),
+      el('div', { class: 'aprovacao-botoes' }, comentario,
+        el('button', { class: 'botao pequeno', type: 'button', texto: t('Mudar o plano'), onclick: () => decidir('mudar') })));
+    notificar(t('O Claude pede o seu OK'), t('Ele mostrou o plano e espera você dizer se pode ir.'));
+    return card;
+  }
+  card = el('div', { class: 'fluxo plano', dados: { id: ev.id }, role: 'group', 'aria-label': t('Plano para aprovar') },
     el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('lista') }),
       el('div', {}, el('small', { class: 'sobre', texto: t('Modo Plano') }), el('b', { texto: t('O plano está pronto. Executar?') }))),
     corpo,
@@ -405,7 +420,86 @@ export function cartaoPlanoSalvo(entrada, resultado) {
   const aprovado = /^(Plano aprovado|Plan approved)/.test(resultado || '');
   return el('details', { class: 'fluxo plano salvo', open: false },
     el('summary', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('lista') }),
-      el('div', {}, el('small', { class: 'sobre', texto: t('Modo Plano') }), el('b', { texto: aprovado ? t('Plano aprovado') : t('Plano apresentado') }))),
+      el('div', {}, el('small', { class: 'sobre', texto: t('Plano') }), el('b', { texto: aprovado ? t('Plano aprovado') : t('Plano apresentado') }))),
+    corpo);
+}
+
+// ---------- perguntas do Claude ----------
+// Um cartão com 1 a 4 perguntas: opções para clicar (uma ou várias) e um campo "Outra". A resposta volta para o
+// Claude e a tarefa continua dali; "Pular" deixa ele seguir com a opção que recomendaria.
+export function cartaoPergunta(ev, { execucaoId }) {
+  const perguntas = ev.perguntas || [];
+  const estados = perguntas.map(() => ({ escolhas: new Set(), outra: '' }));
+  const blocos = perguntas.map((p, i) => {
+    const nomeGrupo = `perg-${ev.id}-${i}`;
+    const opcoes = p.opcoes.map((o) => {
+      const entrada = el('input', { type: p.varias ? 'checkbox' : 'radio', name: nomeGrupo, value: o.rotulo });
+      entrada.addEventListener('change', () => {
+        if (!p.varias) estados[i].escolhas.clear();
+        if (entrada.checked) estados[i].escolhas.add(o.rotulo); else estados[i].escolhas.delete(o.rotulo);
+        if (!p.varias && entrada.checked) { estados[i].outra = ''; outra.value = ''; }
+        atualizar();
+      });
+      return el('label', { class: 'pergunta-opcao' }, entrada,
+        el('span', { class: 'textos' }, el('b', { texto: o.rotulo }), o.descricao ? el('small', { texto: o.descricao }) : null));
+    });
+    const outra = el('input', { class: 'entrada', placeholder: t('Outra resposta (opcional)') });
+    outra.addEventListener('input', () => {
+      estados[i].outra = outra.value;
+      if (!p.varias && outra.value.trim()) {
+        estados[i].escolhas.clear();
+        blocos[i]?.querySelectorAll('input[type=radio]').forEach((r) => { r.checked = false; });
+      }
+      atualizar();
+    });
+    return el('fieldset', { class: 'pergunta' },
+      el('legend', {}, p.titulo ? el('span', { class: 'etiqueta', texto: p.titulo }) : null, el('b', { texto: p.pergunta })),
+      p.varias ? el('small', { class: 'ajuda', texto: t('Pode marcar mais de uma.') }) : null,
+      el('div', { class: 'pergunta-opcoes' }, ...opcoes), outra);
+  });
+  const responder = el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('enviar')}${t('Responder')}`, disabled: true });
+  function atualizar() {
+    responder.disabled = !estados.every((s) => s.escolhas.size || s.outra.trim());
+  }
+  async function decidir(decisao) {
+    const respostas = estados.map((s) => ({ escolhas: [...s.escolhas], outra: s.outra.trim() }));
+    try {
+      await api(`/execucoes/${execucaoId}/aprovar`, { metodo: 'POST', corpo: { id: ev.id, decisao, dados: { respostas } } });
+      card.replaceWith(cartaoPerguntaSalva({ perguntas }, decisao === 'responder' ? textoDasRespostas(perguntas, respostas) : ''));
+    } catch (e) { aviso(e.message, 'erro'); }
+  }
+  responder.addEventListener('click', () => decidir('responder'));
+  const card = el('div', { class: 'fluxo pergunta-card', dados: { id: ev.id }, role: 'group', 'aria-label': t('Pergunta do Claude') },
+    el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('chat') }),
+      el('div', {}, el('small', { class: 'sobre', texto: t('Pergunta') }),
+        el('b', { texto: perguntas.length > 1 ? t('O Claude tem {n} perguntas', { n: perguntas.length }) : t('O Claude tem uma pergunta') }))),
+    el('div', { class: 'perguntas' }, ...blocos),
+    el('div', { class: 'aprovacao-botoes' }, responder,
+      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Pular'), title: t('O Claude segue com a opção que ele recomendaria'), onclick: () => decidir('pular') })));
+  notificar(t('O Claude tem uma pergunta'), perguntas[0]?.pergunta || '');
+  return card;
+}
+
+// o mesmo texto que o servidor devolve para o Claude (execucao.texto_respostas)
+function textoDasRespostas(perguntas, respostas) {
+  const partes = [t('Respostas de quem usa:')];
+  perguntas.forEach((p, i) => {
+    const r = respostas[i] || {};
+    const itens = [...(r.escolhas || []), ...(r.outra ? [t('Outra: {resposta}', { resposta: r.outra })] : [])];
+    partes.push(`**${p.pergunta}**\n${itens.length ? itens.join(', ') : t('(sem resposta)')}`);
+  });
+  return partes.join('\n\n');
+}
+
+export function cartaoPerguntaSalva(entrada, resultado) {
+  const respondida = /^(Respostas de quem usa|Answers from the person)/.test(resultado || '');
+  const corpo = el('div', { class: 'resposta plano-corpo' });
+  renderizar(corpo, respondida ? resultado.replace(/^[^\n]*\n\n/, '')
+    : (entrada?.perguntas || []).map((p) => `**${p.pergunta}**`).join('\n\n'), { final: true });
+  return el('details', { class: 'fluxo pergunta-card salvo', open: respondida },
+    el('summary', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('chat') }),
+      el('div', {}, el('small', { class: 'sobre', texto: t('Pergunta') }),
+        el('b', { texto: respondida ? t('Você respondeu') : t('Ficou sem resposta') }))),
     corpo);
 }
 

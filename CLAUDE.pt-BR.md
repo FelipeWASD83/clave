@@ -68,6 +68,7 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 | `servidor/compactar.py` | `/compact`: compactação sob demanda (beta `compact-2026-09-04`); o bloco vira uma mensagem `compactacao` e o pedido começa nela |
 | `servidor/importar.py` | Importar do Claude ou do ChatGPT: o pedido para colar lá, a leitura da resposta (seções e uma entrada por linha) e a aplicação |
 | `servidor/tom.py` | O jeito de falar (tom básico e os controles de Menos, Padrão e Mais): a frase de cada escolha no prompt de sistema e o exemplo no Haiku |
+| `servidor/videos.py` | Os vídeos das lições: o arquivo local na cópia de desenvolvimento (`video/saida/`), senão baixado uma vez da release `videos` para `dados/videos`, entregue com Range |
 | `servidor/ferramentas/email.py`, `word.py` | E-mail (IMAP e SMTP com senha de app, ou o Outlook clássico por COM) e Word (.docx com a biblioteca padrão, PDF pelo Word instalado) |
 | `servidor/lancamentos.py`, `lancamentos.json` | Fichas de lançamento dos modelos: o cartão de apresentação (abre uma vez para modelo novo), o banner de modelo novo, os cartões "Modelos", a nota de inteligência e a fonte dela (`_inteligencia`) e os modelos que a conta tem e o Clave ainda não conhece (API de modelos, uma vez por dia) |
 | `app/js/i18n.js`, `app/i18n/en/*.json` | Tradução da interface (`t()`); o servidor junta os catálogos em `/i18n/en.json` |
@@ -128,6 +129,23 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   `<jeito_de_falar>`; tudo em Padrão manda exatamente o prompt de antes (um teste confere). O que a pessoa escreveu em
   "Como você quer as respostas" vale mais que os controles. Não há tom Profissional nem Eficiente porque os estilos
   Formal e Conciso já cobrem isso.
+- **`perguntar` e o plano fora do modo Plano passam pelo caminho das aprovações** (`_pedir_aprovacao`, decisões
+  `responder`/`pular` e `pode_ir`/`mudar`/`nao_fazer`): esperam, sobrevivem a recarregar a tela
+  (`aprovacoes_pendentes`) e nunca existem em rotina nem em etapa de fluxo. O `apresentar_plano` vai em todos os
+  modos do Code enquanto `pedir_ok_plano` estiver ligado, com uma descrição só para todos os modos (a lista de
+  ferramentas não muda quando o modo muda). O Haiku só apresentou o plano depois que o prompt de sistema deu
+  critério concreto (3 arquivos ou mais, mover, renomear ou apagar, reorganizar pasta): manter concreto.
+- **Os vídeos nunca vão dentro do app.** Cada MP4 tem vários MB, e o botão Atualizar baixaria todos a cada versão.
+  Eles ficam na release `videos`, criada como pré-lançamento para o `releases/latest` (o botão Atualizar) nunca
+  pegá-la; vídeo renderizado de novo: `gh release upload videos <arquivo> --clobber`. As lições apontam com
+  `video: <id>` no cabeçalho (`<id>.<pt-BR|en>.mp4`).
+- **Toda release leva também o `clave.zip`** (o mesmo pacote, nome fixo, pasta `clave/`), então
+  `releases/latest/download/clave.zip` é sempre a versão mais nova. O link curto `tinyurl.com/instalar-clave`
+  aponta para lá; é ele que o dono do repositório manda no comando de instalação de uma linha do PowerShell. O
+  botão Atualizar pega o primeiro `.zip` e acha a pasta do app pelo `versao.json`, então qualquer um dos dois serve.
+- **O script de prints recarrega antes de fotografar um cartão que espera clique** (`testes/prints_demo.py`,
+  `recarregar`): neste PC o antivírus segura a resposta em fluxo no Edge de teste até ela terminar, então o cartão
+  que espera nunca chega ao vivo ali. O app e o navegador do Claude recebem na hora.
 - **SDK oficial `anthropic` em versão fixa** (`requirements.txt`). O Smart App
   Control do Windows pode barrar versão nova de pacote com parte nativa
   (`pydantic_core`, `jiter`). Atualizar só testando o import no Windows.

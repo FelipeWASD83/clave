@@ -31,6 +31,16 @@ When it asks for permission, a card shows you **exactly** what it is about to do
 
 **Read before you approve.** If you don't understand a command, deny it and ask "what does this command do?".
 
+## The plan before a big task
+
+Before touching a lot (three files or more, moving or renaming files, reorganizing a folder), Claude shows a **Can I do it like this?** card with the plan, and only starts after your answer:
+
+- **Go ahead**: it carries on, and the permissions work as usual.
+- **Change the plan**: write what you want different in the field and it redoes the plan.
+- **Don't do it**: it stops and asks what you prefer.
+
+This works in any mode. If you would rather it went straight ahead, turn it off in **Settings > Code mode > Ask for OK before big tasks**.
+
 ## Undo
 
 Made a mistake? Below the reply you will see **Undo changes**: the files it created or changed in that reply go back to how they were. (Commands that delete things or touch anything outside the folder can't be undone, which is why they always ask for your OK.)

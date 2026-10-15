@@ -14,7 +14,7 @@ import { painelUso, painelAmbientes } from './painel-uso.js';
 import { bannerModeloNovo } from './lancamentos.js';
 import { menuConversa } from './lateral.js';
 import { pegarRascunho } from './aprender.js';
-import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, cartaoSugestao, FluxoVivo, notificar } from './fluxo-ui.js';
+import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, cartaoPergunta, cartaoSugestao, FluxoVivo, notificar } from './fluxo-ui.js';
 import { t } from './i18n.js';
 
 function saudacao() {
@@ -643,6 +643,7 @@ class Vivo {
       case 'aprovacao':
       case 'fluxo_proposta':
       case 'plano_proposto':
+      case 'pergunta':
         this.tirarIndicador();
         this.pedido(ev);
         break;
@@ -654,9 +655,12 @@ class Vivo {
         this.rolar();
         break;
       }
-      case 'aprovacao_decidida':
-        this.tela.mensagensEl.querySelector(`[data-id="${CSS.escape(ev.id)}"]:is(.aprovacao, .fluxo)`)?.remove();
+      case 'aprovacao_decidida': {
+        const card = this.tela.mensagensEl.querySelector(`[data-id="${CSS.escape(ev.id)}"]:is(.aprovacao, .fluxo)`);
+        // o cartão de perguntas respondido vira o resumo das respostas sozinho; só sai se a tarefa parou
+        if (card && !(card.classList.contains('pergunta-card') && ['responder', 'pular'].includes(ev.decisao))) card.remove();
         break;
+      }
       case 'fluxo_inicio': {
         this.tirarIndicador();
         this.tirarSalvo(ev.fluxo);
@@ -759,6 +763,7 @@ class Vivo {
     let card;
     if (ev.tipo === 'fluxo_proposta') { this.tirarSalvo(ev.id); card = cartaoPropostaFluxo(ev, { execucaoId }); }
     else if (ev.tipo === 'plano_proposto') card = cartaoPlano(ev, { execucaoId });
+    else if (ev.tipo === 'pergunta') card = cartaoPergunta(ev, { execucaoId });
     else card = cartaoAprovacao(ev, { execucaoId, temPasta: this.tela.modo === 'code' });
     const det = this.achar(ev.id);
     if (det) det.after(card); else this.alvo.append(card);

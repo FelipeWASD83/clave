@@ -2,6 +2,22 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 4.2.0 (2026-10-15)
+
+**New**
+
+- **Claude asks with a card**: when it is stuck on a decision that is yours, Claude shows a card with up to 4
+  questions and options to click (one or several, plus a field for another answer), and goes on from your
+  answer. "Skip" lets it go on with the option it would recommend. It works in chat and in Code; routines don't
+  ask, since nobody is there to answer.
+- **"Can I do it like this?"**: in Code, in any mode, before a big task (several files, moving or renaming files,
+  something hard to undo) Claude shows the plan and waits for "Go ahead", "Change the plan" or "Don't do it".
+  Plan mode stays as it was. It can be turned off in Settings > Code mode.
+
+**Fixed**
+
+- When you reopened a chat that was waiting for your decision on a plan, the plan showed up twice.
+
 ## 4.1.0 (2026-10-15)
 
 **New**

@@ -1,0 +1,7 @@
+{
+  "Vídeo inválido.": "Invalid video.",
+  "O vídeo é maior do que o esperado; o download parou.": "The video is bigger than expected; the download stopped.",
+  "O arquivo baixado não é um vídeo.": "The downloaded file is not a video.",
+  "Este vídeo ainda não está no GitHub ({codigo}).": "This video is not on GitHub yet ({codigo}).",
+  "Sem conexão para baixar o vídeo ({erro}).": "No connection to download the video ({erro})."
+}

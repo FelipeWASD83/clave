@@ -67,7 +67,7 @@ class Servidor:
                 if linha.startswith("data: "):
                     ev = json.loads(linha[6:])
                     saida.append(ev)
-                    if ev["tipo"] in ("aprovacao", "fluxo_proposta", "plano_proposto") and decidir:
+                    if ev["tipo"] in ("aprovacao", "fluxo_proposta", "plano_proposto", "pergunta") and decidir:
                         self._responder(eid, ev, decidir)
                     if ev["tipo"] == "etapa_evento" and ev["ev"]["tipo"] == "aprovacao" and decidir:
                         self._responder(ev["execucao"], ev["ev"], decidir)

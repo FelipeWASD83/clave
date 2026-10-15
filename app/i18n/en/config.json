@@ -276,5 +276,7 @@
   "(resposta vazia)": "(empty answer)",
   "Custou {valor}.": "It cost {valor}.",
   "Como o Claude vai falar": "How Claude will talk",
-  "Com o jeito de falar e o resto da sua personalização. Troque a pergunta se quiser.": "With the way of talking and the rest of your personalization. Change the question if you like."
+  "Com o jeito de falar e o resto da sua personalização. Troque a pergunta se quiser.": "With the way of talking and the rest of your personalization. Change the question if you like.",
+  "Pedir OK antes de tarefas grandes": "Ask for OK before big tasks",
+  "Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer \"pode ir\", em qualquer modo. Vale para as conversas novas.": "Before touching several files or doing something hard to undo, Claude shows the plan and waits for you to say \"go ahead\", in any mode. Applies to new chats."
 }

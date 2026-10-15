@@ -48,8 +48,11 @@ npm run capa                                  # um quadro em saida/capa.png
 3. **Nada que imite o app da Anthropic.** O cartão de "Limite atingido" é genérico, e o fecho diz que o Clave é
    independente e que Claude é marca da Anthropic.
 4. **A narração e o vídeo não vão para o git** (`.gitignore` daqui): a voz é gerada por um serviço da
-   Microsoft e o MP4 é grande. O vídeo pronto vai como anexo da release no GitHub, só quando o dono do
-   repositório quiser.
+   Microsoft e o MP4 é grande. O vídeo pronto é anexo da release **v2.0.0** no GitHub, e o README aponta para
+   `releases/download/v2.0.0/por-que-o-clave.mp4` com a `capa.jpg` daqui (o último quadro, 1280 px, a única
+   saída que fica no git). Regravou o vídeo? `gh release upload v2.0.0 saida/por-que-o-clave.mp4 --clobber`
+   troca o anexo sem mudar o link. O botão Atualizar só baixa anexo `.zip`, então o MP4 na release não
+   atrapalha.
 5. **Remotion fixado em 4.0.534** (versão exata no `package.json`). Grátis para pessoa física e empresa de
    até 3 pessoas.
 6. **O endereço do repositório vem do `versao.json`** do Clave (o mesmo que o botão Atualizar usa): um fork

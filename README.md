@@ -9,6 +9,11 @@ uso e com um teto de gasto que você define.
 
 ## Por que você deveria usar o Clave
 
+[![Vídeo: por que usar o Clave (1 min 27 s, com narração)](video/capa.jpg)](https://github.com/FelipeWASD83/clave/releases/download/v2.0.0/por-que-o-clave.mp4)
+
+**[Assista ao vídeo: por que usar o Clave](https://github.com/FelipeWASD83/clave/releases/download/v2.0.0/por-que-o-clave.mp4)**
+(1 min 27 s, com narração em português)
+
 **Você paga pelo que usa, não por uma mensalidade.** A assinatura Pro do
 Claude custa US$ 20 por mês, use você muito ou pouco. Pela API, cada resposta
 custa o que gastou: mil mensagens curtas no Haiku 5.5 saem por volta de

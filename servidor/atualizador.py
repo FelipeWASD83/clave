@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import time
 import urllib.error
@@ -168,6 +169,13 @@ def aplicar_pendente(raiz_app: Path | None = None) -> dict | None:
     if not p:
         return None
     raiz_app = raiz_app or config.RAIZ
+    # quem troca os arquivos não pode estar "dentro" de uma das pastas trocadas (o Windows não apaga pasta em uso)
+    try:
+        dentro = Path.cwd().resolve()
+        if any(dentro == (raiz_app / n).resolve() or (raiz_app / n).resolve() in dentro.parents for n in GERENCIADOS):
+            os.chdir(raiz_app)
+    except OSError:
+        pass
     novo = Path(p["pasta"])
     anterior = PASTA / "anterior"
     shutil.rmtree(anterior, ignore_errors=True)
@@ -191,6 +199,25 @@ def aplicar_pendente(raiz_app: Path | None = None) -> dict | None:
     return {"versao": p["versao"], "dependencias_mudaram": req_antes != req_depois}
 
 
+def _restaurar(origem: Path, alvo: Path) -> None:
+    """Põe `origem` no lugar de `alvo`. Se o Windows não deixar apagar `alvo` (pasta em uso por outro programa,
+    antivírus, terminal aberto nela), devolve o conteúdo para dentro dela, item por item: mover a pasta inteira
+    para um destino que ainda existe a colocaria DENTRO dele (servidor/servidor) e o app não abriria."""
+    if alvo.is_dir():
+        shutil.rmtree(alvo, ignore_errors=True)
+    elif alvo.exists():
+        alvo.unlink()
+    if not alvo.exists():
+        shutil.move(str(origem), str(alvo))
+        return
+    if origem.is_dir() and alvo.is_dir():
+        for item in list(origem.iterdir()):
+            _restaurar(item, alvo / item.name)
+        shutil.rmtree(origem, ignore_errors=True)
+    else:
+        raise ErroAtualizacao(f"Não deu para restaurar {alvo}: o arquivo está em uso.")
+
+
 def reverter(raiz_app: Path | None = None) -> bool:
     raiz_app = raiz_app or config.RAIZ
     anterior = PASTA / "anterior"
@@ -198,10 +225,5 @@ def reverter(raiz_app: Path | None = None) -> bool:
         return False
     for nome in GERENCIADOS:
         if (anterior / nome).exists():
-            alvo = raiz_app / nome
-            if alvo.is_dir():
-                shutil.rmtree(alvo, ignore_errors=True)
-            elif alvo.exists():
-                alvo.unlink()
-            shutil.move(str(anterior / nome), str(alvo))
+            _restaurar(anterior / nome, raiz_app / nome)
     return True

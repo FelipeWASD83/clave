@@ -1,5 +1,12 @@
 # Novidades do Clave
 
+## 2.0.1 (14/10/2026)
+
+**Corrigido**
+
+- Se o Windows não deixar trocar uma pasta durante a atualização (por exemplo, a pasta do Clave aberta
+  num terminal ou presa pelo antivírus), a volta para a versão anterior não deixa mais o app sem abrir.
+
 ## 2.0.0 (14/10/2026)
 
 Fluxos com vários modelos, permissões por regras, plugins, comandos de barra,

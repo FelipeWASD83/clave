@@ -1,8 +1,10 @@
 import json
+import os
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import base  # noqa: F401
 import atualizador
@@ -58,6 +60,32 @@ class TestTroca(unittest.TestCase):
         self.assertEqual((self.app / "servidor" / "servidor.py").read_text(encoding="utf-8"), "velho")
         self.assertTrue((self.app / "app" / "so-no-velho.js").exists())
         self.assertEqual((self.app / "dados" / "clave.db").read_text(encoding="utf-8"), "conversas")
+
+    def test_aplica_mesmo_rodando_de_dentro_da_pasta(self):
+        # no Windows, pasta que é o diretório atual de um processo não pode ser apagada nem movida
+        antes = os.getcwd()
+        os.chdir(self.app / "servidor")
+        try:
+            r = atualizador.aplicar_pendente(self.app)
+        finally:
+            os.chdir(antes)
+        self.assertEqual(r["versao"], "1.1.0")
+        self.assertEqual((self.app / "servidor" / "servidor.py").read_text(encoding="utf-8"), "novo")
+
+    def test_volta_atras_com_pasta_presa_nao_aninha(self):
+        atualizador.aplicar_pendente(self.app)
+        real = shutil.rmtree
+
+        def rmtree_preso(caminho, ignore_errors=False, **kw):
+            # como no Windows com a pasta em uso por outro programa: o conteúdo sai, a pasta fica
+            for item in list(Path(caminho).iterdir()):
+                real(item) if item.is_dir() else item.unlink()
+
+        with mock.patch.object(atualizador.shutil, "rmtree", rmtree_preso):
+            self.assertTrue(atualizador.reverter(self.app))
+        self.assertFalse((self.app / "servidor" / "servidor").exists(), "a versão antiga não pode ir parar dentro da pasta")
+        self.assertEqual((self.app / "servidor" / "servidor.py").read_text(encoding="utf-8"), "velho")
+        self.assertTrue((self.app / "app" / "so-no-velho.js").exists())
 
     def test_sem_nada_pendente(self):
         (atualizador.PASTA / "pronta.json").unlink()

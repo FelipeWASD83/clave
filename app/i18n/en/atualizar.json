@@ -1,0 +1,13 @@
+{
+  "Você já está na versão mais nova ({versao}).": "You're already on the latest version ({versao}).",
+  "Sem notas desta versão.": "No notes for this version.",
+  "Versão {versao} disponível": "Version {versao} available",
+  "Você está na {atual}. A atualização baixa a versão nova do GitHub, guarda a atual (para voltar se algo der errado) e reinicia o Clave. Suas conversas e configurações não são tocadas.": "You're on {atual}. The update downloads the new version from GitHub, keeps the current one (to roll back if something goes wrong) and restarts Clave. Your chats and settings aren't touched.",
+  "O que mudou": "What changed",
+  "Agora não": "Not now",
+  "Atualizar e reiniciar": "Update and restart",
+  "Atualizando…": "Updating…",
+  "Instalando a versão {versao}. O Clave volta sozinho em alguns segundos.": "Installing version {versao}. Clave will come back on its own in a few seconds.",
+  "A atualização está demorando": "The update is taking a while",
+  "Feche o Clave e abra de novo. Se a versão nova não subir, o Clave volta sozinho para a anterior.": "Close Clave and open it again. If the new version doesn't start, Clave goes back to the previous one on its own."
+}

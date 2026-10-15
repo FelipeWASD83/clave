@@ -1,0 +1,24 @@
+{
+  "displayName": "Programação",
+  "description": "Achar a causa de um erro, escrever testes, revisar e explicar código para quem não programa.",
+  "skills": {
+    "depurar-erro": {
+      "description": "Use quando algo dá erro ou não funciona como deveria. Acha a causa de verdade antes de mudar o código, corrige com a menor mudança possível e confere."
+    },
+    "escrever-testes": {
+      "description": "Use para criar testes automáticos que conferem se o código faz o que deve, inclusive nos casos difíceis, usando a ferramenta de testes que o projeto já usa."
+    },
+    "explicar-codigo": {
+      "description": "Use quando a pessoa quer entender o que um código, script ou projeto faz, principalmente se ela não programa."
+    },
+    "revisar-codigo": {
+      "description": "Use para revisar código (o seu, o de outra pessoa ou o que o Claude acabou de escrever) e achar erros, riscos e confusões antes que virem problema."
+    }
+  },
+  "commands": {
+    "explicar": {
+      "description": "Explica um código ou projeto em linguagem simples",
+      "argument-hint": "[arquivo ou pasta]"
+    }
+  }
+}

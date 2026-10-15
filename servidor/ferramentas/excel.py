@@ -25,6 +25,8 @@ from openpyxl.utils import column_index_from_string, get_column_letter, range_bo
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
+from i18n import t
+
 EXTENSOES = {".xlsx", ".xlsm"}
 MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -49,22 +51,22 @@ def ler(caminho: str | Path, aba: str | None = None, intervalo: str | None = Non
         max_colunas: int = 30) -> str:
     p = Path(caminho)
     if p.suffix.lower() not in EXTENSOES:
-        raise ErroExcel("Só leio .xlsx e .xlsm. Para .xls ou .csv, converta antes (no_excel com acao converter_xlsx) "
-                        "ou leia o .csv como texto.")
+        raise ErroExcel(t("Só leio .xlsx e .xlsm. Para .xls ou .csv, converta antes (no_excel com acao converter_xlsx) ou leia o .csv como texto."))
     if not p.is_file():
-        raise ErroExcel(f"Arquivo não encontrado: {p}")
+        raise ErroExcel(t("Arquivo não encontrado: {caminho}", caminho=p))
     grande = p.stat().st_size > 8 * 1024 * 1024
     try:
         wb_f = openpyxl.load_workbook(p, data_only=False, read_only=grande)
         wb_v = openpyxl.load_workbook(p, data_only=True, read_only=grande)
     except Exception as e:  # arquivo corrompido, protegido por senha etc.
-        raise ErroExcel(f"Não deu para abrir a planilha: {e}")
+        raise ErroExcel(t("Não deu para abrir a planilha: {erro}", erro=e))
     try:
-        linhas = [f"Planilha: {p.name}", "Abas: " + ", ".join(
-            f"{ws.title} ({ws.max_row} linhas x {ws.max_column} colunas)" for ws in wb_f.worksheets)]
+        linhas = [t("Planilha: {nome}", nome=p.name), t("Abas: {abas}", abas=", ".join(
+            t("{aba} ({linhas} linhas x {colunas} colunas)", aba=ws.title, linhas=ws.max_row, colunas=ws.max_column)
+            for ws in wb_f.worksheets))]
         alvos = [wb_f[aba]] if aba else wb_f.worksheets[:1] if intervalo else wb_f.worksheets[:3]
         if aba and aba not in wb_f.sheetnames:
-            raise ErroExcel(f"Não existe a aba '{aba}'. Abas: {', '.join(wb_f.sheetnames)}")
+            raise ErroExcel(t("Não existe a aba '{aba}'. Abas: {abas}", aba=aba, abas=", ".join(wb_f.sheetnames)))
         sem_valor = False
         for ws in alvos:
             wv = wb_v[ws.title]
@@ -77,20 +79,21 @@ def ler(caminho: str | Path, aba: str | None = None, intervalo: str | None = Non
             c2 = min(c2, c1 + max_colunas - 1)
             l2_corte = min(l2, l1 + max_linhas - 1)
             linhas.append("")
-            linhas.append(f"## Aba \"{ws.title}\" ({get_column_letter(c1)}{l1}:{get_column_letter(c2)}{l2_corte})")
+            linhas.append(t("## Aba \"{aba}\" ({intervalo})", aba=ws.title,
+                            intervalo=f"{get_column_letter(c1)}{l1}:{get_column_letter(c2)}{l2_corte}"))
             if not grande:
                 extras = []
                 if ws.freeze_panes:
-                    extras.append(f"painel congelado em {ws.freeze_panes}")
+                    extras.append(t("painel congelado em {celula}", celula=ws.freeze_panes))
                 if ws.tables:
-                    extras.append("tabelas: " + ", ".join(f"{n} ({ref})" for n, ref in ws.tables.items()))
+                    extras.append(t("tabelas: {lista}", lista=", ".join(f"{n} ({ref})" for n, ref in ws.tables.items())))
                 if ws.merged_cells.ranges:
-                    extras.append(f"{len(ws.merged_cells.ranges)} mesclagem(ns)")
+                    extras.append(t("{n} mesclagem(ns)", n=len(ws.merged_cells.ranges)))
                 if getattr(ws, "_charts", None):
-                    extras.append(f"{len(ws._charts)} gráfico(s)")
+                    extras.append(t("{n} gráfico(s)", n=len(ws._charts)))
                 if extras:
                     linhas.append("(" + "; ".join(extras) + ")")
-            linhas.append("Cada linha: número | coluna=valor (fórmulas aparecem como =FÓRMULA → valor calculado).")
+            linhas.append(t("Cada linha: número | coluna=valor (fórmulas aparecem como =FÓRMULA → valor calculado)."))
             vazias = 0
             faixa = dict(min_row=l1, max_row=l2_corte, min_col=c1, max_col=c2, values_only=True)
             for r, (lf, lv) in enumerate(zip(ws.iter_rows(**faixa), wv.iter_rows(**faixa)), start=l1):
@@ -112,14 +115,16 @@ def ler(caminho: str | Path, aba: str | None = None, intervalo: str | None = Non
                 else:
                     vazias += 1
                     if vazias == 1:
-                        linhas.append(f"{r} | (vazia)")
+                        linhas.append(f"{r} | " + t("(vazia)"))
             if l2 > l2_corte:
-                linhas.append(f"[... mais {l2 - l2_corte} linhas; leia com intervalo, ex.: {get_column_letter(c1)}{l2_corte + 1}:{get_column_letter(c2)}{min(l2, l2_corte + max_linhas)}]")
+                linhas.append(t("[... mais {n} linhas; leia com intervalo, ex.: {exemplo}]", n=l2 - l2_corte,
+                                exemplo=f"{get_column_letter(c1)}{l2_corte + 1}:{get_column_letter(c2)}"
+                                        f"{min(l2, l2_corte + max_linhas)}"))
         if len(wb_f.worksheets) > len(alvos) and not aba:
-            linhas.append(f"\n[mostrando {len(alvos)} de {len(wb_f.worksheets)} abas; use o parâmetro aba para ler as outras]")
+            linhas.append("\n" + t("[mostrando {n} de {total} abas; use o parâmetro aba para ler as outras]",
+                                   n=len(alvos), total=len(wb_f.worksheets)))
         if sem_valor:
-            linhas.append("\n'?' = fórmula sem valor guardado (o arquivo nunca foi recalculado no Excel). "
-                          "Para ver o resultado, use no_excel com acao recalcular, ou calcule você mesmo.")
+            linhas.append("\n" + t("'?' = fórmula sem valor guardado (o arquivo nunca foi recalculado no Excel). Para ver o resultado, use no_excel com acao recalcular, ou calcule você mesmo."))
         return "\n".join(linhas)
     finally:
         wb_f.close()
@@ -141,7 +146,7 @@ def _cor(c) -> str | None:
     c = _CORES.get(c, c).lstrip("#").upper()
     if re.fullmatch(r"[0-9A-F]{6}", c):
         return c
-    raise ErroExcel(f"Cor inválida: {c} (use #RRGGBB ou nomes como verde, vermelho_claro)")
+    raise ErroExcel(t("Cor inválida: {cor} (use #RRGGBB ou nomes como verde, vermelho_claro)", cor=c))
 
 
 def _converter(v, datas: bool):
@@ -160,7 +165,7 @@ def _aba(wb, nome: str | None, criar=False):
         return wb[nome]
     if criar:
         return wb.create_sheet(nome[:31])
-    raise ErroExcel(f"Não existe a aba '{nome}'. Abas: {', '.join(wb.sheetnames)}")
+    raise ErroExcel(t("Não existe a aba '{aba}'. Abas: {abas}", aba=nome, abas=", ".join(wb.sheetnames)))
 
 
 def _celulas(ws, intervalo: str):
@@ -175,19 +180,19 @@ def _op(wb, op: dict, datas: bool) -> str:
     if acao == "criar_aba":
         nome = str(op["aba"])[:31]
         if nome in wb.sheetnames:
-            return f"aba '{nome}' já existia"
+            return t("aba '{aba}' já existia", aba=nome)
         wb.create_sheet(nome, op.get("posicao"))
-        return f"aba '{nome}' criada"
+        return t("aba '{aba}' criada", aba=nome)
     if acao == "renomear_aba":
         ws = _aba(wb, op["aba"])
         ws.title = str(op["novo_nome"])[:31]
-        return f"aba renomeada para '{ws.title}'"
+        return t("aba renomeada para '{aba}'", aba=ws.title)
     if acao == "apagar_aba":
         ws = _aba(wb, op["aba"])
         if len(wb.worksheets) == 1:
-            raise ErroExcel("Não dá para apagar a única aba.")
+            raise ErroExcel(t("Não dá para apagar a única aba."))
         wb.remove(ws)
-        return f"aba '{op['aba']}' apagada"
+        return t("aba '{aba}' apagada", aba=op["aba"])
     ws = _aba(wb, op.get("aba"), criar=acao in ("escrever", "celulas"))
     if acao == "escrever":
         linhas = op.get("linhas") or []
@@ -195,18 +200,19 @@ def _op(wb, op: dict, datas: bool) -> str:
         for i, linha in enumerate(linhas):
             for j, v in enumerate(linha if isinstance(linha, list) else [linha]):
                 ws.cell(row=l0 + i, column=c0 + j, value=_converter(v, datas))
-        return f"{len(linhas)} linha(s) escritas em '{ws.title}' a partir de {op.get('inicio') or 'A1'}"
+        return t("{n} linha(s) escritas em '{aba}' a partir de {inicio}", n=len(linhas), aba=ws.title,
+                 inicio=op.get("inicio") or "A1")
     if acao == "celulas":
         valores = op.get("valores") or {}
         for ref, v in valores.items():
             ws[ref.upper()] = _converter(v, datas)
-        return f"{len(valores)} célula(s) definidas em '{ws.title}'"
+        return t("{n} célula(s) definidas em '{aba}'", n=len(valores), aba=ws.title)
     if acao == "limpar":
         n = 0
         for cel in _celulas(ws, op["intervalo"]):
             cel.value = None
             n += 1
-        return f"{n} célula(s) limpas"
+        return t("{n} célula(s) limpas", n=n)
     if acao == "formatar":
         n = 0
         for cel in _celulas(ws, op["intervalo"]):
@@ -227,7 +233,7 @@ def _op(wb, op: dict, datas: bool) -> str:
                 lado = Side(style={"fina": "thin", "grossa": "medium", "nenhuma": None}.get(op["borda"], "thin"))
                 cel.border = Border(left=lado, right=lado, top=lado, bottom=lado)
             n += 1
-        return f"{n} célula(s) formatadas"
+        return t("{n} célula(s) formatadas", n=n)
     if acao == "largura_colunas":
         if op.get("auto"):
             larguras = {}
@@ -238,39 +244,41 @@ def _op(wb, op: dict, datas: bool) -> str:
                         larguras[letra] = max(larguras.get(letra, 0), min(60, len(_valor_txt(cel.value)) + 2))
             for letra, w in larguras.items():
                 ws.column_dimensions[letra].width = max(8, w)
-            return f"largura automática em {len(larguras)} coluna(s)"
+            return t("largura automática em {n} coluna(s)", n=len(larguras))
         for letra, w in (op.get("larguras") or {}).items():
             ws.column_dimensions[letra.upper()].width = float(w)
-        return "larguras ajustadas"
+        return t("larguras ajustadas")
     if acao == "congelar":
         ws.freeze_panes = op.get("celula") or None
-        return f"painel congelado em {op.get('celula')}"
+        return t("painel congelado em {celula}", celula=op.get("celula"))
     if acao == "filtro":
         ws.auto_filter.ref = op["intervalo"].upper()
-        return f"filtro em {op['intervalo']}"
+        return t("filtro em {intervalo}", intervalo=op["intervalo"])
     if acao == "mesclar":
         ws.merge_cells(op["intervalo"].upper())
-        return f"células {op['intervalo']} mescladas"
+        return t("células {intervalo} mescladas", intervalo=op["intervalo"])
     if acao == "tabela":
         nome = re.sub(r"\W", "_", str(op.get("nome") or f"Tabela{len(ws.tables) + 1}"))
-        t = Table(displayName=nome, ref=op["intervalo"].upper())
-        t.tableStyleInfo = TableStyleInfo(name=op.get("estilo") or "TableStyleMedium2", showRowStripes=True)
-        ws.add_table(t)
-        return f"tabela {nome} criada em {op['intervalo']}"
+        tab = Table(displayName=nome, ref=op["intervalo"].upper())
+        tab.tableStyleInfo = TableStyleInfo(name=op.get("estilo") or "TableStyleMedium2", showRowStripes=True)
+        ws.add_table(tab)
+        return t("tabela {nome} criada em {intervalo}", nome=nome, intervalo=op["intervalo"])
     if acao in ("inserir_linhas", "apagar_linhas"):
         fn = ws.insert_rows if acao == "inserir_linhas" else ws.delete_rows
         fn(int(op["linha"]), int(op.get("quantidade") or 1))
-        return f"{acao.replace('_', ' ')}: {op.get('quantidade') or 1} a partir da linha {op['linha']}"
+        return t("{acao}: {n} a partir da linha {linha}", acao=t(acao.replace("_", " ")), n=op.get("quantidade") or 1,
+                 linha=op["linha"])
     if acao in ("inserir_colunas", "apagar_colunas"):
         fn = ws.insert_cols if acao == "inserir_colunas" else ws.delete_cols
         fn(column_index_from_string(str(op["coluna"]).upper()), int(op.get("quantidade") or 1))
-        return f"{acao.replace('_', ' ')}: {op.get('quantidade') or 1} a partir da coluna {op['coluna']}"
+        return t("{acao}: {n} a partir da coluna {coluna}", acao=t(acao.replace("_", " ")), n=op.get("quantidade") or 1,
+                 coluna=op["coluna"])
     if acao == "validacao_lista":
         opcoes = [str(o).replace('"', "'") for o in op.get("opcoes") or []]
         dv = DataValidation(type="list", formula1='"' + ",".join(opcoes) + '"', allow_blank=True)
         ws.add_data_validation(dv)
         dv.add(op["intervalo"].upper())
-        return f"lista de opções em {op['intervalo']}"
+        return t("lista de opções em {intervalo}", intervalo=op["intervalo"])
     if acao == "formatacao_condicional":
         regra = op.get("regra")
         intervalo = op["intervalo"].upper()
@@ -283,21 +291,21 @@ def _op(wb, op: dict, datas: bool) -> str:
             operadores = {"maior_que": "greaterThan", "menor_que": "lessThan", "igual": "equal", "entre": "between",
                           "maior_ou_igual": "greaterThanOrEqual", "menor_ou_igual": "lessThanOrEqual", "diferente": "notEqual"}
             if regra not in operadores:
-                raise ErroExcel(f"Regra desconhecida: {regra}")
+                raise ErroExcel(t("Regra desconhecida: {regra}", regra=regra))
             formula = [str(op.get("valor"))] + ([str(op.get("valor2"))] if regra == "entre" else [])
             ws.conditional_formatting.add(intervalo, CellIsRule(operator=operadores[regra], formula=formula,
                                                                 fill=PatternFill("solid", fgColor=_cor(op.get("cor_fundo") or "amarelo_claro")),
                                                                 font=Font(color=_cor(op.get("cor_texto"))) if op.get("cor_texto") else None))
-        return f"formatação condicional ({regra}) em {intervalo}"
+        return t("formatação condicional ({regra}) em {intervalo}", regra=regra, intervalo=intervalo)
     if acao == "grafico":
         return _grafico(ws, op)
-    raise ErroExcel(f"Ação desconhecida: {acao}")
+    raise ErroExcel(t("Ação desconhecida: {acao}", acao=acao))
 
 
 def _coluna_linha(ref: str) -> tuple[int, int]:
     m = re.fullmatch(r"([A-Za-z]{1,3})(\d+)", ref.strip())
     if not m:
-        raise ErroExcel(f"Célula inválida: {ref}")
+        raise ErroExcel(t("Célula inválida: {celula}", celula=ref))
     return column_index_from_string(m.group(1).upper()), int(m.group(2))
 
 
@@ -306,7 +314,7 @@ def _grafico(ws, op: dict) -> str:
     classes = {"coluna": BarChart, "barra": BarChart, "linha": LineChart, "pizza": PieChart, "area": AreaChart,
                "dispersao": ScatterChart}
     if tipo not in classes:
-        raise ErroExcel(f"Tipo de gráfico desconhecido: {tipo}")
+        raise ErroExcel(t("Tipo de gráfico desconhecido: {tipo}", tipo=tipo))
     g = classes[tipo]()
     if tipo == "barra":
         g.type = "bar"
@@ -320,7 +328,7 @@ def _grafico(ws, op: dict) -> str:
         cats = Reference(ws, min_col=a1, min_row=b1, max_col=a2, max_row=b2)
     if tipo == "dispersao":
         if not cats:
-            raise ErroExcel("Gráfico de dispersão precisa de 'categorias' (os valores do eixo X).")
+            raise ErroExcel(t("Gráfico de dispersão precisa de 'categorias' (os valores do eixo X)."))
         for c in range(c1, c2 + 1):
             ys = Reference(ws, min_col=c, min_row=l1 + 1, max_row=l2)
             g.series.append(Series(ys, cats, title_from_data=False, title=str(ws.cell(row=l1, column=c).value or "")))
@@ -338,7 +346,7 @@ def _grafico(ws, op: dict) -> str:
     g.width = float(op.get("largura") or 18)
     g.height = float(op.get("altura") or 9)
     ws.add_chart(g, (op.get("posicao") or "H2").upper())
-    return f"gráfico de {tipo} em {op.get('posicao') or 'H2'}"
+    return t("gráfico de {tipo} em {posicao}", tipo=t(tipo), posicao=op.get("posicao") or "H2")
 
 
 def aplicar(caminho: str | Path, operacoes: list, criar: bool = True, converter_datas: bool = True,
@@ -346,36 +354,37 @@ def aplicar(caminho: str | Path, operacoes: list, criar: bool = True, converter_
     """Cria ou altera uma planilha. `base` = começar de uma cópia deste arquivo."""
     p = Path(caminho)
     if p.suffix.lower() not in EXTENSOES:
-        raise ErroExcel("O arquivo precisa terminar em .xlsx (ou .xlsm).")
+        raise ErroExcel(t("O arquivo precisa terminar em .xlsx (ou .xlsm)."))
     if not isinstance(operacoes, list) or not operacoes:
-        raise ErroExcel("Mande pelo menos uma operação.")
+        raise ErroExcel(t("Mande pelo menos uma operação."))
     origem = Path(base) if base else p
     if origem.is_file():
         try:
             wb = openpyxl.load_workbook(origem, keep_vba=origem.suffix.lower() == ".xlsm")
         except Exception as e:
-            raise ErroExcel(f"Não deu para abrir a planilha: {e}")
+            raise ErroExcel(t("Não deu para abrir a planilha: {erro}", erro=e))
         novo = False
     elif criar:
         if p.suffix.lower() == ".xlsm":
-            raise ErroExcel("Planilha nova precisa ser .xlsx (.xlsm é só para arquivo que já tem macro).")
+            raise ErroExcel(t("Planilha nova precisa ser .xlsx (.xlsm é só para arquivo que já tem macro)."))
         wb = openpyxl.Workbook()
         primeira = next((o.get("aba") for o in operacoes if isinstance(o, dict) and o.get("aba")), None)
         if primeira:
             wb.active.title = str(primeira)[:31]
         novo = True
     else:
-        raise ErroExcel(f"Arquivo não encontrado: {p}")
+        raise ErroExcel(t("Arquivo não encontrado: {caminho}", caminho=p))
     feitos = []
     for i, op in enumerate(operacoes, 1):
         if not isinstance(op, dict):
-            raise ErroExcel(f"Operação {i} inválida.")
+            raise ErroExcel(t("Operação {i} inválida.", i=i))
         try:
             feitos.append(_op(wb, op, converter_datas))
         except ErroExcel as e:
-            raise ErroExcel(f"Operação {i} ({op.get('acao')}): {e}")
+            raise ErroExcel(t("Operação {i} ({acao}): {erro}", i=i, acao=op.get("acao"), erro=e))
         except (KeyError, ValueError, TypeError) as e:
-            raise ErroExcel(f"Operação {i} ({op.get('acao')}): parâmetro faltando ou inválido ({e})")
+            raise ErroExcel(t("Operação {i} ({acao}): parâmetro faltando ou inválido ({erro})", i=i, acao=op.get("acao"),
+                              erro=e))
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_name(f".~clave-{p.name}")
     wb.save(tmp)
@@ -384,9 +393,9 @@ def aplicar(caminho: str | Path, operacoes: list, criar: bool = True, converter_
         os.replace(tmp, p)
     except PermissionError:
         tmp.unlink(missing_ok=True)
-        raise ErroExcel("Não deu para salvar: o arquivo está aberto no Excel. Feche ele e tente de novo.")
-    cab = f"{'Planilha criada' if novo else 'Planilha alterada'}: {p}"
-    return cab + "\n- " + "\n- ".join(feitos) + ("\n(Fórmulas são calculadas quando o arquivo abre no Excel.)"
+        raise ErroExcel(t("Não deu para salvar: o arquivo está aberto no Excel. Feche ele e tente de novo."))
+    cab = t("Planilha criada: {caminho}", caminho=p) if novo else t("Planilha alterada: {caminho}", caminho=p)
+    return cab + "\n- " + "\n- ".join(feitos) + ("\n" + t("(Fórmulas são calculadas quando o arquivo abre no Excel.)")
                                                  if any(_tem_formula(o) for o in operacoes) else "")
 
 
@@ -432,19 +441,18 @@ try {
 
 def no_excel(caminho: str | Path, acao: str, saida: str | Path | None = None, tempo: int = 180) -> str:
     if not excel_instalado():
-        raise ErroExcel("O Microsoft Excel não está instalado neste computador, então não dá para recalcular, "
-                        "exportar PDF ou converter por ele.")
+        raise ErroExcel(t("O Microsoft Excel não está instalado neste computador, então não dá para recalcular, exportar PDF ou converter por ele."))
     p = Path(caminho).resolve()
     if not p.is_file():
-        raise ErroExcel(f"Arquivo não encontrado: {p}")
+        raise ErroExcel(t("Arquivo não encontrado: {caminho}", caminho=p))
     if acao not in ("recalcular", "pdf", "converter_xlsx"):
-        raise ErroExcel("Ação inválida (use recalcular, pdf ou converter_xlsx).")
+        raise ErroExcel(t("Ação inválida (use recalcular, pdf ou converter_xlsx)."))
     if acao == "pdf":
         saida = Path(saida).resolve() if saida else p.with_suffix(".pdf")
     elif acao == "converter_xlsx":
         saida = Path(saida).resolve() if saida else p.with_suffix(".xlsx")
         if saida == p:
-            raise ErroExcel("O arquivo já é .xlsx.")
+            raise ErroExcel(t("O arquivo já é .xlsx."))
     env = dict(os.environ, CLAVE_EXCEL_ENTRADA=str(p), CLAVE_EXCEL_SAIDA=str(saida or ""), CLAVE_EXCEL_ACAO=acao)
     with tempfile.NamedTemporaryFile("w", suffix=".ps1", delete=False, encoding="utf-8-sig") as f:
         f.write(_PS)
@@ -453,15 +461,16 @@ def no_excel(caminho: str | Path, acao: str, saida: str | Path | None = None, te
         r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script],
                            capture_output=True, text=True, timeout=tempo, env=env, creationflags=0x08000000)
     except subprocess.TimeoutExpired:
-        raise ErroExcel("O Excel demorou demais para responder (ele pode estar esperando alguma janela aberta).")
+        raise ErroExcel(t("O Excel demorou demais para responder (ele pode estar esperando alguma janela aberta)."))
     finally:
         os.unlink(script)
     if r.returncode != 0 or "ok" not in r.stdout:
         erro = (r.stderr or r.stdout).strip().splitlines()
-        raise ErroExcel("O Excel não conseguiu: " + (erro[0] if erro else "erro desconhecido")[:300])
+        raise ErroExcel(t("O Excel não conseguiu: {erro}", erro=(erro[0] if erro else t("erro desconhecido"))[:300]))
     if acao == "recalcular":
-        return f"Fórmulas recalculadas e salvas no próprio Excel: {p}. Leia de novo para ver os valores."
-    return f"{'PDF exportado' if acao == 'pdf' else 'Convertido para .xlsx'}: {saida}"
+        return t("Fórmulas recalculadas e salvas no próprio Excel: {caminho}. Leia de novo para ver os valores.", caminho=p)
+    return t("PDF exportado: {caminho}", caminho=saida) if acao == "pdf" else t("Convertido para .xlsx: {caminho}",
+                                                                                caminho=saida)
 
 
 SEGUROS_PARA_ABRIR = {".xlsx", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".txt", ".md"}
@@ -470,18 +479,19 @@ SEGUROS_PARA_ABRIR = {".xlsx", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".gif", 
 def abrir_no_excel(caminho: str | Path) -> str:
     p = Path(caminho).resolve()
     if not p.is_file():
-        raise ErroExcel(f"Arquivo não encontrado: {p}")
+        raise ErroExcel(t("Arquivo não encontrado: {caminho}", caminho=p))
     if p.suffix.lower() not in SEGUROS_PARA_ABRIR:
-        raise ErroExcel("Esse tipo de arquivo não é aberto pelo Clave (ele poderia executar um programa).")
+        raise ErroExcel(t("Esse tipo de arquivo não é aberto pelo Clave (ele poderia executar um programa)."))
     if sys.platform == "win32":
         os.startfile(str(p))  # abre no programa padrão (o Excel, quando instalado)
     else:
         subprocess.Popen(["xdg-open" if shutil.which("xdg-open") else "open", str(p)])
-    return f"Abri {p.name} no Excel (ou no programa padrão de planilhas) para a pessoa ver."
+    return t("Abri {nome} no Excel (ou no programa padrão de planilhas) para a pessoa ver.", nome=p.name)
 
 
 # ---------------- esquema das operações (para as ferramentas) ----------------
 
+# a descrição é traduzida pelo catálogo das ferramentas (i18n.traduzir_ferramentas)
 ESQUEMA_OPERACOES = {
     "type": "array",
     "description": (

@@ -1,0 +1,15 @@
+{
+ "Sem repositório configurado em versao.json.": "No repository configured in versao.json.",
+ "O repositório ainda não tem nenhuma versão publicada (ou é privado).": "The repository has no published version yet (or it is private).",
+ "O GitHub respondeu {codigo}.": "GitHub answered {codigo}.",
+ "Sem conexão com o GitHub ({erro}).": "No connection to GitHub ({erro}).",
+ "O pacote baixado não parece ser do Clave (falta versao.json).": "The downloaded package doesn't look like Clave (versao.json is missing).",
+ "Esta é uma cópia de desenvolvimento (tem .git). Atualize com git pull.": "This is a development copy (it has .git). Update it with git pull.",
+ "Você já está na versão mais nova.": "You already have the newest version.",
+ "O pacote baixado não confere com a assinatura do GitHub. Tente de novo.": "The downloaded package doesn't match GitHub's checksum. Try again.",
+ "Pacote com caminho inválido.": "Package with an invalid path.",
+ "Pacote incompleto.": "Incomplete package.",
+ "O pacote diz versão {versao}, mas a release é {release}.": "The package says version {versao}, but the release is {release}.",
+ "Não deu para trocar os arquivos ({erro}); a versão anterior foi restaurada.": "Couldn't replace the files ({erro}); the previous version was restored.",
+ "Não deu para restaurar {caminho}: o arquivo está em uso.": "Couldn't restore {caminho}: the file is in use."
+}

@@ -1,17 +1,17 @@
 ---
 name: resumir-documento
-description: Use para resumir um documento longo (PDF anexado, contrato, relatório, artigo, transcrição) em níveis, sem perder números e prazos importantes.
+description: Use to summarize a long document (attached PDF, contract, report, article, transcript) in levels, without losing important numbers and deadlines.
 ---
 
-# Resumir documento
+# Summarize a document
 
-Entregue em três níveis, nesta ordem:
-1. **Em uma frase:** do que se trata e a conclusão principal.
-2. **Em tópicos (5 a 8):** os pontos que importam, cada um em uma linha.
-3. **O que exige atenção:** prazos, valores, obrigações, riscos, coisas fora do comum. Cite a página ou a seção.
+Deliver three levels, in this order:
+1. **In one sentence:** what it is about and the main conclusion.
+2. **In bullet points (5 to 8):** the points that matter, each on one line.
+3. **What needs attention:** deadlines, amounts, obligations, risks, unusual things. Cite the page or section.
 
-Regras:
-- Números, datas e nomes exatamente como estão no documento.
-- Não acrescente nada que não está no texto; opinião sua só se a pessoa pedir, e separada do resumo.
-- Contrato ou documento jurídico: lembre que o resumo não substitui a leitura de um profissional.
-- Documento muito longo: diga se alguma parte ficou de fora.
+Rules:
+- Numbers, dates and names exactly as they are in the document.
+- Add nothing that isn't in the text; your own opinion only if the person asks, and kept separate from the summary.
+- Contract or legal document: remind the person that the summary doesn't replace reading by a professional.
+- Very long document: say if any part was left out.

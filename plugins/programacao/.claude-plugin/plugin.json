@@ -1,9 +1,9 @@
 {
   "name": "programacao",
-  "displayName": "Programação",
+  "displayName": "Programming",
   "version": "1.0.0",
-  "description": "Achar a causa de um erro, escrever testes, revisar e explicar código para quem não programa.",
+  "description": "Find the cause of an error, write tests, review code and explain it to people who don't program.",
   "author": {"name": "Clave"},
   "license": "MIT",
-  "keywords": ["código", "erro", "testes", "revisão", "programação"]
+  "keywords": ["code", "error", "tests", "review", "programming"]
 }

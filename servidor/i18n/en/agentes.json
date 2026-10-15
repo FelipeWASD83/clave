@@ -1,0 +1,5 @@
+{
+ "Nome do agente: só letras minúsculas, números e hífen (ex.: revisor-de-texto).": "Agent name: only lowercase letters, numbers and hyphens (e.g.: text-reviewer).",
+ "Escolha a pasta onde o agente vai morar.": "Choose the folder where the agent will live.",
+ "Só dá para apagar agente pessoal ou da pasta.": "Only personal or folder agents can be deleted."
+}

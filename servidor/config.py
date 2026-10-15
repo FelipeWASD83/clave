@@ -24,6 +24,28 @@ def info_versao() -> dict:
 
 VERSAO = info_versao().get("versao", "0.0.0")
 
+IDIOMAS = ("pt-BR", "en")
+
+
+def detectar_idioma() -> str:
+    """O idioma do Windows (português vira pt-BR; qualquer outro, e o que não der para ler, vira inglês).
+    CLAVE_IDIOMA força um idioma (os testes usam)."""
+    forcado = os.environ.get("CLAVE_IDIOMA", "")
+    if forcado:
+        return "pt-BR" if forcado.lower().startswith("pt") else "en"
+    try:
+        if os.name == "nt":
+            import ctypes
+            lid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+            return "pt-BR" if (lid & 0x3FF) == 0x16 else "en"  # 0x16 = língua portuguesa (qualquer país)
+    except Exception:
+        pass
+    import locale
+    for valor in (os.environ.get("LANG", ""), locale.getlocale()[0] or ""):
+        if valor.lower().startswith("pt"):
+            return "pt-BR"
+    return "en"
+
 ESTILOS_PRONTOS = {
     "normal": {"nome": "Normal", "instrucoes": ""},
     "conciso": {
@@ -109,6 +131,12 @@ PADRAO = {
     # notificação do Windows quando uma resposta termina ou pede OK com a janela em segundo plano
     "notificacoes": True,
     "painel_uso_inicio": True,
+    # idioma da interface e dos prompts: "pt-BR" ou "en" (vazio: decidido no primeiro carregamento)
+    "idioma": "",
+    # tours com setinhas já vistos e banners de modelo novo já fechados
+    "tours_vistos": [],
+    "modelos_vistos": [],
+    "modelos_apresentados": [],
 }
 
 _trava = threading.Lock()
@@ -130,6 +158,10 @@ def carregar() -> dict:
                 dados = {}
             cfg = copy.deepcopy(PADRAO)
             cfg.update({k: v for k, v in dados.items() if k in PADRAO})
+            if cfg.get("idioma") not in IDIOMAS:
+                # quem já usava o Clave (antes de existir inglês) continua em português; instalação nova
+                # segue o idioma do Windows
+                cfg["idioma"] = "pt-BR" if dados else detectar_idioma()
             _cache = cfg
         return copy.deepcopy(_cache)
 
@@ -156,7 +188,9 @@ def recarregar() -> None:
 
 
 def estilos(cfg: dict) -> dict:
-    todos = copy.deepcopy(ESTILOS_PRONTOS)
+    from i18n import t  # aqui dentro: o i18n importa este módulo
+    todos = {k: {"nome": t(v["nome"]), "instrucoes": t(v["instrucoes"]) if v["instrucoes"] else ""}
+             for k, v in ESTILOS_PRONTOS.items()}
     for est in cfg.get("estilos_proprios") or []:
         if est.get("id") and est.get("nome"):
             todos[est["id"]] = {"nome": est["nome"], "instrucoes": est.get("instrucoes", ""), "proprio": True}

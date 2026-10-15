@@ -16,6 +16,7 @@ import urllib.request
 
 import config
 import segredos
+from i18n import t
 
 API = "https://api.github.com"
 
@@ -58,9 +59,9 @@ def pedir(metodo: str, caminho: str, params: dict | None = None, corpo: dict | N
     if params:
         url += ("&" if "?" in url else "?") + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
     cab = {"Accept": aceitar, "X-GitHub-Api-Version": "2022-11-28", "User-Agent": f"Clave/{config.VERSAO}"}
-    t = token() if tok == "auto" else tok
-    if t:
-        cab["Authorization"] = f"Bearer {t}"
+    tk = token() if tok == "auto" else tok
+    if tk:
+        cab["Authorization"] = f"Bearer {tk}"
     dados = None
     if corpo is not None:
         dados = json.dumps(corpo).encode("utf-8")
@@ -79,15 +80,14 @@ def pedir(metodo: str, caminho: str, params: dict | None = None, corpo: dict | N
         except (ValueError, OSError):
             pass
         if e.code == 401:
-            raise ErroGitHub("O GitHub recusou o login (token inválido ou vencido).", 401)
+            raise ErroGitHub(t("O GitHub recusou o login (token inválido ou vencido)."), 401)
         if e.code == 403 and "rate limit" in msg.lower():
-            raise ErroGitHub("Limite de pedidos do GitHub atingido. Tente de novo daqui a pouco "
-                             "(com login no GitHub o limite é bem maior).", 403)
+            raise ErroGitHub(t("Limite de pedidos do GitHub atingido. Tente de novo daqui a pouco (com login no GitHub o limite é bem maior)."), 403)
         if e.code == 404:
-            raise ErroGitHub("Não encontrado no GitHub (ou o repositório é privado e falta permissão).", 404)
-        raise ErroGitHub(f"GitHub respondeu {e.code}: {msg or e.reason}", e.code)
+            raise ErroGitHub(t("Não encontrado no GitHub (ou o repositório é privado e falta permissão)."), 404)
+        raise ErroGitHub(t("GitHub respondeu {codigo}: {erro}", codigo=e.code, erro=msg or e.reason), e.code)
     except urllib.error.URLError as e:
-        raise ErroGitHub(f"Sem conexão com o GitHub: {e.reason}")
+        raise ErroGitHub(t("Sem conexão com o GitHub: {erro}", erro=e.reason))
 
 
 def usuario() -> dict:

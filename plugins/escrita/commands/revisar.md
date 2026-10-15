@@ -1,8 +1,8 @@
 ---
-description: Revisa um texto (gramática e clareza) sem mudar o sentido
-argument-hint: [cole o texto depois do comando]
+description: Proofreads a text (grammar and clarity) without changing the meaning
+argument-hint: [paste the text after the command]
 ---
 
-Revise este texto seguindo a skill escrita:revisar-texto (carregue com usar_skill):
+Proofread this text following the skill escrita:revisar-texto (load it with usar_skill):
 
 $ARGUMENTS

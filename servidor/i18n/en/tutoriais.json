@@ -1,0 +1,9 @@
+{
+ "Outros": "Other",
+ "O Clave tem lições para quem está começando, na área Aprender.": "Clave has lessons for beginners, in the Learn area.",
+ "Quando a pessoa mostrar que não conhece um termo (mesmo escrito errado ou de um jeito estranho, como \"quem é JASON\" querendo dizer JSON, ou \"guiti rabi\" querendo dizer GitHub) ou perguntar como usar o próprio app, explique em linguagem bem simples, em poucas frases, e indique a lição com um link Markdown exatamente no formato abaixo (ele abre dentro do app).": "When the person shows they don't know a term (even misspelled or written in an odd way, like \"who's JASON\" meaning JSON, or \"git hob\" meaning GitHub) or asks how to use the app itself, explain it in very simple language, in a few sentences, and point to the lesson with a Markdown link exactly in the format below (it opens inside the app).",
+ "Se o termo foi escrito errado, diga com gentileza o nome certo.": "If the term was misspelled, kindly tell them the right name.",
+ "Não indique lição para quem claramente já domina o assunto, e no máximo um ou dois links por resposta.": "Don't point to lessons for someone who clearly already knows the subject, and use at most one or two links per reply.",
+ "Lições:": "Lessons:",
+ "Termos do glossário (link direto para cada um): {termos}": "Glossary terms (direct link to each one): {termos}"
+}

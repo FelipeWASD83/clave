@@ -11,40 +11,43 @@ import {
 } from './blocos.js';
 import { abrirPrevia } from './previa.js';
 import { painelUso, painelAmbientes } from './painel-uso.js';
+import { bannerModeloNovo } from './lancamentos.js';
 import { menuConversa } from './lateral.js';
 import { pegarRascunho } from './aprender.js';
 import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, cartaoSugestao, FluxoVivo, notificar } from './fluxo-ui.js';
+import { t } from './i18n.js';
 
 function saudacao() {
   const h = new Date().getHours();
-  return h >= 5 && h < 12 ? 'Bom dia' : h >= 12 && h < 18 ? 'Boa tarde' : 'Boa noite';
+  return h >= 5 && h < 12 ? t('Bom dia') : h >= 12 && h < 18 ? t('Boa tarde') : t('Boa noite');
 }
 
-const SUGESTOES_CHAT = [
-  'Explique o que é uma API como se eu tivesse 12 anos',
-  'Me ajude a escrever um e-mail educado pedindo um prazo maior',
-  'Crie uma página HTML de um cartão de aniversário animado',
-  'Monte uma tabela comparando 3 formas de organizar meus estudos',
+// funções, e não constantes, para o t() rodar depois que o catálogo do idioma carregou
+const SUGESTOES_CHAT = () => [
+  t('Explique o que é uma API como se eu tivesse 12 anos'),
+  t('Me ajude a escrever um e-mail educado pedindo um prazo maior'),
+  t('Crie uma página HTML de um cartão de aniversário animado'),
+  t('Monte uma tabela comparando 3 formas de organizar meus estudos'),
 ];
-const SUGESTOES_CODE = [
-  'Explique o que tem nesta pasta, em linguagem simples',
-  'Organize os arquivos desta pasta em subpastas por tipo (me mostre o plano antes)',
-  'Crie um script que renomeia as fotos desta pasta pela data em que foram tiradas',
-  'Crie uma página HTML simples com uma lista de tarefas que salva no navegador',
+const SUGESTOES_CODE = () => [
+  t('Explique o que tem nesta pasta, em linguagem simples'),
+  t('Organize os arquivos desta pasta em subpastas por tipo (me mostre o plano antes)'),
+  t('Crie um script que renomeia as fotos desta pasta pela data em que foram tiradas'),
+  t('Crie uma página HTML simples com uma lista de tarefas que salva no navegador'),
 ];
 
 export async function novaConversa(principal, { modo = 'chat', projeto = null } = {}) {
   estado.conversaAtual = null;
-  const t = new TelaConversa(principal, { modo, projetoId: projeto });
-  await t.montarNova();
-  return t;
+  const tela = new TelaConversa(principal, { modo, projetoId: projeto });
+  await tela.montarNova();
+  return tela;
 }
 
 export async function abrirConversa(principal, id) {
   estado.conversaAtual = id;
-  const t = new TelaConversa(principal, { id });
-  await t.montarExistente();
-  return t;
+  const tela = new TelaConversa(principal, { id });
+  await tela.montarExistente();
+  return tela;
 }
 
 class TelaConversa {
@@ -71,7 +74,7 @@ class TelaConversa {
     this.centro = el('div', { class: 'inicio' });
     this.principal.replaceChildren(el('section', { class: 'conversa' }, this.topo, this.centro));
     const projeto = this.projetoId ? await api(`/projetos/${this.projetoId}`).then((r) => r.projeto).catch(() => null) : null;
-    this.desenharTopo(this.modo === 'code' ? 'Novo trabalho no Code' : (projeto ? `Nova conversa em ${projeto.nome}` : 'Nova conversa'));
+    this.desenharTopo(this.modo === 'code' ? t('Novo trabalho no Code') : (projeto ? t('Nova conversa em {nome}', { nome: projeto.nome }) : t('Nova conversa')));
     if (this.modo === 'code') {
       // como no app oficial: começa no último ambiente usado (dá para trocar no painel de ambientes);
       // a lista de pastas recentes muda no servidor a cada trabalho novo, então vem atualizada
@@ -103,9 +106,11 @@ class TelaConversa {
     const permAntes = anterior?.opcoes().permissao;
     const comp = this.criarCompositor();
     if (permAntes) comp.definirPermissao(permAntes);
-    const sugestoes = el('div', { class: 'sugestoes' }, ...(this.modo === 'code' ? SUGESTOES_CODE : SUGESTOES_CHAT).map((s) =>
+    const sugestoes = el('div', { class: 'sugestoes' }, ...(this.modo === 'code' ? SUGESTOES_CODE() : SUGESTOES_CHAT()).map((s) =>
       el('button', { class: 'sugestao', type: 'button', texto: s, onclick: () => comp.definirTexto(s) })));
-    const frase = this.modo === 'code' ? 'O que vamos construir?' : (projeto ? `Projeto: ${projeto.nome}` : 'Em que posso ajudar?');
+    const frase = this.modo === 'code' ? t('O que vamos construir?') : (projeto ? t('Projeto: {nome}', { nome: projeto.nome }) : t('Em que posso ajudar?'));
+    // a frase tem um link no meio: a chave inteira traduz, e o {link} vira o elemento
+    const [antesLink, depoisLink = ''] = t('Primeira vez? Veja {link}.').split('{link}');
     const ambientes = this.modo === 'code' ? painelAmbientes({
       atual: this.pasta,
       aoEscolher: async (c) => { if (await this.carregarPasta(c)) this.desenharInicio(); },
@@ -121,11 +126,12 @@ class TelaConversa {
       this.modo === 'code' ? this.chipsDaPasta() : null,
       comp.elemento,
       sugestoes,
-      !estado.info.tem_chave ? nota('Falta colar a sua chave da API para o Claude responder.', 'info',
-        el('a', { class: 'botao pequeno', href: '#/config/conta', texto: 'Colar a chave' })) : null,
+      !estado.info.tem_chave ? nota(t('Falta colar a sua chave da API para o Claude responder.'), 'info',
+        el('a', { class: 'botao pequeno', href: '#/config/conta', texto: t('Colar a chave') })) : null,
+      bannerModeloNovo(),
       el('div', { class: 'paineis-inicio' }, painelUso(), ambientes),
-      this.modo === 'code' && !(cfg().pastas_recentes || []).length ? el('p', { class: 'ajuda', style: 'text-align:center' }, 'Primeira vez? Veja ',
-        el('a', { href: '#/aprender/modo-code', texto: 'como o modo Code funciona' }), '.') : null));
+      this.modo === 'code' && !(cfg().pastas_recentes || []).length ? el('p', { class: 'ajuda', style: 'text-align:center' }, antesLink,
+        el('a', { href: '#/aprender/modo-code', texto: t('como o modo Code funciona') }), depoisLink) : null));
     comp.definirContexto(0);
     const rascunho = textoAntes || pegarRascunho();
     if (rascunho) comp.definirTexto(rascunho);
@@ -133,12 +139,15 @@ class TelaConversa {
   }
 
   chipsDaPasta() {
-    if (!this.pasta) return el('div', { class: 'contexto-code' }, el('span', { class: 'etiqueta', html: `${ic('pasta')}` }, 'nenhum ambiente escolhido: escolha embaixo'));
+    if (!this.pasta) return el('div', { class: 'contexto-code' }, el('span', { class: 'etiqueta', html: `${ic('pasta')}` }, t('nenhum ambiente escolhido: escolha embaixo')));
     const inst = this.infoPasta?.instrucoes || [];
+    const nSkills = this.skills.length;
     return el('div', { class: 'contexto-code' },
       el('span', { class: 'etiqueta', title: this.pasta, html: `${ic('pasta')}` }, this.pasta.length > 48 ? '…' + this.pasta.slice(-46) : this.pasta),
-      inst.length ? el('span', { class: 'etiqueta acao', title: inst.map((i) => i.caminho).join('\n'), texto: `${inst.length} arquivo(s) de regras (CLAUDE.md)` }) : el('span', { class: 'etiqueta', texto: 'sem CLAUDE.md' }),
-      el('span', { class: 'etiqueta', title: this.skills.map((s) => s.nome).join(', '), texto: `${this.skills.length} skill(s)` }));
+      inst.length ? el('span', { class: 'etiqueta acao', title: inst.map((i) => i.caminho).join('\n'),
+        texto: inst.length === 1 ? t('{n} arquivo de regras (CLAUDE.md)', { n: inst.length }) : t('{n} arquivos de regras (CLAUDE.md)', { n: inst.length }) })
+        : el('span', { class: 'etiqueta', texto: t('sem CLAUDE.md') }),
+      el('span', { class: 'etiqueta', title: this.skills.map((s) => s.nome).join(', '), texto: nSkills === 1 ? t('{n} skill', { n: nSkills }) : t('{n} skills', { n: nSkills }) }));
   }
 
   // ---------- conversa existente ----------
@@ -154,7 +163,7 @@ class TelaConversa {
     this.comp.elemento.querySelector('.coluna').prepend(this.tarefasEl);
     this.principal.replaceChildren(el('section', { class: 'conversa' }, this.topo, this.rolagem, this.comp.elemento));
     this.mensagensEl.addEventListener('click', (e) => this.cliqueNasMensagens(e));
-    this.desenharTopo(this.visao.conversa.titulo || 'Nova conversa');
+    this.desenharTopo(this.visao.conversa.titulo || t('Nova conversa'));
     this.desenharMensagens();
     this.rolarParaBaixo(false);
     if (this.modo === 'code' && this.pasta) {
@@ -167,28 +176,28 @@ class TelaConversa {
 
   async recarregar() {
     this.visao = await api(`/conversas/${this.id}`);
-    this.desenharTopo(this.visao.conversa.titulo || 'Nova conversa');
+    this.desenharTopo(this.visao.conversa.titulo || t('Nova conversa'));
     this.desenharMensagens();
   }
 
   desenharTopo(titulo) {
-    const h1 = el('h1', { class: 'titulo-editavel', texto: titulo, title: this.id ? 'Clique para renomear' : '' });
+    const h1 = el('h1', { class: 'titulo-editavel', texto: titulo, title: this.id ? t('Clique para renomear') : '' });
     if (this.id) h1.addEventListener('click', async () => {
       const { perguntarTexto } = await import('./ui.js');
-      const novo = await perguntarTexto('Renomear conversa', { valor: this.visao?.conversa?.titulo || '' });
+      const novo = await perguntarTexto(t('Renomear conversa'), { valor: this.visao?.conversa?.titulo || '' });
       if (novo) { await api(`/conversas/${this.id}`, { metodo: 'PATCH', corpo: { titulo: novo } }); h1.textContent = novo; avisar('conversas-mudaram'); }
     });
     const extras = [];
     if (this.modo === 'code' && this.pasta) {
-      extras.push(el('button', { class: 'chip', type: 'button', title: window.clave?.abrirPasta ? 'Abrir a pasta no Explorador' : this.pasta, html: `${ic('pasta')}<span>${this.pasta.split(/[\\/]/).pop()}</span>`,
+      extras.push(el('button', { class: 'chip', type: 'button', title: window.clave?.abrirPasta ? t('Abrir a pasta no Explorador') : this.pasta, html: `${ic('pasta')}<span>${this.pasta.split(/[\\/]/).pop()}</span>`,
         onclick: () => window.clave?.abrirPasta ? window.clave.abrirPasta(this.pasta) : aviso(this.pasta) }));
     }
     if (this.visao?.projeto) extras.push(el('a', { class: 'chip', href: `#/projetos/${this.visao.projeto.id}`, html: `${ic('camadas')}<span>${this.visao.projeto.nome}</span>` }));
-    if (this.id && cfg().mostrar_custo && this.visao) extras.push(el('span', { class: 'meta', title: 'Gasto total desta conversa', texto: usd(this.visao.gasto) }));
-    const mais = this.id ? el('button', { class: 'icone-botao', type: 'button', 'aria-label': 'Opções da conversa', html: ic('pontos'),
+    if (this.id && cfg().mostrar_custo && this.visao) extras.push(el('span', { class: 'meta', title: t('Gasto total desta conversa'), texto: usd(this.visao.gasto) }));
+    const mais = this.id ? el('button', { class: 'icone-botao', type: 'button', 'aria-label': t('Opções da conversa'), html: ic('pontos'),
       onclick: (e) => menuConversa(e.currentTarget, { ...this.visao.conversa }) }) : null;
     this.topo.replaceChildren(
-      el('button', { class: 'icone-botao abrir-lateral', type: 'button', 'aria-label': 'Abrir a barra lateral', html: ic('menu'),
+      el('button', { class: 'icone-botao abrir-lateral', type: 'button', 'aria-label': t('Abrir a barra lateral'), html: ic('menu'),
         onclick: () => import('./lateral.js').then((m) => m.alternarLateral()) }),
       h1, ...extras, ...(mais ? [mais] : []));
   }
@@ -213,7 +222,7 @@ class TelaConversa {
     try {
       if (!this.id) {
         const corpo = { modo: this.modo, projeto_id: this.projetoId, pasta: this.pasta };
-        if (this.modo === 'code' && !this.pasta) { aviso('Escolha o ambiente (a pasta de trabalho) no painel embaixo primeiro.', 'erro'); return false; }
+        if (this.modo === 'code' && !this.pasta) { aviso(t('Escolha o ambiente (a pasta de trabalho) no painel embaixo primeiro.'), 'erro'); return false; }
         const { conversa } = await api('/conversas', { metodo: 'POST', corpo });
         await api(`/conversas/${conversa.id}/enviar`, { metodo: 'POST', corpo: { texto, anexos: anexos.map((a) => a.id), opcoes: op } });
         avisar('conversas-mudaram');
@@ -237,8 +246,8 @@ class TelaConversa {
     if (nome === 'custo') {
       try {
         const u = await api('/uso');
-        const conv = this.id ? `Esta conversa: ${usd(this.visao?.gasto || 0)}. ` : '';
-        aviso(`${conv}Este mês: ${usd(u.orcamento.gasto)} de ${usd(u.orcamento.teto)}.`);
+        const conv = this.id ? t('Esta conversa: {valor}.', { valor: usd(this.visao?.gasto || 0) }) + ' ' : '';
+        aviso(conv + t('Este mês: {gasto} de {teto}.', { gasto: usd(u.orcamento.gasto), teto: usd(u.orcamento.teto) }));
       } catch (e) { aviso(e.message, 'erro'); }
       return true;
     }
@@ -246,14 +255,14 @@ class TelaConversa {
       const { janela } = await import('./ui.js');
       const q = this.pasta ? `?pasta=${encodeURIComponent(this.pasta)}` : '';
       const { comandos } = await api(`/comandos${q}`);
-      const grupos = { app: 'Do Clave', comando: 'Comandos', skill: 'Skills', fluxo: 'Fluxos' };
-      janela({ titulo: 'Comandos de barra', larga: true, corpo: el('div', { class: 'lista-comandos' },
-        el('p', { class: 'ajuda', texto: 'Digite / na caixa de mensagem para ver e escolher. Comandos e skills seus ficam em .claude/commands e .claude/skills (formato do Claude Code).' }),
+      const grupos = { app: t('Do Clave'), comando: t('Comandos'), skill: t('Skills'), fluxo: t('Fluxos') };
+      janela({ titulo: t('Comandos de barra'), larga: true, corpo: el('div', { class: 'lista-comandos' },
+        el('p', { class: 'ajuda', texto: t('Digite / na caixa de mensagem para ver e escolher. Comandos e skills seus ficam em .claude/commands e .claude/skills (formato do Claude Code).') }),
         ...Object.entries(grupos).map(([tipo, titulo]) => {
           const itens = comandos.filter((c) => c.tipo === tipo);
           return itens.length ? el('div', {}, el('div', { class: 'secao-titulo', texto: titulo }),
             ...itens.map((c) => el('div', { class: 'item-comando' }, el('code', { texto: '/' + c.nome + (c.argumentos ? ' ' + c.argumentos : '') }), el('span', { texto: c.descricao })))) : null;
-        })), botoes: [{ texto: 'Fechar', classe: 'primario' }] });
+        })), botoes: [{ texto: t('Fechar'), classe: 'primario' }] });
       return true;
     }
     return false;
@@ -304,16 +313,16 @@ class TelaConversa {
     if (estavaNoFim) this.rolarParaBaixo(false);
     avisar('conversas-mudaram');
     setTimeout(() => avisar('conversas-mudaram'), 2500);
-    if (ev.status === 'parada' && !ev.pediu_ok) aviso('Resposta interrompida.');
-    if (ev.status === 'concluida') notificar('Clave', 'O Claude terminou de responder.');
+    if (ev.status === 'parada' && !ev.pediu_ok) aviso(t('Resposta interrompida.'));
+    if (ev.status === 'concluida') notificar('Clave', t('O Claude terminou de responder.'));
   }
 
   desenharTarefas(lista) {
     if (!this.tarefasEl) return;
     this.tarefasEl.hidden = !lista?.length;
     const icone = { pendente: 'circulo', fazendo: 'progresso', feito: 'feito' };
-    this.tarefasEl.replaceChildren(...(lista || []).map((t) =>
-      el('div', { class: `t ${t.estado}` }, el('span', { html: ic(icone[t.estado] || 'circulo') }), el('span', { texto: t.texto }))));
+    this.tarefasEl.replaceChildren(...(lista || []).map((tarefa) =>
+      el('div', { class: `t ${tarefa.estado}` }, el('span', { html: ic(icone[tarefa.estado] || 'circulo') }), el('span', { texto: tarefa.texto }))));
   }
 
   // ---------- histórico ----------
@@ -325,16 +334,16 @@ class TelaConversa {
       else if (turnos.length) turnos[turnos.length - 1].respostas.push(m);
     }
     const filhos = [];
-    turnos.forEach((t, i) => {
-      filhos.push(this.elementoUsuario(t.usuario));
-      if (t.respostas.length) filhos.push(this.elementoTurno(t, i === turnos.length - 1));
-      const meta = t.usuario.meta || {};
-      if (meta.erro && !t.respostas.some((r) => r.papel === 'assistant')) {
-        filhos.push(nota(meta.erro, 'erro', el('button', { class: 'botao pequeno', type: 'button', texto: 'Tentar de novo', onclick: () => this.regenerar(t.usuario.id) })));
+    turnos.forEach((turno, i) => {
+      filhos.push(this.elementoUsuario(turno.usuario));
+      if (turno.respostas.length) filhos.push(this.elementoTurno(turno, i === turnos.length - 1));
+      const meta = turno.usuario.meta || {};
+      if (meta.erro && !turno.respostas.some((r) => r.papel === 'assistant')) {
+        filhos.push(nota(meta.erro, 'erro', el('button', { class: 'botao pequeno', type: 'button', texto: t('Tentar de novo'), onclick: () => this.regenerar(turno.usuario.id) })));
       }
-      if (meta.recusa && !t.respostas.length) filhos.push(nota('O Claude recusou este pedido pelas regras de segurança da Anthropic. Reformule ou tente outro modelo.'));
+      if (meta.recusa && !turno.respostas.length) filhos.push(nota(t('O Claude recusou este pedido pelas regras de segurança da Anthropic. Reformule ou tente outro modelo.')));
     });
-    if (!turnos.length) filhos.push(el('div', { class: 'vazio', texto: 'Conversa vazia.' }));
+    if (!turnos.length) filhos.push(el('div', { class: 'vazio', texto: t('Conversa vazia.') }));
     this.mensagensEl.replaceChildren(...filhos);
     // régua de contexto e custo
     const ultimaResp = [...msgs].reverse().find((m) => m.papel === 'assistant' && m.uso);
@@ -354,8 +363,8 @@ class TelaConversa {
     const irmaos = m.irmaos || [m.id];
     const acoes = el('div', { class: 'acoes-msg' },
       this.navVersoes(irmaos, m.id),
-      el('button', { class: 'icone-botao', type: 'button', title: 'Editar e reenviar', 'aria-label': 'Editar', html: ic('lapis'), onclick: () => this.editar(caixa, m, texto) }),
-      el('button', { class: 'icone-botao', type: 'button', title: 'Copiar', 'aria-label': 'Copiar', html: ic('copiar'), onclick: (e) => copiarTexto(texto, e.currentTarget) }));
+      el('button', { class: 'icone-botao', type: 'button', title: t('Editar e reenviar'), 'aria-label': t('Editar'), html: ic('lapis'), onclick: () => this.editar(caixa, m, texto) }),
+      el('button', { class: 'icone-botao', type: 'button', title: t('Copiar'), 'aria-label': t('Copiar'), html: ic('copiar'), onclick: (e) => copiarTexto(texto, e.currentTarget) }));
     const caixa = el('div', { class: 'msg-usuario', dados: { id: m.id } },
       anexos.length ? el('div', { class: 'anexos-msg' }, ...anexos.map((a) => a.tipo?.startsWith('image/')
         ? el('img', { class: 'imagem-grande', src: `/api/anexos/${a.id}`, alt: a.nome, loading: 'lazy' })
@@ -370,12 +379,12 @@ class TelaConversa {
     const anexos = (Array.isArray(m.conteudo) ? m.conteudo : []).filter((b) => b.type === 'clave_anexo').map((b) => ({ id: b.id, nome: b.nome, tipo: b.tipo }));
     const editor = el('div', { style: 'display:grid;gap:8px;justify-items:end;width:100%' }, area,
       el('div', { style: 'display:flex;gap:8px' },
-        el('button', { class: 'botao pequeno', type: 'button', texto: 'Cancelar', onclick: () => this.desenharMensagens() }),
-        el('button', { class: 'botao pequeno primario', type: 'button', texto: 'Enviar', onclick: () => {
+        el('button', { class: 'botao pequeno', type: 'button', texto: t('Cancelar'), onclick: () => this.desenharMensagens() }),
+        el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Enviar'), onclick: () => {
           if (!area.value.trim()) return;
           this.enviar(area.value.trim(), anexos, this.comp.opcoes(), m.id);
         } })),
-      el('small', { class: 'ajuda', texto: 'Enviar cria uma nova versão a partir daqui; a anterior continua guardada (setas < >).' }));
+      el('small', { class: 'ajuda', texto: t('Enviar cria uma nova versão a partir daqui; a anterior continua guardada (setas < >).') }));
     caixa.replaceChildren(editor);
     area.focus();
   }
@@ -388,15 +397,15 @@ class TelaConversa {
       catch (e) { aviso(e.message, 'erro'); }
     };
     return el('span', { class: 'versoes' },
-      el('button', { class: 'icone-botao', type: 'button', 'aria-label': 'Versão anterior', html: ic('esq'), disabled: i <= 0, onclick: () => ir(irmaos[i - 1]) }),
+      el('button', { class: 'icone-botao', type: 'button', 'aria-label': t('Versão anterior'), html: ic('esq'), disabled: i <= 0, onclick: () => ir(irmaos[i - 1]) }),
       `${i + 1}/${irmaos.length}`,
-      el('button', { class: 'icone-botao', type: 'button', 'aria-label': 'Próxima versão', html: ic('dir'), disabled: i >= irmaos.length - 1, onclick: () => ir(irmaos[i + 1]) }));
+      el('button', { class: 'icone-botao', type: 'button', 'aria-label': t('Próxima versão'), html: ic('dir'), disabled: i >= irmaos.length - 1, onclick: () => ir(irmaos[i + 1]) }));
   }
 
-  elementoTurno(t, ultimo) {
+  elementoTurno(turno, ultimo) {
     const blocos = el('div', { class: 'blocos', style: 'display:grid;gap:12px' });
-    renderizarTurno(blocos, t.respostas);
-    const assistentes = t.respostas.filter((r) => r.papel === 'assistant');
+    renderizarTurno(blocos, turno.respostas);
+    const assistentes = turno.respostas.filter((r) => r.papel === 'assistant');
     const primeira = assistentes[0];
     const ultima = assistentes[assistentes.length - 1];
     const custoTurno = assistentes.reduce((s, r) => s + (r.custo_usd || 0), 0);
@@ -406,34 +415,36 @@ class TelaConversa {
     const notas = [];
     for (const r of assistentes) {
       const meta = r.meta || {};
-      if (meta.recusa) notas.push(nota('O Claude recusou parte deste pedido pelas regras de segurança da Anthropic.'));
-      if (meta.respondido_por) notas.push(nota(`Respondido pelo ${modeloInfo(meta.respondido_por).nome}, porque o modelo escolhido recusou o pedido.`, 'info'));
-      if (meta.stop === 'max_tokens') notas.push(nota('A resposta chegou ao tamanho máximo e foi cortada. Mande "continue".'));
+      if (meta.recusa) notas.push(nota(t('O Claude recusou parte deste pedido pelas regras de segurança da Anthropic.')));
+      if (meta.respondido_por) notas.push(nota(t('Respondido pelo {modelo}, porque o modelo escolhido recusou o pedido.', { modelo: modeloInfo(meta.respondido_por).nome }), 'info'));
+      if (meta.stop === 'max_tokens') notas.push(nota(t('A resposta chegou ao tamanho máximo e foi cortada. Mande "continue".')));
     }
     const nomeModelo = ultima?.modelo ? modeloInfo(ultima.modelo).nome : '';
     const acoes = el('div', { class: 'acoes-msg' },
       primeira ? this.navVersoes(primeira.irmaos, primeira.id) : null,
-      el('button', { class: 'icone-botao', type: 'button', title: 'Copiar resposta', 'aria-label': 'Copiar resposta', html: ic('copiar'), onclick: (e) => copiarTexto(texto, e.currentTarget) }),
-      el('button', { class: 'icone-botao', type: 'button', title: 'Gerar outra resposta', 'aria-label': 'Gerar outra resposta', html: ic('refazer'), onclick: (e) => this.menuRegenerar(e.currentTarget, t.usuario.id) }),
-      mudouArquivos && execId ? el('button', { class: 'botao pequeno fantasma', type: 'button', html: `${ic('desfazer')}Desfazer mudanças`, onclick: () => this.desfazer(execId) }) : null,
+      el('button', { class: 'icone-botao', type: 'button', title: t('Copiar resposta'), 'aria-label': t('Copiar resposta'), html: ic('copiar'), onclick: (e) => copiarTexto(texto, e.currentTarget) }),
+      el('button', { class: 'icone-botao', type: 'button', title: t('Gerar outra resposta'), 'aria-label': t('Gerar outra resposta'), html: ic('refazer'), onclick: (e) => this.menuRegenerar(e.currentTarget, turno.usuario.id) }),
+      mudouArquivos && execId ? el('button', { class: 'botao pequeno fantasma', type: 'button', html: `${ic('desfazer')}${t('Desfazer mudanças')}`, onclick: () => this.desfazer(execId) }) : null,
       el('span', { class: 'meta', texto: [nomeModelo, cfg().mostrar_custo && custoTurno ? usd(custoTurno) : ''].filter(Boolean).join(' · ') }));
     const meta = (ultima?.meta || {});
-    return el('div', { class: 'msg-claude', dados: { turno: t.usuario.id } }, blocos, ...notas,
-      meta.interrompida ? nota('Resposta interrompida.', 'info') : null,
+    return el('div', { class: 'msg-claude', dados: { turno: turno.usuario.id } }, blocos, ...notas,
+      meta.interrompida ? nota(t('Resposta interrompida.'), 'info') : null,
       acoes);
   }
 
   menuRegenerar(ancora, usuarioId) {
-    const itens = [{ texto: 'Tentar de novo', sub: 'Com o modelo e o raciocínio escolhidos embaixo', icone: 'refazer', acao: () => this.regenerar(usuarioId) }, '-', { titulo: 'Com outro modelo' }];
+    const itens = [{ texto: t('Tentar de novo'), sub: t('Com o modelo e o raciocínio escolhidos embaixo'), icone: 'refazer', acao: () => this.regenerar(usuarioId) }, '-', { titulo: t('Com outro modelo') }];
     for (const m of estado.info?.modelos || []) itens.push({ texto: m.nome, sub: m.resumo, acao: () => this.regenerar(usuarioId, { ...this.comp.opcoes(), modelo: m.id }) });
     menu(ancora, itens, { acima: true });
   }
 
   async desfazer(execId) {
-    if (!await confirmar('Voltar os arquivos que esta resposta criou ou mudou para como estavam antes dela?', { titulo: 'Desfazer mudanças', sim: 'Desfazer' })) return;
+    if (!await confirmar(t('Voltar os arquivos que esta resposta criou ou mudou para como estavam antes dela?'), { titulo: t('Desfazer mudanças'), sim: t('Desfazer') })) return;
     try {
       const r = await api(`/execucoes/${execId}/desfazer`, { metodo: 'POST' });
-      aviso(r.arquivos.length ? `${r.arquivos.length} arquivo(s) voltaram ao que eram.` : 'Nada para desfazer (já tinha sido desfeito).');
+      const n = r.arquivos.length;
+      aviso(!n ? t('Nada para desfazer (já tinha sido desfeito).')
+        : n === 1 ? t('{n} arquivo voltou ao que era.', { n }) : t('{n} arquivos voltaram ao que eram.', { n }));
     } catch (e) { aviso(e.message, 'erro'); }
   }
 
@@ -507,7 +518,7 @@ class Vivo {
   }
 
   evento(ev) {
-    const t = this.tela;
+    const tela = this.tela;
     switch (ev.tipo) {
       case 'chamando':
         this.chamada += 1;
@@ -620,18 +631,25 @@ class Vivo {
         this.fluxos.get(ev.fluxo)?.evento(ev);
         if (ev.tipo === 'fluxo_fim') this.mostrarIndicador();
         break;
-      case 'modo_mudou':
-        t.comp.definirPermissao?.(ev.permissao);
-        aviso(`Plano aprovado. Permissão agora: ${{ perguntar: 'Perguntar', aceitar_edicoes: 'Aceitar edições', livre: 'Livre' }[ev.permissao] || ev.permissao}.`);
+      case 'modo_mudou': {
+        tela.comp.definirPermissao?.(ev.permissao);
+        const modo = { perguntar: t('Perguntar'), aceitar_edicoes: t('Aceitar edições'), livre: t('Livre') }[ev.permissao] || ev.permissao;
+        aviso(t('Plano aprovado. Permissão agora: {modo}.', { modo }));
         break;
+      }
       case 'regra_salva':
-        aviso(`Regra salva ${ev.escopo === 'pasta' ? 'nesta pasta' : 'no Clave'}: ${ev.regra}`);
+        aviso(ev.escopo === 'pasta' ? t('Regra salva nesta pasta: {regra}', { regra: ev.regra }) : t('Regra salva no Clave: {regra}', { regra: ev.regra }));
         break;
-      case 'rotina_parou':
+      case 'rotina_parou': {
         this.tirarIndicador();
-        this.alvo.append(nota(`A rotina parou: precisaria do seu OK para ${ev.motivo || 'uma ação'}${ev.alvo ? ` (${ev.alvo})` : ''}. Para ela fazer isso sozinha, crie uma regra${ev.sugestao ? `, por exemplo ${ev.sugestao}` : ''}.`, '',
-          el('a', { class: 'botao pequeno', href: '#/permissoes', texto: 'Abrir permissões' })));
+        const acao = (ev.motivo || t('uma ação')) + (ev.alvo ? ` (${ev.alvo})` : '');
+        const texto = ev.sugestao
+          ? t('A rotina parou: precisaria do seu OK para {acao}. Para ela fazer isso sozinha, crie uma regra, por exemplo {sugestao}.', { acao, sugestao: ev.sugestao })
+          : t('A rotina parou: precisaria do seu OK para {acao}. Para ela fazer isso sozinha, crie uma regra.', { acao });
+        this.alvo.append(nota(texto, '',
+          el('a', { class: 'botao pequeno', href: '#/permissoes', texto: t('Abrir permissões') })));
         break;
+      }
       case 'ferramenta_rodando': {
         const det = this.achar(ev.id);
         det?.classList.add('rodando');
@@ -650,14 +668,14 @@ class Vivo {
         break;
       }
       case 'tarefas':
-        t.desenharTarefas(ev.tarefas);
+        tela.desenharTarefas(ev.tarefas);
         break;
       case 'uso':
-        t.comp.definirContexto(ev.contexto, 1_000_000);
+        tela.comp.definirContexto(ev.contexto, 1_000_000);
         atualizarOrcamento(ev.orcamento);
         break;
       case 'alerta_orcamento':
-        aviso(ev.porcentagem >= 100 ? 'Você chegou ao teto de gasto deste mês.' : `Você já usou ${ev.porcentagem}% do teto de gasto deste mês.`, ev.porcentagem >= 95 ? 'erro' : '');
+        aviso(ev.porcentagem >= 100 ? t('Você chegou ao teto de gasto deste mês.') : t('Você já usou {pct}% do teto de gasto deste mês.', { pct: ev.porcentagem }), ev.porcentagem >= 95 ? 'erro' : '');
         break;
       case 'aviso':
         this.tirarIndicador();
@@ -667,13 +685,13 @@ class Vivo {
       case 'erro':
         this.tirarIndicador();
         this.alvo.append(nota(ev.mensagem, 'erro', ev.codigo === 'sem_chave'
-          ? el('a', { class: 'botao pequeno', href: '#/config/conta', texto: 'Colar a chave' })
-          : ev.codigo === 'teto' ? el('a', { class: 'botao pequeno', href: '#/config/limite', texto: 'Ver o teto' }) : null));
+          ? el('a', { class: 'botao pequeno', href: '#/config/conta', texto: t('Colar a chave') })
+          : ev.codigo === 'teto' ? el('a', { class: 'botao pequeno', href: '#/config/limite', texto: t('Ver o teto') }) : null));
         this.rolar();
         break;
       case 'fim':
         this.tirarIndicador();
-        t.terminou(ev);
+        tela.terminou(ev);
         break;
       default:
         break;

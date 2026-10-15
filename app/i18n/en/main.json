@@ -1,0 +1,7 @@
+{
+  "Voltar ao início": "Back to start",
+  "Abra o Clave pelo atalho": "Open Clave from its shortcut",
+  "Esta janela não tem a sessão do Clave (ela é criada quando você abre pelo atalho Clave na área de trabalho ou pelo Clave.bat). Feche e abra de novo por lá.": "This window doesn't have a Clave session (it's created when you open Clave from the Clave shortcut on the desktop or from Clave.bat). Close it and open it again from there.",
+  "Navegação": "Navigation",
+  "Rotina \"{nome}\": {status}.": "Routine \"{nome}\": {status}."
+}

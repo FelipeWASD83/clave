@@ -1,0 +1,28 @@
+{
+  "displayName": "Escrita",
+  "description": "E-mails, revisão de texto, resumos e atas de reunião, no tom certo para cada ocasião.",
+  "skills": {
+    "ata-de-reuniao": {
+      "description": "Use para transformar anotações soltas ou a transcrição de uma reunião numa ata organizada, com decisões e tarefas com dono e prazo."
+    },
+    "email-profissional": {
+      "description": "Use para escrever ou responder um e-mail de trabalho (pedido, cobrança, resposta a cliente, recusa educada, follow-up). Curto, claro e no tom certo."
+    },
+    "resumir-documento": {
+      "description": "Use para resumir um documento longo (PDF anexado, contrato, relatório, artigo, transcrição) em níveis, sem perder números e prazos importantes."
+    },
+    "revisar-texto": {
+      "description": "Use para revisar um texto em português (erros de gramática e digitação, clareza, frases longas) sem mudar o sentido nem a voz de quem escreveu."
+    }
+  },
+  "commands": {
+    "email": {
+      "description": "Escreve um e-mail de trabalho no tom certo",
+      "argument-hint": "[para quem e o que você quer]"
+    },
+    "revisar": {
+      "description": "Revisa um texto (gramática e clareza) sem mudar o sentido",
+      "argument-hint": "[cole o texto depois do comando]"
+    }
+  }
+}

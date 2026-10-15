@@ -1,26 +1,26 @@
 ---
 name: relatorio-em-pdf
-description: Use quando a pessoa pedir um relatório, documento ou resumo para imprimir ou mandar em PDF. Monta uma página bonita em HTML e converte em PDF pelo Microsoft Edge, que vem no Windows.
+description: Use when the person asks for a report, document or summary to print or send as a PDF. Builds a nice page in HTML and converts it to PDF through Microsoft Edge, which comes with Windows.
 ---
 
-# Relatório em PDF
+# PDF report
 
-## 1. Conteúdo primeiro
-- Junte os dados (planilha, arquivos, o que a pessoa disse) e confira os números antes de formatar.
-- Estrutura: título, data, resumo de 3 a 5 linhas no topo, depois as seções, e no fim as fontes ou observações.
+## 1. Content first
+- Gather the data (spreadsheet, files, what the person said) and check the numbers before formatting.
+- Structure: title, date, a 3 to 5 line summary at the top, then the sections, and at the end the sources or notes.
 
-## 2. Página HTML
-Crie `relatorio.html` (ou o nome que fizer sentido) na pasta, num arquivo só, com o CSS dentro da página:
-- Fonte do sistema (`font-family: "Segoe UI", Arial, sans-serif`), corpo em 11pt, títulos maiores.
-- Página A4 para impressão: `@page { size: A4; margin: 18mm; }`.
-- Tabelas com cabeçalho destacado e linhas alternadas; números alinhados à direita.
-- Evite quebra no meio de tabela pequena: `tr, figure { break-inside: avoid; }`.
-- Sem imagem da internet: se precisar de imagem, use arquivo da pasta.
+## 2. HTML page
+Create `relatorio.html` (or whatever name makes sense) in the folder, as a single file, with the CSS inside the page:
+- System font (`font-family: "Segoe UI", Arial, sans-serif`), body at 11pt, larger headings.
+- A4 page for printing: `@page { size: A4; margin: 18mm; }`.
+- Tables with a highlighted header and alternating rows; numbers right-aligned.
+- Avoid page breaks in the middle of a small table: `tr, figure { break-inside: avoid; }`.
+- No image from the internet: if you need an image, use a file from the folder.
 
-No chat (sem pasta), entregue o HTML num bloco ```html: a pessoa vê a prévia e pode salvar.
+In chat (no folder), deliver the HTML in an ```html block: the person sees the preview and can save it.
 
-## 3. Converter em PDF (modo Code)
-O Edge faz isso sem abrir janela. Rode (ajuste os caminhos):
+## 3. Convert to PDF (Code mode)
+Edge does this without opening a window. Run (adjust the paths):
 
 ```powershell
 $edge = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
@@ -29,7 +29,7 @@ $html = (Resolve-Path ".\relatorio.html").Path
 & $edge --headless --disable-gpu --no-pdf-header-footer --print-to-pdf="$PWD\relatorio.pdf" "file:///$($html -replace '\\','/')"
 ```
 
-Depois confira que `relatorio.pdf` existe e tem tamanho maior que zero. Se for uma planilha que já está pronta no Excel, `excel_no_app` com `pdf` é mais simples.
+Then check that `relatorio.pdf` exists and is larger than zero bytes. If it is a spreadsheet that is already finished in Excel, `excel_no_app` with `pdf` is simpler.
 
-## 4. Entregar
-Diga onde estão o HTML (para editar) e o PDF, e ofereça abrir o PDF com `excel_abrir`.
+## 4. Deliver
+Say where the HTML (to edit) and the PDF are, and offer to open the PDF with `excel_abrir`.

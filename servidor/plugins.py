@@ -23,6 +23,8 @@ import zipfile
 from pathlib import Path
 
 import config
+import i18n
+from i18n import t
 
 EMBUTIDOS = config.RAIZ / "plugins"
 LIMITE_BAIXADO = 60 * 1024 * 1024
@@ -46,13 +48,13 @@ def _slug(nome: str) -> str:
 def ler_manifesto(pasta: Path) -> dict:
     arq = Path(pasta) / ".claude-plugin" / "plugin.json"
     if not arq.is_file():
-        raise ErroPlugin("Não é um plugin: falta o arquivo .claude-plugin/plugin.json.")
+        raise ErroPlugin(t("Não é um plugin: falta o arquivo .claude-plugin/plugin.json."))
     try:
         dados = json.loads(arq.read_text(encoding="utf-8-sig"))
     except ValueError as e:
-        raise ErroPlugin(f"O plugin.json não é um JSON válido ({e}).") from e
+        raise ErroPlugin(t("O plugin.json não é um JSON válido ({erro}).", erro=e)) from e
     if not isinstance(dados, dict) or not str(dados.get("name") or "").strip():
-        raise ErroPlugin("O plugin.json precisa ter o campo \"name\".")
+        raise ErroPlugin(t("O plugin.json precisa ter o campo \"name\"."))
     return dados
 
 
@@ -81,11 +83,12 @@ def analisar(pasta: Path) -> dict:
     pasta = Path(pasta)
     m = ler_manifesto(pasta)
     nome = _slug(str(m["name"]))
+    pt = i18n.guardado_pt(pasta)  # plugins do app vêm em inglês, com o português guardado ao lado
     info = {
         "nome": nome,
-        "titulo": str(m.get("displayName") or m.get("title") or m["name"]),
+        "titulo": str(pt.get("displayName") or m.get("displayName") or m.get("title") or m["name"]),
         "versao": str(m.get("version") or ""),
-        "descricao": str(m.get("description") or ""),
+        "descricao": str(pt.get("description") or m.get("description") or ""),
         "autor": (m.get("author") or {}).get("name", "") if isinstance(m.get("author"), dict) else str(m.get("author") or ""),
         "site": str(m.get("homepage") or m.get("repository") or "") if not isinstance(m.get("repository"), dict)
         else str(m["repository"].get("url") or ""),
@@ -98,19 +101,24 @@ def analisar(pasta: Path) -> dict:
                 arq = d / "SKILL.md"
                 if arq.is_file():
                     fm = _frontmatter(arq.read_text(encoding="utf-8", errors="replace"))
-                    info["skills"].append({"nome": str(fm.get("name") or d.name), "descricao": str(fm.get("description") or "")})
+                    sk = str(fm.get("name") or d.name)
+                    info["skills"].append({"nome": sk, "descricao": str((pt.get("skills", {}).get(sk) or {}).get("description")
+                                                                          or fm.get("description") or "")})
     for base in _caminhos(pasta, m, "agents", "agents"):
         if base.is_dir():
             for arq in sorted(base.glob("*.md")):
                 fm = _frontmatter(arq.read_text(encoding="utf-8", errors="replace"))
-                info["agentes"].append({"nome": str(fm.get("name") or arq.stem), "descricao": str(fm.get("description") or ""),
+                ag = str(fm.get("name") or arq.stem)
+                info["agentes"].append({"nome": ag, "descricao": str((pt.get("agents", {}).get(ag) or {}).get("description")
+                                                                       or fm.get("description") or ""),
                                         "modelo": str(fm.get("model") or "")})
     for base in _caminhos(pasta, m, "commands", "commands"):
         if base.is_dir():
             for arq in sorted(base.rglob("*.md")):
                 fm = _frontmatter(arq.read_text(encoding="utf-8", errors="replace"))
                 rel = arq.relative_to(base).with_suffix("").as_posix().replace("/", ":")
-                info["comandos"].append({"nome": rel, "descricao": str(fm.get("description") or "")})
+                info["comandos"].append({"nome": rel, "descricao": str((pt.get("commands", {}).get(rel) or {}).get("description")
+                                                                        or fm.get("description") or "")})
     fl = pasta / "fluxos"
     if fl.is_dir():
         for arq in sorted(fl.glob("*.json")):
@@ -118,10 +126,9 @@ def analisar(pasta: Path) -> dict:
                 d = json.loads(arq.read_text(encoding="utf-8"))
                 info["fluxos"].append({"nome": d.get("nome") or arq.stem, "descricao": d.get("descricao", "")})
             except ValueError:
-                info["avisos"].append(f"Modelo de fluxo inválido: {arq.name}")
+                info["avisos"].append(t("Modelo de fluxo inválido: {arquivo}", arquivo=arq.name))
     if (pasta / "hooks").exists() or m.get("hooks"):
-        info["avisos"].append("Traz hooks (comandos que rodam sozinhos a cada evento). O Clave não usa hooks: "
-                              "essa parte fica desligada.")
+        info["avisos"].append(t("Traz hooks (comandos que rodam sozinhos a cada evento). O Clave não usa hooks: essa parte fica desligada."))
     mcp_arq = pasta / ".mcp.json"
     mcp = m.get("mcpServers")
     if mcp_arq.is_file():
@@ -135,10 +142,9 @@ def analisar(pasta: Path) -> dict:
             if isinstance(cfg_srv, dict) and str(cfg_srv.get("url") or "").startswith("https://"):
                 info["mcp_remotos"].append({"nome": nome_srv, "url": cfg_srv["url"]})
             else:
-                info["avisos"].append(f"O conector \"{nome_srv}\" roda no computador (MCP local); o Clave só usa "
-                                      "conectores na internet, então ele fica de fora.")
+                info["avisos"].append(t("O conector \"{nome}\" roda no computador (MCP local); o Clave só usa conectores na internet, então ele fica de fora.", nome=nome_srv))
     if (pasta / ".lsp.json").exists() or m.get("lspServers"):
-        info["avisos"].append("Traz servidores de linguagem (LSP), que o Clave não usa.")
+        info["avisos"].append(t("Traz servidores de linguagem (LSP), que o Clave não usa."))
     return info
 
 
@@ -234,7 +240,7 @@ def instalar_de_pasta(origem: Path, fonte: str = "") -> dict:
 def remover(nome: str) -> None:
     destino = instalados_dir() / _slug(nome)
     if not destino.is_dir():
-        raise ErroPlugin("Só dá para remover plugin instalado; os que vêm com o Clave dá para desligar.")
+        raise ErroPlugin(t("Só dá para remover plugin instalado; os que vêm com o Clave dá para desligar."))
     shutil.rmtree(destino)
     est = _estado()
     est.pop(_slug(nome), None)
@@ -245,30 +251,30 @@ def remover(nome: str) -> None:
 
 def _ref_github(texto: str) -> tuple[str, str, str]:
     """'dono/repo', 'dono/repo#v1', 'https://github.com/dono/repo/tree/main' -> (dono, repo, ref)."""
-    t = (texto or "").strip()
+    txt = (texto or "").strip()
     ref = ""
-    if "#" in t:
-        t, ref = t.split("#", 1)
-    if t.startswith(("http://", "https://")):
-        u = urllib.parse.urlparse(t)
+    if "#" in txt:
+        txt, ref = txt.split("#", 1)
+    if txt.startswith(("http://", "https://")):
+        u = urllib.parse.urlparse(txt)
         if u.netloc.lower() not in ("github.com", "www.github.com"):
-            raise ErroPlugin("Só dá para instalar do GitHub (github.com/dono/repositório).")
+            raise ErroPlugin(t("Só dá para instalar do GitHub (github.com/dono/repositório)."))
         partes_url = [p for p in u.path.split("/") if p]
         if len(partes_url) < 2:
-            raise ErroPlugin("Endereço do GitHub incompleto.")
+            raise ErroPlugin(t("Endereço do GitHub incompleto."))
         dono, repo = partes_url[0], partes_url[1]
         if len(partes_url) >= 4 and partes_url[2] == "tree" and not ref:
             ref = "/".join(partes_url[3:])
     else:
-        partes_txt = t.split("/")
+        partes_txt = txt.split("/")
         if len(partes_txt) != 2:
-            raise ErroPlugin("Escreva dono/repositório, por exemplo: anthropics/claude-plugins.")
+            raise ErroPlugin(t("Escreva dono/repositório, por exemplo: anthropics/claude-plugins."))
         dono, repo = partes_txt
     repo = repo.removesuffix(".git")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", dono) or not re.fullmatch(r"[A-Za-z0-9_.-]+", repo):
-        raise ErroPlugin("Nome de repositório inválido.")
+        raise ErroPlugin(t("Nome de repositório inválido."))
     if ref and not re.fullmatch(r"[A-Za-z0-9_./-]+", ref):
-        raise ErroPlugin("Versão (ref) inválida.")
+        raise ErroPlugin(t("Versão (ref) inválida."))
     return dono, repo, ref or "HEAD"
 
 
@@ -280,12 +286,12 @@ def _baixar_zip(dono: str, repo: str, ref: str) -> bytes:
             dados = r.read(LIMITE_BAIXADO + 1)
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            raise ErroPlugin("Repositório não encontrado (ou é privado).") from e
-        raise ErroPlugin(f"O GitHub respondeu {e.code}.") from e
+            raise ErroPlugin(t("Repositório não encontrado (ou é privado).")) from e
+        raise ErroPlugin(t("O GitHub respondeu {codigo}.", codigo=e.code)) from e
     except (urllib.error.URLError, OSError) as e:
-        raise ErroPlugin(f"Sem conexão com o GitHub ({e}).") from e
+        raise ErroPlugin(t("Sem conexão com o GitHub ({erro}).", erro=e)) from e
     if len(dados) > LIMITE_BAIXADO:
-        raise ErroPlugin("O repositório é grande demais para um plugin (mais de 60 MB).")
+        raise ErroPlugin(t("O repositório é grande demais para um plugin (mais de 60 MB)."))
     return dados
 
 
@@ -296,13 +302,13 @@ def extrair_zip(dados: bytes, destino: Path) -> Path:
     with zipfile.ZipFile(io.BytesIO(dados)) as z:
         nomes = z.infolist()
         if len(nomes) > LIMITE_ARQUIVOS:
-            raise ErroPlugin("O pacote tem arquivos demais para um plugin.")
+            raise ErroPlugin(t("O pacote tem arquivos demais para um plugin."))
         if sum(i.file_size for i in nomes) > LIMITE_BAIXADO * 3:
-            raise ErroPlugin("O pacote descompactado é grande demais.")
+            raise ErroPlugin(t("O pacote descompactado é grande demais."))
         for i in nomes:
             alvo = (destino / i.filename).resolve()
             if not alvo.is_relative_to(base):
-                raise ErroPlugin("O pacote tenta gravar fora da pasta; instalação cancelada.")
+                raise ErroPlugin(t("O pacote tenta gravar fora da pasta; instalação cancelada."))
             if (i.external_attr >> 16) & 0o170000 == 0o120000:
                 continue  # atalho (symlink): ignorado
             if i.is_dir():
@@ -330,7 +336,7 @@ def preparar_github(texto: str, _baixar=None) -> dict:
         try:
             dados = json.loads(mkt.read_text(encoding="utf-8-sig"))
         except ValueError as e:
-            raise ErroPlugin(f"O marketplace.json não é um JSON válido ({e}).") from e
+            raise ErroPlugin(t("O marketplace.json não é um JSON válido ({erro}).", erro=e)) from e
         for ent in dados.get("plugins") or []:
             fonte = ent.get("source")
             if isinstance(fonte, str) and fonte.startswith("./"):
@@ -345,25 +351,24 @@ def preparar_github(texto: str, _baixar=None) -> dict:
                          "version": ent.get("version", "")}), encoding="utf-8")
                     candidatos.append({**analisar(p), "fonte": f"{dono}/{repo}#{ref}:{fonte}"})
             elif isinstance(fonte, dict) and fonte.get("source") == "github" and fonte.get("repo"):
-                avisos.append(f"\"{ent.get('name')}\" mora em outro repositório ({fonte['repo']}): instale "
-                              f"por lá.")
+                avisos.append(t("\"{nome}\" mora em outro repositório ({repo}): instale por lá.", nome=ent.get("name"),
+                                repo=fonte["repo"]))
             else:
-                avisos.append(f"\"{ent.get('name')}\" usa um tipo de origem que o Clave não instala.")
+                avisos.append(t("\"{nome}\" usa um tipo de origem que o Clave não instala.", nome=ent.get("name")))
     elif (raiz / ".claude-plugin" / "plugin.json").is_file():
         candidatos.append({**analisar(raiz), "fonte": f"{dono}/{repo}#{ref}"})
     else:
         shutil.rmtree(tmp, ignore_errors=True)
-        raise ErroPlugin("Esse repositório não tem plugin do Claude Code (.claude-plugin/plugin.json) nem "
-                         "marketplace (.claude-plugin/marketplace.json).")
+        raise ErroPlugin(t("Esse repositório não tem plugin do Claude Code (.claude-plugin/plugin.json) nem marketplace (.claude-plugin/marketplace.json)."))
     return {"id": pid, "repositorio": f"{dono}/{repo}", "ref": ref, "plugins": candidatos, "avisos": avisos}
 
 
 def instalar_preparado(pid: str, nomes: list[str]) -> list[dict]:
     if not re.fullmatch(r"[a-z0-9._-]+", pid or ""):
-        raise ErroPlugin("Identificador inválido.")
+        raise ErroPlugin(t("Identificador inválido."))
     tmp = instalados_dir() / ".baixando" / pid
     if not tmp.is_dir():
-        raise ErroPlugin("O download expirou; procure o repositório de novo.")
+        raise ErroPlugin(t("O download expirou; procure o repositório de novo."))
     feitos = []
     try:
         for d in [p for p in tmp.rglob("plugin.json") if p.parent.name == ".claude-plugin"]:

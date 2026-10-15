@@ -239,3 +239,14 @@
   .comparacao-valor { grid-column: 1 / -1; text-align: left; }
 }
 .tabela td.num { white-space: nowrap; }
+
+/* ---------- Preços e planos: cartões dos modelos ---------- */
+.cartoes-modelos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 32px; }
+.cartao-modelo { display: grid; grid-template-rows: auto 1fr; padding: 0; border: 1px solid var(--linha); border-radius: var(--raio-g); background: var(--papel); overflow: hidden; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.cartao-modelo:hover { border-color: var(--acao); }
+.cartao-modelo .modelo-arte { border-radius: 0; height: 120px; }
+.cartao-modelo .modelo-arte img { max-width: 92px; }
+.cartao-modelo-corpo { display: grid; gap: 10px; padding: 14px 16px 16px; align-content: start; }
+.cartao-modelo-nome { display: flex; align-items: center; gap: 8px; font-size: 15.5px; }
+.secao-com-link { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.secao-com-link a { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-size: 13.5px; color: var(--acao); }

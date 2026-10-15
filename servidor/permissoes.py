@@ -26,10 +26,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import config
+from i18n import t
 
 ACOES = ("deny", "ask", "allow")
 NOME_ACAO = {"deny": "negar", "ask": "perguntar", "allow": "permitir"}
-ESCOPOS = {"app": "todo o Clave", "pasta": "esta pasta", "tarefa": "esta tarefa", "comando": "o comando de barra"}
+ESCOPOS = {"app": "todo o Clave", "pasta": "esta pasta", "tarefa": "esta tarefa", "comando": "o comando de barra"}  # mostrar com t()
 
 # ferramentas do Claude Code que o Clave entende, e o que cada uma vira aqui
 CONHECIDAS = {
@@ -74,7 +75,8 @@ class Regra:
         return analisar(self.texto)[1]
 
     def descrever(self) -> str:
-        return f"regra \"{self.texto}\" ({ESCOPOS.get(self.escopo, self.escopo)})"
+        escopo = t(ESCOPOS[self.escopo]) if self.escopo in ESCOPOS else self.escopo
+        return t("regra \"{regra}\" ({escopo})", regra=self.texto, escopo=escopo)
 
 
 def analisar(texto: str) -> tuple[str, str | None]:
@@ -94,24 +96,23 @@ def analisar(texto: str) -> tuple[str, str | None]:
 
 
 def validar(texto: str) -> str | None:
-    """Mensagem de erro em português, ou None se a regra é boa."""
+    """Mensagem de erro (no idioma de quem usa), ou None se a regra é boa."""
     texto = (texto or "").strip()
     if not texto:
-        return "A regra está vazia."
+        return t("A regra está vazia.")
     m = _REGRA.match(texto)
     if not m:
-        return "Escreva no formato Ferramenta(padrão), por exemplo Bash(git status *) ou Edit(docs/**)."
+        return t("Escreva no formato Ferramenta(padrão), por exemplo Bash(git status *) ou Edit(docs/**).")
     nome = m.group(1)
     if nome.startswith("mcp__"):
         if nome.rstrip("_") == "mcp" or "*" in nome.replace("__*", ""):
-            return "Para conector, use mcp__nome-do-conector ou mcp__nome-do-conector__ferramenta."
+            return t("Para conector, use mcp__nome-do-conector ou mcp__nome-do-conector__ferramenta.")
         return None
     if nome not in CONHECIDAS:
-        return (f"\"{nome}\" não é uma ferramenta conhecida. Use Bash, Read, Edit, WebFetch, WebSearch, Agent, "
-                "Fluxo, GitHub ou mcp__conector.")
+        return t("\"{nome}\" não é uma ferramenta conhecida. Use Bash, Read, Edit, WebFetch, WebSearch, Agent, Fluxo, GitHub ou mcp__conector.", nome=nome)
     padrao = m.group(2)
     if CONHECIDAS[nome] == "WebFetch" and padrao and not padrao.strip().startswith("domain:"):
-        return "Para páginas da web, use WebFetch(domain:exemplo.com)."
+        return t("Para páginas da web, use WebFetch(domain:exemplo.com).")
     return None
 
 
@@ -142,15 +143,16 @@ def ler_pasta(pasta: Path | None) -> tuple[list[Regra], list[str]]:
         try:
             dados = json.loads(arq.read_text(encoding="utf-8-sig"))
         except (OSError, ValueError) as e:
-            avisos.append(f"{arq}: não deu para ler ({e}).")
+            avisos.append(t("{arquivo}: não deu para ler ({erro}).", arquivo=arq, erro=e))
             continue
         perm = dados.get("permissions") if isinstance(dados, dict) else None
         if isinstance(perm, dict):
             regras += _do_dict(perm, "pasta", str(arq))
             for acao in ACOES:
-                for t in perm.get(acao) or []:
-                    if isinstance(t, str) and validar(t):
-                        avisos.append(f"{arq.name}: regra ignorada \"{t}\" ({validar(t)})")
+                for texto in perm.get(acao) or []:
+                    if isinstance(texto, str) and validar(texto):
+                        avisos.append(t("{arquivo}: regra ignorada \"{regra}\" ({erro})", arquivo=arq.name, regra=texto,
+                                        erro=validar(texto)))
     return regras, avisos
 
 
@@ -168,16 +170,16 @@ def coletar(cfg: dict | None, pasta: Path | None, tarefa: list[Regra] | None = N
 def salvar_na_pasta(pasta: Path, acao: str, texto: str) -> Path:
     """Guarda a regra em .claude/settings.local.json (o arquivo pessoal do Claude Code, fora do git)."""
     if acao not in ACOES or validar(texto):
-        raise ValueError(validar(texto) or "Ação inválida.")
+        raise ValueError(validar(texto) or t("Ação inválida."))
     arq = Path(pasta) / ".claude" / "settings.local.json"
     dados: dict = {}
     if arq.is_file():
         try:
             dados = json.loads(arq.read_text(encoding="utf-8-sig"))
         except ValueError as e:
-            raise ValueError(f"O arquivo {arq} não é um JSON válido; conserte antes ({e}).") from e
+            raise ValueError(t("O arquivo {arquivo} não é um JSON válido; conserte antes ({erro}).", arquivo=arq, erro=e)) from e
         if not isinstance(dados, dict):
-            raise ValueError(f"O arquivo {arq} não tem o formato esperado.")
+            raise ValueError(t("O arquivo {arquivo} não tem o formato esperado.", arquivo=arq))
     perm = dados.setdefault("permissions", {})
     lista = perm.setdefault(acao, [])
     if texto not in lista:
@@ -208,7 +210,7 @@ def remover_da_pasta(pasta: Path, acao: str, texto: str) -> bool:
 
 def salvar_no_app(acao: str, texto: str) -> None:
     if acao not in ACOES or validar(texto):
-        raise ValueError(validar(texto) or "Ação inválida.")
+        raise ValueError(validar(texto) or t("Ação inválida."))
     cfg = config.carregar()
     perm = {a: list((cfg.get("permissoes") or {}).get(a) or []) for a in ACOES}
     if texto not in perm[acao]:

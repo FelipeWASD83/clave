@@ -1,22 +1,22 @@
 ---
 name: pesquisa-com-fontes
-description: Use quando a resposta depende de informação atual ou verificável (preço, versão, regra, notícia, especificação). Pesquisa na web, prefere fonte primária e põe fonte e data em cada fato.
+description: Use when the answer depends on current or verifiable information (price, version, rule, news, specification). Searches the web, prefers primary sources and puts a source and a date on every fact.
 ---
 
-# Pesquisa com fontes
+# Research with sources
 
-Precisa da busca na web ligada (botão **Web** na caixa de mensagem). Se estiver desligada, diga isso e responda só o que você sabe, avisando que pode estar desatualizado.
+Needs web search turned on (the **Web** button in the message box). If it is off, say so and answer only what you know, warning that it may be out of date.
 
-## Como pesquisar
-1. Transforme o pedido em 2 a 4 perguntas objetivas.
-2. Faça várias buscas com palavras diferentes (inclusive em inglês, quando o assunto for técnico).
-3. Abra as páginas e leia o trecho que importa; não confie só no resumo da busca.
-4. Prefira, nesta ordem: fonte oficial ou primária (fabricante, documentação, órgão público, artigo original), veículo especializado, o resto. Desconfie de página que só copia outra.
-5. Anote a data de cada informação. Preço, versão e regra mudam rápido; para compras no Brasil, procure o preço daqui.
+## How to research
+1. Turn the request into 2 to 4 objective questions.
+2. Run several searches with different words (including in other languages, such as English for technical subjects).
+3. Open the pages and read the part that matters; don't trust only the search summary.
+4. Prefer, in this order: an official or primary source (manufacturer, documentation, public body, original article), a specialized outlet, then the rest. Distrust a page that only copies another.
+5. Note the date of each piece of information. Prices, versions and rules change fast; for purchases, look for the price where the person lives.
 
-## Como responder
-- Comece pela resposta direta.
-- Cada fato importante com a fonte entre parênteses ou como link, e a data quando importar.
-- Se as fontes discordarem, mostre as duas versões e diga qual parece mais confiável e por quê.
-- No fim, diga o que você **não** conseguiu confirmar.
-- Nunca invente link, número ou citação.
+## How to answer
+- Start with the direct answer.
+- Each important fact with its source in parentheses or as a link, and the date when it matters.
+- If the sources disagree, show both versions and say which seems more reliable and why.
+- At the end, say what you could **not** confirm.
+- Never invent a link, number or quote.

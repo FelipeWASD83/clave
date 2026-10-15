@@ -13,6 +13,7 @@ from pathlib import Path
 import anexos
 import banco
 from ferramentas import excel
+from i18n import t
 
 _ID = {"type": "string", "description": "O id do arquivo (aparece em <planilha anexada id=...> ou no resultado de planilha_criar)."}
 
@@ -55,9 +56,9 @@ NOMES = {"planilha_ler", "planilha_criar", "planilha_pdf"}
 def _caminho_anexo(aid: str) -> tuple[Path, dict]:
     reg = banco.anexo(str(aid or "").strip())
     if not reg:
-        raise excel.ErroExcel(f"Não achei o arquivo com id {aid}.")
+        raise excel.ErroExcel(t("Não achei o arquivo com id {id}.", id=aid))
     if reg["tipo"] != excel.MIME_XLSX:
-        raise excel.ErroExcel(f"O arquivo {reg['nome']} não é uma planilha .xlsx.")
+        raise excel.ErroExcel(t("O arquivo {nome} não é uma planilha .xlsx.", nome=reg["nome"]))
     return anexos.caminho(reg["id"]), reg
 
 
@@ -89,12 +90,12 @@ def executar(nome: str, e: dict) -> str:
             if e.get("recalcular"):
                 try:
                     excel.no_excel(destino, "recalcular")
-                    nota = "\nFórmulas calculadas pelo Excel; use planilha_ler para conferir os valores."
+                    nota = "\n" + t("Fórmulas calculadas pelo Excel; use planilha_ler para conferir os valores.")
                 except excel.ErroExcel as erro:
-                    nota = f"\n(Não deu para recalcular: {erro})"
+                    nota = "\n" + t("(Não deu para recalcular: {erro})", erro=erro)
             reg = anexos.salvar(nome_arq, destino.read_bytes(), origem="gerado")
         resumo = resumo.replace(str(destino), nome_arq)
-        return f"{resumo}{nota}\nArquivo pronto para a pessoa baixar: {nome_arq} (id {reg['id']}). Diga a ela que o botão de baixar aparece aqui na conversa."
+        return f"{resumo}{nota}\n" + t("Arquivo pronto para a pessoa baixar: {nome} (id {id}). Diga a ela que o botão de baixar aparece aqui na conversa.", nome=nome_arq, id=reg["id"])
     if nome == "planilha_pdf":
         caminho, reg = _caminho_anexo(e.get("anexo_id"))
         with tempfile.TemporaryDirectory() as tmp:
@@ -103,5 +104,5 @@ def executar(nome: str, e: dict) -> str:
             saida = entrada.with_suffix(".pdf")
             excel.no_excel(entrada, "pdf", saida)
             novo = anexos.salvar(saida.name, saida.read_bytes(), origem="gerado")
-        return f"PDF pronto para a pessoa baixar: {novo['nome']} (id {novo['id']})."
-    raise excel.ErroExcel(f"Ferramenta desconhecida: {nome}")
+        return t("PDF pronto para a pessoa baixar: {nome} (id {id}).", nome=novo["nome"], id=novo["id"])
+    raise excel.ErroExcel(t("Ferramenta desconhecida: {nome}", nome=nome))

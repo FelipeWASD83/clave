@@ -1,33 +1,33 @@
 ---
 name: criar-skill
-description: Use quando a pessoa quiser ensinar ao Claude um jeito fixo de fazer uma tarefa que ela repete (um procedimento, um checklist, um padrão de texto). Entrevista a pessoa e escreve a skill no formato do Claude Code.
+description: Use when the person wants to teach Claude a fixed way of doing a task they repeat (a procedure, a checklist, a text pattern). Interviews the person and writes the skill in the Claude Code format.
 ---
 
-# Criar uma skill
+# Create a skill
 
-Uma skill é um arquivo `SKILL.md` com instruções que o Claude carrega quando a tarefa combina com a descrição. Funciona no Clave e no Claude Code.
+A skill is a `SKILL.md` file with instructions that Claude loads when the task matches the description. It works in Clave and in Claude Code.
 
-## 1. Entrevista (curta)
-Pergunte, no máximo 4 coisas por vez:
-- Que tarefa é essa, e quando ela aparece? (vira a descrição)
-- Como você faz hoje, passo a passo? Tem um exemplo de resultado bom?
-- O que não pode acontecer de jeito nenhum?
-- Vale para todo lugar (skill pessoal) ou só para uma pasta (skill da pasta)?
+## 1. Interview (short)
+Ask, at most 4 things at a time:
+- What task is it, and when does it come up? (becomes the description)
+- How do you do it today, step by step? Is there an example of a good result?
+- What must never happen?
+- Does it apply everywhere (personal skill) or only to one folder (folder skill)?
 
-## 2. Escrever
-- Pasta: `.claude/skills/<nome>/SKILL.md` na pasta de trabalho (skill da pasta) ou `~/.claude/skills/<nome>/SKILL.md` (pessoal, vale em toda pasta). No chat, sem pasta, mostre o arquivo pronto e diga onde salvar.
-- Nome: minúsculo, com hífen (`relatorio-mensal`).
-- Cabeçalho:
+## 2. Write
+- Location: `.claude/skills/<name>/SKILL.md` in the working folder (folder skill) or `~/.claude/skills/<name>/SKILL.md` (personal, applies in every folder). In chat, with no folder, show the finished file and say where to save it.
+- Name: lowercase, with hyphens (`relatorio-mensal`).
+- Header:
 
 ```markdown
 ---
 name: relatorio-mensal
-description: Use quando ... (diga QUANDO usar, com as palavras que a pessoa usaria ao pedir)
+description: Use when ... (say WHEN to use it, with the words the person would use when asking)
 ---
 ```
 
-  Opcionais: `disable-model-invocation: true` (só roda quando a pessoa chama por /nome), `argument-hint: [mês]`.
-- Corpo: passos numerados, regras curtas, um exemplo de resultado. Menos de 500 linhas. Arquivos de apoio (modelos, exemplos) na mesma pasta, citados com link.
+  Optional: `disable-model-invocation: true` (only runs when the person calls it with /name), `argument-hint: [month]`.
+- Body: numbered steps, short rules, an example of the result. Under 500 lines. Support files (templates, examples) go in the same folder, cited with a link.
 
-## 3. Testar
-Mostre como chamar: `/nome-da-skill` na caixa de mensagem (ou só pedir a tarefa, e o Claude carrega sozinho). Ofereça ajustar depois do primeiro uso.
+## 3. Test
+Show how to call it: `/skill-name` in the message box (or just ask for the task, and Claude loads it on its own). Offer to adjust it after the first use.

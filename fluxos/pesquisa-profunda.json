@@ -1,15 +1,28 @@
 {
-  "nome": "Pesquisa profunda",
-  "descricao": "Três Haiku 5.5 pesquisam ângulos diferentes ao mesmo tempo e um Sonnet 5.5 junta tudo com as fontes.",
-  "pede": "o assunto e o que você quer descobrir",
+  "nome": "Deep research",
+  "descricao": "Three Haiku 5.5 research different angles at the same time and a Sonnet 5.5 puts everything together with the sources.",
+  "pede": "the subject and what you want to find out",
   "etapas": [
-    {"nome": "Pesquisar: fatos e números", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium",
-     "tarefa": "Pesquise os fatos principais e os números (preços, datas, versões) sobre o assunto, com fontes.", "pode": ["web"]},
-    {"nome": "Pesquisar: prós e contras", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium", "paralelo": true,
-     "tarefa": "Pesquise vantagens, desvantagens e problemas conhecidos, com fontes.", "pode": ["web"]},
-    {"nome": "Pesquisar: alternativas", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium", "paralelo": true,
-     "tarefa": "Pesquise as alternativas e como elas se comparam, com fontes.", "pode": ["web"]},
-    {"nome": "Juntar", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
-     "tarefa": "Junte as três pesquisas num texto só: conclusão primeiro, depois os detalhes, com as fontes. Aponte onde as fontes discordam.", "pode": []}
-  ]
+    {"nome": "Research: facts and numbers", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium",
+     "tarefa": "Research the main facts and the numbers (prices, dates, versions) on the subject, with sources.", "pode": ["web"]},
+    {"nome": "Research: pros and cons", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium", "paralelo": true,
+     "tarefa": "Research advantages, disadvantages and known problems, with sources.", "pode": ["web"]},
+    {"nome": "Research: alternatives", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium", "paralelo": true,
+     "tarefa": "Research the alternatives and how they compare, with sources.", "pode": ["web"]},
+    {"nome": "Combine", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Combine the three pieces of research into a single text: conclusion first, then the details, with the sources. Point out where the sources disagree.", "pode": []}
+  ],
+  "i18n": {
+    "pt-BR": {
+      "nome": "Pesquisa profunda",
+      "descricao": "Três Haiku 5.5 pesquisam ângulos diferentes ao mesmo tempo e um Sonnet 5.5 junta tudo com as fontes.",
+      "pede": "o assunto e o que você quer descobrir",
+      "etapas": [
+        {"nome": "Pesquisar: fatos e números", "tarefa": "Pesquise os fatos principais e os números (preços, datas, versões) sobre o assunto, com fontes."},
+        {"nome": "Pesquisar: prós e contras", "tarefa": "Pesquise vantagens, desvantagens e problemas conhecidos, com fontes."},
+        {"nome": "Pesquisar: alternativas", "tarefa": "Pesquise as alternativas e como elas se comparam, com fontes."},
+        {"nome": "Juntar", "tarefa": "Junte as três pesquisas num texto só: conclusão primeiro, depois os detalhes, com as fontes. Aponte onde as fontes discordam."}
+      ]
+    }
+  }
 }

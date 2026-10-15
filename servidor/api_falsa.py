@@ -75,7 +75,7 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
             conteudo = " ".join(b.get("text", "") for b in conteudo if b.get("type") == "text")
         if res.get("is_error"):
             return [{"type": "text", "text": "A ação não foi feita: " + str(conteudo)[:300]}], "end_turn"
-        if str(conteudo).startswith("Plano aprovado") and "escrever_arquivo" in nomes:
+        if str(conteudo).startswith(("Plano aprovado", "Plan approved")) and "escrever_arquivo" in nomes:
             return [{"type": "text", "text": "Plano aprovado. Executando o passo 1."},
                     {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "escrever_arquivo",
                      "input": {"caminho": "exemplo-do-plano.txt", "conteudo": "Feito depois do plano aprovado.\n"}}], \
@@ -86,14 +86,14 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     if etapa and not _tem_resultado(ultima):
         m = texto_etapa.split("<sua_etapa nome=\"", 1)
         nome_etapa = m[1].split("\"", 1)[0] if len(m) > 1 else "etapa"
-        if "escrever_arquivo" in nomes and "crie" in texto_etapa.lower():
+        if "escrever_arquivo" in nomes and any(p in texto_etapa.lower() for p in ("crie", "create")):
             return [{"type": "text", "text": f"Etapa {nome_etapa}: vou criar o arquivo."},
                     {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "escrever_arquivo",
                      "input": {"caminho": "exemplo-do-fluxo.txt", "conteudo": "Criado por uma etapa de fluxo.\n"}}], \
                 "tool_use"
         return [{"type": "text", "text": f"Relatório da etapa \"{nome_etapa}\": analisei o pedido e deixei tudo "
                  "pronto para a próxima etapa. (Demonstração: com a chave de verdade, o modelo faria de fato.)"}], "end_turn"
-    if not _tem_resultado(ultima) and "executar_fluxo" in nomes and "fluxo" in texto_etapa.lower():
+    if not _tem_resultado(ultima) and "executar_fluxo" in nomes and any(p in texto_etapa.lower() for p in ("fluxo", "workflow")):
         com_pasta = "escrever_arquivo" in nomes
         etapas = [{"nome": "Planejar", "agente": "planejador", "modelo": "opus", "esforco": "high",
                    "tarefa": "Entenda o pedido e escreva um plano curto.", "pode": ["ler"] if com_pasta else []},
@@ -108,13 +108,13 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "executar_fluxo",
                  "input": {"titulo": "Fluxo de demonstração", "objetivo": "Mostrar como um fluxo funciona.",
                            "etapas": etapas}}], "tool_use"
-    if not _tem_resultado(ultima) and "sugerir_conversa" in nomes and "outra conversa" in texto_etapa.lower():
+    if not _tem_resultado(ultima) and "sugerir_conversa" in nomes and any(p in texto_etapa.lower() for p in ("outra conversa", "another chat")):
         return [{"type": "text", "text": "Respondi o que você pediu. Notei uma coisa que vale fazer à parte:"},
                 {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "sugerir_conversa",
                  "input": {"titulo": "Organizar as fotos por data",
                            "pedido": "Explique em linguagem simples como organizar fotos em pastas por ano e mês.",
                            "por_que": "É um trabalho separado deste e fica melhor numa conversa própria."}}], "tool_use"
-    if _tem_resultado(ultima) and str(conteudo).startswith("A sugestão apareceu"):
+    if _tem_resultado(ultima) and str(conteudo).startswith(("A sugestão apareceu", "The suggestion appeared")):
         return [{"type": "text", "text": "Se quiser, é só abrir pelo cartão."}], "end_turn"
     if not _tem_resultado(ultima) and "apresentar_plano" in nomes:
         return [{"type": "text", "text": "Olhei a pasta. Este é o plano:"},
@@ -128,12 +128,12 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     if pensa:
         blocos.append({"type": "thinking", "thinking": "Vou entender o pedido e montar uma resposta curta e "
                        "organizada, com um exemplo de cada formato."})
-    if "escrever_arquivo" in nomes and ("crie" in texto or "criar" in texto):
+    if "escrever_arquivo" in nomes and any(p in texto for p in ("crie", "criar", "create")):
         blocos.append({"type": "text", "text": "Vou criar um arquivo de exemplo na pasta."})
         blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "escrever_arquivo",
                        "input": {"caminho": "exemplo-do-clave.txt", "conteudo": "Arquivo criado pela demonstração.\n"}})
         return blocos, "tool_use"
-    if "listar_pasta" in nomes and any(p in texto for p in ("pasta", "arquivo", "organiz", "lista")):
+    if "listar_pasta" in nomes and any(p in texto for p in ("pasta", "arquivo", "organiz", "lista", "folder", "file", "organi", "list")):
         blocos.append({"type": "text", "text": "Primeiro vou ver o que tem na pasta."})
         blocos.append({"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "listar_pasta",
                        "input": {}})

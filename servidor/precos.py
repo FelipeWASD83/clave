@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta
 import banco
 import modelos
 import orcamento
+from i18n import t
 
 PLANOS = [
     {"id": "pro", "nome": "Pro", "preco": 20.0, "preco_anual": 17.0, "multiplicador": 1, "credito_api": 0,
@@ -43,8 +44,18 @@ PERFIS = {
 }
 
 
+def planos() -> list[dict]:
+    """Os planos com o texto ("fonte") no idioma de quem usa; PLANOS fica em português, como dado."""
+    return [{**p, "fonte": t(p["fonte"])} for p in PLANOS]
+
+
+def perfis() -> dict[str, dict]:
+    """Os perfis de mensagem com nome e descrição no idioma de quem usa."""
+    return {k: {**p, "nome": t(p["nome"]), "descricao": t(p["descricao"])} for k, p in PERFIS.items()}
+
+
 def plano(pid: str) -> dict:
-    return next((p for p in PLANOS if p["id"] == pid), PLANOS[0])
+    return next((p for p in planos() if p["id"] == pid), planos()[0])
 
 
 def custo_mensagem(modelo: str, perfil: str = "curta", raciocinio: bool = True) -> float:
@@ -99,13 +110,13 @@ def estimar(d: dict) -> dict:
     if d.get("mensagens_dia") not in (None, ""):
         por_dia = max(0.0, float(d["mensagens_dia"]))
         mensagens_mes = por_dia * DIAS_POR_MES
-        base = "mensagens por dia"
+        base = t("mensagens por dia")
     else:
         janelas = min(42.0, max(0.0, float(d.get("janelas") or 0)))
         pct = min(100.0, max(0.0, float(d.get("porcentagem") or 0)))
         por_semana = janelas * pct / 100 * MENSAGENS_POR_JANELA_PRO * p["multiplicador"]
         mensagens_mes = por_semana * SEMANAS_POR_MES
-        base = "janelas de 5 h"
+        base = t("janelas de 5 h")
     reais = medias_reais()
     linhas = []
     for m in modelos.lista_publica():

@@ -53,6 +53,7 @@ import estatisticas  # noqa: E402
 import fluxos  # noqa: E402
 import github_api  # noqa: E402
 import modelo_pasta  # noqa: E402
+import lancamentos  # noqa: E402
 import modelos  # noqa: E402
 import orcamento  # noqa: E402
 import permissoes  # noqa: E402
@@ -63,6 +64,7 @@ import segredos  # noqa: E402
 import sistema  # noqa: E402
 import tutoriais  # noqa: E402
 from ferramentas import memoria  # noqa: E402
+from i18n import t  # noqa: E402
 
 SEM_SENHA = os.environ.get("CLAVE_SEM_SENHA") == "1"
 DEMO = bool(os.environ.get("CLAVE_API_FALSA"))
@@ -174,7 +176,7 @@ class Manipulador(BaseHTTPRequestHandler):
     def corpo_bruto(self, limite=40 * 1024 * 1024) -> bytes:
         n = int(self.headers.get("Content-Length") or 0)
         if n > limite:
-            raise Erro(413, "Arquivo grande demais.")
+            raise Erro(413, t("Arquivo grande demais."))
         return self.rfile.read(n) if n else b""
 
     def corpo(self) -> dict:
@@ -184,9 +186,9 @@ class Manipulador(BaseHTTPRequestHandler):
         try:
             d = json.loads(bruto)
         except ValueError:
-            raise Erro(400, "JSON inválido.")
+            raise Erro(400, t("JSON inválido."))
         if not isinstance(d, dict):
-            raise Erro(400, "JSON inválido.")
+            raise Erro(400, t("JSON inválido."))
         return d
 
     def query(self) -> dict:
@@ -213,25 +215,25 @@ class Manipulador(BaseHTTPRequestHandler):
         global _ultimo_sinal
         try:
             if not self._host_ok():
-                return self._json({"erro": "Host não permitido."}, 403)
+                return self._json({"erro": t("Host não permitido.")}, 403)
             caminho = urllib.parse.urlparse(self.path).path
             if caminho.startswith("/api/"):
                 if not self._sessao_ok():
-                    return self._json({"erro": "Sessão inválida. Abra o Clave pelo atalho Clave.bat.",
+                    return self._json({"erro": t("Sessão inválida. Abra o Clave pelo atalho Clave.bat."),
                                        "codigo": "sessao"}, 401)
                 if metodo != "GET" and not self._origem_ok():
-                    return self._json({"erro": "Origem não permitida."}, 403)
+                    return self._json({"erro": t("Origem não permitida.")}, 403)
                 _ultimo_sinal = time.time()
                 for m, rx, fn in ROTAS:
                     if m == metodo:
                         achou = rx.match(caminho)
                         if achou:
                             return fn(self, **achou.groupdict())
-                return self._json({"erro": "Rota não encontrada."}, 404)
+                return self._json({"erro": t("Rota não encontrada.")}, 404)
             if caminho.startswith("/previa/") and metodo == "GET":
                 return self._previa(caminho.rsplit("/", 1)[-1])
             if metodo != "GET":
-                return self._json({"erro": "Método não permitido."}, 405)
+                return self._json({"erro": t("Método não permitido.")}, 405)
             return self._estatico(caminho)
         except Erro as e:
             self._json({"erro": e.mensagem}, e.status)
@@ -240,7 +242,7 @@ class Manipulador(BaseHTTPRequestHandler):
         except Exception as e:
             traceback.print_exc()
             try:
-                self._json({"erro": f"Erro interno: {e}"}, 500)
+                self._json({"erro": t("Erro interno: {erro}", erro=e)}, 500)
             except OSError:
                 pass
 
@@ -255,6 +257,15 @@ class Manipulador(BaseHTTPRequestHandler):
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
+        if caminho == "/i18n/en.json":  # o catálogo em inglês da interface: um arquivo por tela, juntado aqui
+            junto: dict = {}
+            for arq in sorted((config.APP / "i18n" / "en").glob("*.json")):
+                try:
+                    junto.update(json.loads(arq.read_text(encoding="utf-8")))
+                except (OSError, ValueError):
+                    pass
+            return self._bytes(json.dumps(junto, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8",
+                               cab={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"})
         rel = "index.html" if caminho in ("/", "") else urllib.parse.unquote(caminho.lstrip("/"))
         base = config.APP.resolve()
         alvo = (base / rel).resolve()
@@ -276,7 +287,7 @@ class Manipulador(BaseHTTPRequestHandler):
     def _previa(self, pid: str):
         item = _previas.get(pid)
         if not item:
-            return self._bytes("Prévia expirada. Abra de novo pela conversa.".encode(), "text/plain; charset=utf-8",
+            return self._bytes(t("Prévia expirada. Abra de novo pela conversa.").encode(), "text/plain; charset=utf-8",
                                404)
         self._bytes(item[1].encode("utf-8"), "text/html; charset=utf-8",
                     cab={"Content-Security-Policy": CSP_PREVIA, "Cache-Control": "no-store",
@@ -316,7 +327,7 @@ def r_estado(h: Manipulador):
         "estilos": config.estilos(cfg),
         "orcamento": orcamento.situacao(),
         "modelos": modelos.lista_publica(cfg.get("modelos_antigos"), _modelos_cache["lista"]),
-        "esforcos": [{"id": e, "nome": modelos.NOMES_ESFORCO[e]} for e in modelos.ESFORCOS],
+        "esforcos": [{"id": e, "nome": t(modelos.NOMES_ESFORCO[e])} for e in modelos.ESFORCOS],
         "github": {"origem": cfg.get("github_origem"), "gh_instalado": github_api.gh_instalado(),
                    "tem_token": segredos.existe("github_token")},
         "atualizacao": atual,
@@ -329,17 +340,17 @@ def r_estado(h: Manipulador):
 def r_chave(h: Manipulador):
     chave = (h.corpo().get("chave") or "").strip()
     if not chave.startswith("sk-ant-"):
-        raise Erro(400, "Essa não parece uma chave da API da Anthropic (ela começa com sk-ant-).")
+        raise Erro(400, t("Essa não parece uma chave da API da Anthropic (ela começa com sk-ant-)."))
     import anthropic
     try:
         cli = anthropic.Anthropic(api_key=chave, max_retries=1, timeout=30)
         ids = [m.id for m in cli.models.list(limit=100).data]
     except anthropic.AuthenticationError:
-        raise Erro(400, "A Anthropic recusou essa chave. Confira se copiou inteira e se ela não foi apagada.")
+        raise Erro(400, t("A Anthropic recusou essa chave. Confira se copiou inteira e se ela não foi apagada."))
     except anthropic.APIConnectionError:
-        raise Erro(400, "Sem conexão com a Anthropic para conferir a chave. Confira a internet.")
+        raise Erro(400, t("Sem conexão com a Anthropic para conferir a chave. Confira a internet."))
     except anthropic.APIStatusError as e:
-        raise Erro(400, f"A Anthropic respondeu {e.status_code} ao conferir a chave.")
+        raise Erro(400, t("A Anthropic respondeu {codigo} ao conferir a chave.", codigo=e.status_code))
     segredos.guardar("anthropic", chave)
     _modelos_cache.update(em=time.time(), lista=ids)
     h._json({"ok": True, "modelos": ids, "chave": segredos.mascarar(chave)})
@@ -370,11 +381,13 @@ def r_config(h: Manipulador):
             try:
                 v = float(v)
             except (TypeError, ValueError):
-                raise Erro(400, f"Valor inválido em {k}.")
+                raise Erro(400, t("Valor inválido em {campo}.", campo=k))
             lo, hi = CAMPOS_NUMERICOS[k]
             v = max(lo, min(hi, v))
             if k in ("dia_virada", "compactar_em", "tamanho_letra"):
                 v = int(v)
+        if k == "idioma" and v not in config.IDIOMAS:
+            raise Erro(400, t("Valor inválido em {campo}.", campo=k))
         limpo[k] = v
     cfg = config.salvar(limpo)
     h._json({"cfg": _cfg_publica(cfg), "estilos": config.estilos(cfg), "orcamento": orcamento.situacao()})
@@ -393,7 +406,7 @@ def r_conector_token(h: Manipulador):
     d = h.corpo()
     nome = re.sub(r"[^\w-]", "-", str(d.get("nome") or ""))
     if not nome:
-        raise Erro(400, "Conector sem nome.")
+        raise Erro(400, t("Conector sem nome."))
     token = str(d.get("token") or "").strip()
     if token:
         segredos.guardar(f"mcp:{nome}", token)
@@ -431,14 +444,14 @@ def r_conversa_nova(h: Manipulador):
     if modo == "code":
         pasta = str(Path(d.get("pasta") or "").expanduser())
         if not d.get("pasta") or not Path(pasta).is_dir():
-            raise Erro(400, "Escolha uma pasta que exista para o modo Code.")
+            raise Erro(400, t("Escolha uma pasta que exista para o modo Code."))
         pasta = str(Path(pasta).resolve())
         cfg = config.carregar()
         recentes = [pasta] + [p for p in cfg.get("pastas_recentes") or [] if p != pasta]
         config.salvar({"pastas_recentes": recentes[:12]})
     projeto_id = d.get("projeto_id") or None
     if projeto_id and not banco.projeto(projeto_id):
-        raise Erro(404, "Projeto não encontrado.")
+        raise Erro(404, t("Projeto não encontrado."))
     c = banco.criar_conversa(modo=modo, projeto_id=projeto_id, pasta=pasta)
     h._json({"conversa": c})
 
@@ -446,7 +459,7 @@ def r_conversa_nova(h: Manipulador):
 def _montar_visao(cid: str) -> dict:
     conv = banco.conversa(cid)
     if not conv:
-        raise Erro(404, "Conversa não encontrada.")
+        raise Erro(404, t("Conversa não encontrada."))
     caminho = banco.caminho(cid)
     for m in caminho:
         if m["papel"] == "user" and m["tipo"] == "normal" or m["papel"] == "assistant":
@@ -475,7 +488,7 @@ def r_conversa(h: Manipulador, cid):
 def r_conversa_editar(h: Manipulador, cid):
     d = h.corpo()
     if not banco.conversa(cid):
-        raise Erro(404, "Conversa não encontrada.")
+        raise Erro(404, t("Conversa não encontrada."))
     campos = {}
     if "titulo" in d:
         campos["titulo"] = str(d["titulo"])[:120]
@@ -493,7 +506,7 @@ def r_conversa_editar(h: Manipulador, cid):
 @rota("DELETE", "/api/conversas/<cid>")
 def r_conversa_apagar(h: Manipulador, cid):
     if execucao.ativa(cid):
-        raise Erro(409, "Pare a resposta antes de apagar a conversa.")
+        raise Erro(409, t("Pare a resposta antes de apagar a conversa."))
     banco.apagar_conversa(cid)
     h._json({"ok": True})
 
@@ -541,9 +554,8 @@ def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, d
         if m:
             texto = fluxos.texto_para_comando(m, pedido_fluxo.strip())
         else:
-            texto = ("Quero que esta tarefa rode como um fluxo, com etapas em modelos diferentes (proponha as etapas, "
-                     "os agentes e os modelos que fizerem sentido e mostre com executar_fluxo):\n\n"
-                     + (sep[1] or "(ainda não disse a tarefa: pergunte qual é)"))
+            texto = (t("Quero que esta tarefa rode como um fluxo, com etapas em modelos diferentes (proponha as etapas, os agentes e os modelos que fizerem sentido e mostre com executar_fluxo):")
+                     + "\n\n" + (sep[1] or t("(ainda não disse a tarefa: pergunte qual é)")))
     elif sep:
         exp = comandos.expandir(texto, pasta)
         if exp:
@@ -552,7 +564,8 @@ def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, d
             meta["tipo_comando"] = exp["tipo"]
             if exp["tipo"] == "skill":
                 meta["skill"] = exp["nome"]
-            texto = (f"Quem usa chamou /{exp['nome']}.\n\n" + exp["texto"]) if exp["tipo"] == "comando" else exp["texto"]
+            texto = (t("Quem usa chamou /{nome}.", nome=exp["nome"]) + "\n\n" + exp["texto"]) if exp["tipo"] == "comando" \
+                else exp["texto"]
             if exp.get("modelo"):
                 import agentes as _ag
                 extras["modelo"] = _ag.resolver_modelo(exp["modelo"], "")
@@ -561,7 +574,7 @@ def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, d
     if texto.strip():
         blocos.append({"type": "text", "text": texto})
     if not blocos:
-        raise Erro(400, "Mensagem vazia.")
+        raise Erro(400, t("Mensagem vazia."))
     return blocos, meta, {k: v for k, v in extras.items() if v}
 
 
@@ -574,12 +587,14 @@ def _nota_de_modo(conv: dict, opcoes: dict) -> str:
     antes = (conv.get("ajustes") or {}).get("permissao") or "perguntar"
     agora = opcoes.get("permissao") or antes
     if agora == "plano":
-        return (f"{execucao.MARCA_MODO}Modo Plano ligado: investigue só lendo (não crie, não edite e não rode comandos) "
-                "e, quando o plano estiver pronto, apresente com a ferramenta apresentar_plano. Quem usa aprova e "
-                f"você segue executando na mesma resposta.{execucao.FIM_MARCA_MODO}")
+        return (execucao.MARCA_MODO + " ".join([
+            t("Modo Plano ligado: investigue só lendo (não crie, não edite e não rode comandos) e, quando o plano estiver pronto, apresente com a ferramenta apresentar_plano."),
+            t("Quem usa aprova e você segue executando na mesma resposta."),
+        ]) + execucao.FIM_MARCA_MODO)
     if antes == "plano":
-        return (f"{execucao.MARCA_MODO}O modo Plano foi desligado; o modo agora é "
-                f"{execucao.NOMES_MODO.get(agora, agora)}. Pode executar normalmente.{execucao.FIM_MARCA_MODO}")
+        nome_modo = t(execucao.NOMES_MODO[agora]) if agora in execucao.NOMES_MODO else agora
+        return (execucao.MARCA_MODO + t("O modo Plano foi desligado; o modo agora é {modo}. Pode executar normalmente.",
+                                        modo=nome_modo) + execucao.FIM_MARCA_MODO)
     return ""
 
 
@@ -594,14 +609,14 @@ def r_enviar(h: Manipulador, cid):
     d = h.corpo()
     conv = banco.conversa(cid)
     if not conv:
-        raise Erro(404, "Conversa não encontrada.")
+        raise Erro(404, t("Conversa não encontrada."))
     if execucao.ativa(cid):
-        raise Erro(409, "Esta conversa ainda está respondendo.")
+        raise Erro(409, t("Esta conversa ainda está respondendo."))
     ok, motivo = orcamento.pode_gastar()
     if not ok:
         raise Erro(402, motivo)
     if not segredos.existe("anthropic") and not DEMO:
-        raise Erro(400, "Falta a chave da API. Cole a sua em Configurações > Conta e chave.")
+        raise Erro(400, t("Falta a chave da API. Cole a sua em Configurações > Conta e chave."))
     _preparar_sistema(conv)
     conv = banco.conversa(cid)
     conteudo, meta, extras = _conteudo_usuario(conv, d.get("texto", ""), d.get("anexos") or [])
@@ -612,7 +627,7 @@ def r_enviar(h: Manipulador, cid):
     if d.get("editar_de"):
         original = banco.mensagem(d["editar_de"])
         if not original or original["conversa_id"] != cid:
-            raise Erro(404, "Mensagem não encontrada.")
+            raise Erro(404, t("Mensagem não encontrada."))
         pai = original["pai_id"]
     msg = banco.adicionar_mensagem(cid, pai, "user", conteudo, meta=meta)
     ex = execucao.iniciar(cid, {**_opcoes(d), **extras})
@@ -624,17 +639,17 @@ def r_enviar(h: Manipulador, cid):
 def r_regenerar(h: Manipulador, cid):
     d = h.corpo()
     if execucao.ativa(cid):
-        raise Erro(409, "Esta conversa ainda está respondendo.")
+        raise Erro(409, t("Esta conversa ainda está respondendo."))
     ok, motivo = orcamento.pode_gastar()
     if not ok:
         raise Erro(402, motivo)
     m = banco.mensagem(d.get("mensagem_id") or "")
     if not m or m["conversa_id"] != cid:
-        raise Erro(404, "Mensagem não encontrada.")
+        raise Erro(404, t("Mensagem não encontrada."))
     while m and not (m["papel"] == "user" and m["tipo"] == "normal"):
         m = banco.mensagem(m["pai_id"]) if m["pai_id"] else None
     if not m:
-        raise Erro(400, "Não achei a pergunta dessa resposta.")
+        raise Erro(400, t("Não achei a pergunta dessa resposta."))
     banco.atualizar_conversa(cid, folha_id=m["id"])
     ex = execucao.iniciar(cid, _opcoes(d))
     h._json({"execucao": ex.id})
@@ -645,9 +660,9 @@ def r_folha(h: Manipulador, cid):
     d = h.corpo()
     m = banco.mensagem(d.get("mensagem_id") or "")
     if not m or m["conversa_id"] != cid:
-        raise Erro(404, "Mensagem não encontrada.")
+        raise Erro(404, t("Mensagem não encontrada."))
     if execucao.ativa(cid):
-        raise Erro(409, "Espere a resposta terminar para trocar de versão.")
+        raise Erro(409, t("Espere a resposta terminar para trocar de versão."))
     banco.atualizar_conversa(cid, folha_id=banco.folha_mais_recente(cid, m["id"]))
     h._json(_montar_visao(cid))
 
@@ -655,11 +670,11 @@ def r_folha(h: Manipulador, cid):
 @rota("GET", "/api/conversas/<cid>/exportar")
 def r_exportar(h: Manipulador, cid):
     v = _montar_visao(cid)
-    linhas = [f"# {v['conversa'].get('titulo') or 'Conversa'}", ""]
+    linhas = [f"# {v['conversa'].get('titulo') or t('Conversa')}", ""]
     for m in v["mensagens"]:
         if m["tipo"] != "normal":
             continue
-        quem = "Você" if m["papel"] == "user" else "Claude"
+        quem = t("Você") if m["papel"] == "user" else "Claude"
         partes = []
         if (m.get("meta") or {}).get("exibir"):
             partes.append(m["meta"]["exibir"])
@@ -668,11 +683,11 @@ def r_exportar(h: Manipulador, cid):
                 if b.get("type") == "text" and not b["text"].startswith(execucao.MARCA_MODO):
                     partes.append(b["text"])
                 elif b.get("type") == "clave_anexo":
-                    partes.append(f"[anexo: {b.get('nome')}]")
+                    partes.append(t("[anexo: {nome}]", nome=b.get("nome")))
         if partes:
             linhas += [f"## {quem}", "", "\n\n".join(partes), ""]
     corpo = "\n".join(linhas).encode("utf-8")
-    nome = re.sub(r"[^\w\- ]", "", v["conversa"].get("titulo") or "conversa")[:60] or "conversa"
+    nome = re.sub(r"[^\w\- ]", "", v["conversa"].get("titulo") or t("conversa"))[:60] or t("conversa")
     h._bytes(corpo, "text/markdown; charset=utf-8",
              cab={"Content-Disposition": f"attachment; filename*=UTF-8''{urllib.parse.quote(nome)}.md"})
 
@@ -684,14 +699,14 @@ def r_ajudante(h: Manipulador, tipo):
     d = h.corpo()
     if tipo == "tutor":
         slug = str(d.get("licao") or "")
-        t = tutoriais.ler(slug)
-        if not t:
-            raise Erro(404, "Lição não encontrada.")
-        chave, titulo, ajustes = f"tutor:{slug}", f"Dúvidas: {t['titulo']}", {"licao": slug}
+        lic = tutoriais.ler(slug)
+        if not lic:
+            raise Erro(404, t("Lição não encontrada."))
+        chave, titulo, ajustes = f"tutor:{slug}", t("Dúvidas: {titulo}", titulo=lic["titulo"]), {"licao": slug}
     elif tipo == "memoria":
-        chave, titulo, ajustes = "memoria", "Editor de memória", {}
+        chave, titulo, ajustes = "memoria", t("Editor de memória"), {}
     else:
-        raise Erro(404, "Ajudante desconhecido.")
+        raise Erro(404, t("Ajudante desconhecido."))
     cfg = config.carregar()
     mapa = dict(cfg.get("ajudantes") or {})
     cid = mapa.get(chave)
@@ -712,7 +727,7 @@ def r_ajudante(h: Manipulador, tipo):
 def r_eventos(h: Manipulador, eid):
     ex = execucao.pegar(eid)
     if not ex:
-        raise Erro(404, "Execução não encontrada.")
+        raise Erro(404, t("Execução não encontrada."))
     desde = int(h.query().get("desde") or 0)
     h.send_response(200)
     h.send_header("Content-Type", "text/event-stream; charset=utf-8")
@@ -755,12 +770,12 @@ def r_aprovar(h: Manipulador, eid):
     d = h.corpo()
     ex = execucao.pegar(eid)
     if not ex:
-        raise Erro(404, "Execução não encontrada.")
+        raise Erro(404, t("Execução não encontrada."))
     decisao = d.get("decisao")
     validas = ("permitir", "permitir_sempre", "permitir_tarefa", "permitir_pasta", "permitir_app", "recusar",
                "executar_perguntar", "executar_aceitar", "executar_livre")
     if decisao not in validas:
-        raise Erro(400, "Decisão inválida.")
+        raise Erro(400, t("Decisão inválida."))
     bruto = d.get("dados") if isinstance(d.get("dados"), dict) else {}
     dados = {}
     if isinstance(bruto.get("regra"), str):
@@ -773,14 +788,14 @@ def r_aprovar(h: Manipulador, eid):
     if isinstance(bruto.get("teto_usd"), (int, float)):
         dados["teto_usd"] = float(bruto["teto_usd"])
     if not ex.decidir(str(d.get("id")), decisao, str(d.get("texto") or "")[:2000], dados):
-        raise Erro(409, "Essa ação não está mais esperando resposta.")
+        raise Erro(409, t("Essa ação não está mais esperando resposta."))
     h._json({"ok": True})
 
 
 @rota("POST", "/api/execucoes/<eid>/desfazer")
 def r_desfazer(h: Manipulador, eid):
     if execucao.pegar(eid) and execucao.pegar(eid).status in ("rodando", "esperando"):
-        raise Erro(409, "Pare a tarefa antes de desfazer.")
+        raise Erro(409, t("Pare a tarefa antes de desfazer."))
     h._json({"arquivos": execucao.desfazer(eid)})
 
 
@@ -790,7 +805,7 @@ def _receber_arquivo(h: Manipulador, projeto_id=None):
     nome = urllib.parse.unquote(h.headers.get("X-Nome-Arquivo") or "arquivo")
     dados = h.corpo_bruto()
     if not dados:
-        raise Erro(400, "Arquivo vazio.")
+        raise Erro(400, t("Arquivo vazio."))
     try:
         return anexos.salvar(Path(nome).name, dados, projeto_id=projeto_id)
     except ValueError as e:
@@ -806,11 +821,11 @@ def r_anexo_novo(h: Manipulador):
 def r_anexo(h: Manipulador, aid):
     reg = banco.anexo(aid)
     if not reg:
-        raise Erro(404, "Anexo não encontrado.")
+        raise Erro(404, t("Anexo não encontrado."))
     try:
         dados = anexos.caminho(aid).read_bytes()
     except OSError:
-        raise Erro(404, "O arquivo do anexo sumiu.")
+        raise Erro(404, t("O arquivo do anexo sumiu."))
     cab = {"Cache-Control": "max-age=86400", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox"}
     if h.query().get("baixar") == "1":
         cab["Content-Disposition"] = f"attachment; filename*=UTF-8''{urllib.parse.quote(reg['nome'])}"
@@ -826,12 +841,12 @@ def r_anexo_abrir(h: Manipulador, aid):
     """Abre uma cópia do arquivo (planilha, PDF) no programa do computador."""
     reg = banco.anexo(aid)
     if not reg:
-        raise Erro(404, "Arquivo não encontrado.")
+        raise Erro(404, t("Arquivo não encontrado."))
     # a extensão vem do tipo conferido, nunca do nome: um "texto" chamado x.bat não pode virar programa
     extensao = {anexos.MIME_XLSX: ".xlsx", "application/pdf": ".pdf", "image/png": ".png", "image/jpeg": ".jpg",
                 "image/gif": ".gif", "image/webp": ".webp", "text/plain": ".txt"}.get(reg["tipo"])
     if not extensao:
-        raise Erro(400, "Esse tipo de arquivo não é aberto pelo Clave.")
+        raise Erro(400, t("Esse tipo de arquivo não é aberto pelo Clave."))
     pasta = config.DADOS / "abertos" / aid
     pasta.mkdir(parents=True, exist_ok=True)
     alvo = pasta / (Path(reg["nome"]).stem[:80] + extensao)
@@ -843,7 +858,7 @@ def r_anexo_abrir(h: Manipulador, aid):
             import subprocess
             subprocess.Popen(["xdg-open", str(alvo)])
     except OSError as e:
-        raise Erro(400, f"Não deu para abrir: {e}")
+        raise Erro(400, t("Não deu para abrir: {erro}", erro=e))
     h._json({"ok": True, "caminho": str(alvo)})
 
 
@@ -859,7 +874,7 @@ def r_projeto_novo(h: Manipulador):
     d = h.corpo()
     nome = (d.get("nome") or "").strip()
     if not nome:
-        raise Erro(400, "Dê um nome ao projeto.")
+        raise Erro(400, t("Dê um nome ao projeto."))
     h._json({"projeto": banco.criar_projeto(nome[:80], (d.get("descricao") or "")[:2000],
                                             (d.get("instrucoes") or "")[:50000])})
 
@@ -868,7 +883,7 @@ def r_projeto_novo(h: Manipulador):
 def r_projeto(h: Manipulador, pid):
     p = banco.projeto(pid)
     if not p:
-        raise Erro(404, "Projeto não encontrado.")
+        raise Erro(404, t("Projeto não encontrado."))
     h._json({"projeto": p, "conversas": banco.listar_conversas(projeto_id=pid)})
 
 
@@ -892,7 +907,7 @@ def r_projeto_apagar(h: Manipulador, pid):
 @rota("POST", "/api/projetos/<pid>/arquivos")
 def r_projeto_arquivo(h: Manipulador, pid):
     if not banco.projeto(pid):
-        raise Erro(404, "Projeto não encontrado.")
+        raise Erro(404, t("Projeto não encontrado."))
     h._json({"anexo": _receber_arquivo(h, projeto_id=pid)})
 
 
@@ -919,12 +934,21 @@ def r_uso_ajuste(h: Manipulador):
     try:
         valor = float(d.get("valor") or 0)
     except (TypeError, ValueError):
-        raise Erro(400, "Valor inválido.")
+        raise Erro(400, t("Valor inválido."))
     cfg = config.carregar()
     ajustes = dict(cfg.get("ajustes") or {})
     ajustes[orcamento.situacao()["chave"]] = max(0.0, valor)
     config.salvar({"ajustes": ajustes})
     h._json({"orcamento": orcamento.situacao()})
+
+
+@rota("GET", "/api/modelos/lancamentos")
+def r_modelos_lancamentos(h: Manipulador):
+    """As fichas dos modelos (cartões de Preços e planos), os lançados há menos de 14 dias que a pessoa não fechou
+    (banner do início) e os que a conta já tem e o Clave ainda não conhece."""
+    cfg = config.carregar()
+    h._json({"fichas": lancamentos.lista(), "novos": lancamentos.novidades(cfg),
+             "desconhecidos": lancamentos.desconhecidos(cfg), "inteligencia": lancamentos.fonte_inteligencia()})
 
 
 @rota("GET", "/api/uso/painel")
@@ -945,7 +969,7 @@ def r_sugestao(h: Manipulador, sid):
 def r_sugestao_dispensar(h: Manipulador, sid):
     origem = banco.conversa(str(h.corpo().get("conversa_id") or ""))
     if not origem:
-        raise Erro(404, "Conversa não encontrada.")
+        raise Erro(404, t("Conversa não encontrada."))
     banco.marcar_sugestao(sid, origem["id"], "dispensada")
     h._json({"ok": True})
 
@@ -955,28 +979,28 @@ def r_sugestao_abrir(h: Manipulador, sid):
     """Abre a conversa que o Claude sugeriu e já manda o pedido dela. Só acontece com o clique de quem usa."""
     origem = banco.conversa(str(h.corpo().get("conversa_id") or ""))
     if not origem:
-        raise Erro(404, "Conversa não encontrada.")
+        raise Erro(404, t("Conversa não encontrada."))
     ja = banco.sugestao(sid)
     if ja and ja["estado"] == "aberta" and ja.get("nova_conversa_id") and banco.conversa(ja["nova_conversa_id"]):
         h._json({"conversa": banco.conversa(ja["nova_conversa_id"]), "ja_aberta": True})
         return
     b = banco.bloco_ferramenta(origem["id"], sid)
     if not b or b.get("name") != "sugerir_conversa":
-        raise Erro(404, "Sugestão não encontrada.")
+        raise Erro(404, t("Sugestão não encontrada."))
     entrada = b.get("input") or {}
     titulo = " ".join(str(entrada.get("titulo") or "").split())[:80]
     pedido = str(entrada.get("pedido") or "").strip()
     if not titulo or not pedido:
-        raise Erro(400, "A sugestão veio sem título ou sem pedido.")
+        raise Erro(400, t("A sugestão veio sem título ou sem pedido."))
     ok, motivo = orcamento.pode_gastar()
     if not ok:
         raise Erro(402, motivo)
     if not segredos.existe("anthropic") and not DEMO:
-        raise Erro(400, "Falta a chave da API. Cole a sua em Configurações > Conta e chave.")
+        raise Erro(400, t("Falta a chave da API. Cole a sua em Configurações > Conta e chave."))
     modo = origem["modo"] if origem["modo"] in ("chat", "code") else "chat"
     pasta = origem.get("pasta") if modo == "code" else None
     if modo == "code" and not (pasta and Path(pasta).is_dir()):
-        raise Erro(400, "A pasta desta conversa não existe mais.")
+        raise Erro(400, t("A pasta desta conversa não existe mais."))
     ajustes = _opcoes({"opcoes": origem.get("ajustes") or {}})
     conv = banco.criar_conversa(modo=modo, projeto_id=origem.get("projeto_id"), pasta=pasta, titulo=titulo, ajustes=ajustes)
     _preparar_sistema(conv)
@@ -995,7 +1019,7 @@ def r_sugestao_abrir(h: Manipulador, sid):
 
 @rota("GET", "/api/precos")
 def r_precos(h: Manipulador):
-    h._json({"modelos": precos.tabela_modelos(), "planos": precos.PLANOS, "perfis": precos.PERFIS,
+    h._json({"modelos": precos.tabela_modelos(), "planos": precos.planos(), "perfis": precos.perfis(),
              "reais": precos.medias_reais(), "projecao": precos.projecao(),
              "mensagens_por_janela": precos.MENSAGENS_POR_JANELA_PRO})
 
@@ -1005,7 +1029,7 @@ def r_precos_estimar(h: Manipulador):
     try:
         h._json(precos.estimar(h.corpo()))
     except (TypeError, ValueError):
-        raise Erro(400, "Algum número da estimativa está inválido.")
+        raise Erro(400, t("Algum número da estimativa está inválido."))
 
 
 # ---------- memória ----------
@@ -1045,7 +1069,7 @@ def r_pastas(h: Manipulador):
         return h._json({"caminho": "", "pai": None, "pastas": [{"nome": d, "caminho": d} for d in discos]})
     p = Path(caminho).expanduser()
     if not p.is_dir():
-        raise Erro(404, "Pasta não encontrada.")
+        raise Erro(404, t("Pasta não encontrada."))
     p = p.resolve()
     pastas = []
     try:
@@ -1056,9 +1080,9 @@ def r_pastas(h: Manipulador):
             except OSError:
                 continue
     except OSError as e:
-        raise Erro(403, f"Sem acesso a essa pasta ({e.strerror}).")
+        raise Erro(403, t("Sem acesso a essa pasta ({erro}).", erro=e.strerror))
     pai = str(p.parent) if p.parent != p else ("::discos" if sys.platform == "win32" else None)
-    atalhos = [{"nome": "Pasta pessoal", "caminho": str(Path.home())}]
+    atalhos = [{"nome": t("Pasta pessoal"), "caminho": str(Path.home())}]
     for nome in ("Desktop", "Documents", "Downloads", "Área de Trabalho", "Documentos"):
         alvo = Path.home() / nome
         if alvo.is_dir():
@@ -1070,7 +1094,7 @@ def r_pastas(h: Manipulador):
 def r_pasta_info(h: Manipulador):
     caminho = h.query().get("caminho") or ""
     if not caminho or not Path(caminho).is_dir():
-        raise Erro(404, "Pasta não encontrada.")
+        raise Erro(404, t("Pasta não encontrada."))
     inst = [{"caminho": a["caminho"], "escopo": a["escopo"], "tamanho": len(a.get("texto", ""))}
             for a in contexto_pasta.instrucoes(caminho)]
     h._json({"instrucoes": inst, "skills": contexto_pasta.skills(caminho)})
@@ -1099,18 +1123,17 @@ def r_gh_conectar(h: Manipulador):
     if origem == "gh":
         tok = github_api.token_do_gh()
         if not tok:
-            raise Erro(400, "O gh não está instalado ou não está logado. Rode 'gh auth login' no terminal, "
-                            "ou use um token pessoal.")
+            raise Erro(400, t("O gh não está instalado ou não está logado. Rode 'gh auth login' no terminal, ou use um token pessoal."))
     elif origem == "token":
         tok = (d.get("token") or "").strip()
         if not tok:
-            raise Erro(400, "Cole o token.")
+            raise Erro(400, t("Cole o token."))
     elif origem in ("", None):
         config.salvar({"github_origem": "", "github_ferramentas": False})
         segredos.apagar("github_token")
         return h._json({"ok": True})
     else:
-        raise Erro(400, "Origem inválida.")
+        raise Erro(400, t("Origem inválida."))
     try:
         u = github_api.pedir("GET", "/user", tok=tok)
     except github_api.ErroGitHub as e:
@@ -1165,10 +1188,10 @@ def r_tutoriais(h: Manipulador):
 
 @rota("GET", "/api/tutoriais/<slug>")
 def r_tutorial(h: Manipulador, slug):
-    t = tutoriais.ler(slug)
-    if not t:
-        raise Erro(404, "Tutorial não encontrado.")
-    h._json(t)
+    lic = tutoriais.ler(slug)
+    if not lic:
+        raise Erro(404, t("Tutorial não encontrado."))
+    h._json(lic)
 
 
 @rota("POST", "/api/tutoriais/<slug>/feito")
@@ -1204,9 +1227,9 @@ def r_atualizacao(h: Manipulador):
 @rota("POST", "/api/atualizacao/aplicar")
 def r_atualizacao_aplicar(h: Manipulador):
     if execucao.alguma_rodando():
-        raise Erro(409, "Espere as respostas em andamento terminarem antes de atualizar.")
+        raise Erro(409, t("Espere as respostas em andamento terminarem antes de atualizar."))
     if os.environ.get("CLAVE_LANCADOR") != "1":
-        raise Erro(400, "Para atualizar, abra o Clave pelo atalho Clave.bat (ele reinicia o app depois).")
+        raise Erro(400, t("Para atualizar, abra o Clave pelo atalho Clave.bat (ele reinicia o app depois)."))
     try:
         r = atualizador.baixar_e_preparar()
     except atualizador.ErroAtualizacao as e:
@@ -1231,8 +1254,8 @@ def r_previa(h: Manipulador):
         html = ("<!doctype html><meta charset=utf-8><style>html,body{margin:0;height:100%;display:grid;"
                 "place-items:center;background:#fff}svg{max-width:100%;max-height:100vh}</style>" + html)
     agora = time.time()
-    for k, (t, _) in list(_previas.items()):
-        if agora - t > 3600:
+    for k, (em, _) in list(_previas.items()):
+        if agora - em > 3600:
             _previas.pop(k, None)
     pid = secrets.token_urlsafe(12)
     _previas[pid] = (agora, html)
@@ -1262,7 +1285,7 @@ def _pasta_param(valor) -> Path | None:
         return None
     p = Path(str(valor)).expanduser()
     if not p.is_dir():
-        raise Erro(400, "Pasta não encontrada.")
+        raise Erro(400, t("Pasta não encontrada."))
     return p.resolve()
 
 
@@ -1286,7 +1309,7 @@ def r_permissao_nova(h: Manipulador):
     d = h.corpo()
     acao, texto = d.get("acao"), str(d.get("regra") or "").strip()
     if acao not in permissoes.ACOES:
-        raise Erro(400, "Ação inválida.")
+        raise Erro(400, t("Ação inválida."))
     erro = permissoes.validar(texto)
     if erro:
         raise Erro(400, erro)
@@ -1294,7 +1317,7 @@ def r_permissao_nova(h: Manipulador):
         if d.get("escopo") == "pasta":
             pasta = _pasta_param(d.get("pasta"))
             if not pasta:
-                raise Erro(400, "Escolha a pasta.")
+                raise Erro(400, t("Escolha a pasta."))
             permissoes.salvar_na_pasta(pasta, acao, texto)
         else:
             permissoes.salvar_no_app(acao, texto)
@@ -1312,7 +1335,7 @@ def r_permissao_apagar(h: Manipulador):
     else:
         ok = permissoes.remover_do_app(acao, texto)
     if not ok:
-        raise Erro(404, "Regra não encontrada.")
+        raise Erro(404, t("Regra não encontrada."))
     h._json({"ok": True})
 
 
@@ -1325,7 +1348,7 @@ def r_permissao_testar(h: Manipulador):
     ferr = str(d.get("ferramenta") or "Bash")
     valor = str(d.get("valor") or "").strip()
     if not valor:
-        raise Erro(400, "Escreva o comando ou o caminho.")
+        raise Erro(400, t("Escreva o comando ou o caminho."))
     modo = d.get("modo") if d.get("modo") in ("perguntar", "aceitar_edicoes", "plano", "livre") else "perguntar"
     cfg = config.carregar()
     ctx = fcode.Contexto(raiz=pasta, protegidos=list(cfg.get("protegidos") or []), execucao_id="teste",
@@ -1338,9 +1361,9 @@ def r_permissao_testar(h: Manipulador):
         if ferr in ("WebFetch", "WebSearch"):
             r = permissoes.nega(ctx.regras, ferr, valor)
             h._json({"decisao": "negar" if r else "auto", "motivo": r.descrever() if r else
-                     "a web segue o botão de busca da conversa", "origem": "regra" if r else "modo"})
+                     t("a web segue o botão de busca da conversa"), "origem": "regra" if r else "modo"})
             return
-        raise Erro(400, "Ferramenta inválida.")
+        raise Erro(400, t("Ferramenta inválida."))
     det = fcode.decidir(nome, entrada, ctx, modo, set())
     det["sugestao"] = permissoes.sugerir(nome, entrada, ctx)
     h._json(det)
@@ -1407,7 +1430,7 @@ def r_fluxos(h: Manipulador):
 def r_fluxo(h: Manipulador, fid):
     f = banco.fluxo(fid)
     if not f:
-        raise Erro(404, "Fluxo não encontrado.")
+        raise Erro(404, t("Fluxo não encontrado."))
     h._json({"fluxo": f})
 
 
@@ -1498,7 +1521,7 @@ def r_plugin_github_instalar(h: Manipulador):
     d = h.corpo()
     nomes = [str(n) for n in (d.get("nomes") or []) if isinstance(n, str)]
     if not nomes:
-        raise Erro(400, "Escolha pelo menos um plugin.")
+        raise Erro(400, t("Escolha pelo menos um plugin."))
     try:
         h._json({"instalados": plugins.instalar_preparado(str(d.get("id") or ""), nomes)})
     except (plugins.ErroPlugin, OSError) as e:

@@ -19,10 +19,12 @@ import zipfile
 from pathlib import Path
 
 import config
+from i18n import t
 
 GERENCIADOS = ["servidor", "app", "electron", "skills", "plugins", "agentes", "fluxos", "tutoriais",
-               "modelo-de-pasta", "ferramentas", "versao.json",
-               "package.json", "requirements.txt", "Clave.bat", "instalar.bat", "README.md", "CHANGELOG.md", "LICENSE"]
+               "modelo-de-pasta", "modelo-de-pasta-en", "ferramentas", "versao.json",
+               "package.json", "requirements.txt", "Clave.bat", "instalar.bat", "README.md", "README.pt-BR.md",
+               "CHANGELOG.md", "CHANGELOG.pt-BR.md", "LICENSE"]
 PASTA = config.DADOS / "atualizacao"
 _CACHE = PASTA / "checagem.json"
 _PRONTA = PASTA / "pronta.json"
@@ -63,7 +65,7 @@ def checar(forcar: bool = False) -> dict:
     atual = config.VERSAO
     base = {"atual": atual, "repositorio": repo, "dev": copia_de_desenvolvimento()}
     if not repo:
-        return {**base, "erro": "Sem repositório configurado em versao.json."}
+        return {**base, "erro": t("Sem repositório configurado em versao.json.")}
     if not forcar:
         try:
             cache = json.loads(_CACHE.read_text(encoding="utf-8"))
@@ -75,10 +77,10 @@ def checar(forcar: bool = False) -> dict:
         rel = _get_json(f"https://api.github.com/repos/{repo}/releases/latest")
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            return {**base, "erro": "O repositório ainda não tem nenhuma versão publicada (ou é privado)."}
-        return {**base, "erro": f"O GitHub respondeu {e.code}."}
+            return {**base, "erro": t("O repositório ainda não tem nenhuma versão publicada (ou é privado).")}
+        return {**base, "erro": t("O GitHub respondeu {codigo}.", codigo=e.code)}
     except (urllib.error.URLError, OSError, ValueError) as e:
-        return {**base, "erro": f"Sem conexão com o GitHub ({e})."}
+        return {**base, "erro": t("Sem conexão com o GitHub ({erro}).", erro=e)}
     versao = (rel.get("tag_name") or "").lstrip("vV")
     pacote = None
     for a in rel.get("assets") or []:
@@ -108,17 +110,17 @@ def _raiz_do_pacote(pasta: Path) -> Path:
     for d in pasta.iterdir():
         if d.is_dir() and (d / "versao.json").is_file():
             return d
-    raise ErroAtualizacao("O pacote baixado não parece ser do Clave (falta versao.json).")
+    raise ErroAtualizacao(t("O pacote baixado não parece ser do Clave (falta versao.json)."))
 
 
 def baixar_e_preparar() -> dict:
     if copia_de_desenvolvimento():
-        raise ErroAtualizacao("Esta é uma cópia de desenvolvimento (tem .git). Atualize com git pull.")
+        raise ErroAtualizacao(t("Esta é uma cópia de desenvolvimento (tem .git). Atualize com git pull."))
     info = checar(forcar=True)
     if info.get("erro"):
         raise ErroAtualizacao(info["erro"])
     if not info.get("nova"):
-        raise ErroAtualizacao("Você já está na versão mais nova.")
+        raise ErroAtualizacao(t("Você já está na versão mais nova."))
     PASTA.mkdir(parents=True, exist_ok=True)
     zip_path = PASTA / "pacote.zip"
     novo = PASTA / "novo"
@@ -129,19 +131,19 @@ def baixar_e_preparar() -> dict:
         h = hashlib.sha256(zip_path.read_bytes()).hexdigest()
         if h != digest.split(":", 1)[1]:
             zip_path.unlink(missing_ok=True)
-            raise ErroAtualizacao("O pacote baixado não confere com a assinatura do GitHub. Tente de novo.")
+            raise ErroAtualizacao(t("O pacote baixado não confere com a assinatura do GitHub. Tente de novo."))
     with zipfile.ZipFile(zip_path) as z:
         for nome in z.namelist():
             alvo = (novo / nome).resolve()
             if not alvo.is_relative_to(novo.resolve()):
-                raise ErroAtualizacao("Pacote com caminho inválido.")
+                raise ErroAtualizacao(t("Pacote com caminho inválido."))
         z.extractall(novo)
     raiz = _raiz_do_pacote(novo)
     v_pacote = json.loads((raiz / "versao.json").read_text(encoding="utf-8")).get("versao", "")
     if not (raiz / "servidor" / "servidor.py").is_file() or not (raiz / "app" / "index.html").is_file():
-        raise ErroAtualizacao("Pacote incompleto.")
+        raise ErroAtualizacao(t("Pacote incompleto."))
     if v_pacote and _versao_tupla(v_pacote) != _versao_tupla(info["ultima"]):
-        raise ErroAtualizacao(f"O pacote diz versão {v_pacote}, mas a release é {info['ultima']}.")
+        raise ErroAtualizacao(t("O pacote diz versão {versao}, mas a release é {release}.", versao=v_pacote, release=info["ultima"]))
     _PRONTA.write_text(json.dumps({"versao": info["ultima"], "pasta": str(raiz), "notas": info.get("notas", "")},
                                   ensure_ascii=False), encoding="utf-8")
     zip_path.unlink(missing_ok=True)
@@ -192,7 +194,7 @@ def aplicar_pendente(raiz_app: Path | None = None) -> dict | None:
     except Exception as e:
         reverter(raiz_app)
         _PRONTA.unlink(missing_ok=True)
-        raise ErroAtualizacao(f"Não deu para trocar os arquivos ({e}); a versão anterior foi restaurada.")
+        raise ErroAtualizacao(t("Não deu para trocar os arquivos ({erro}); a versão anterior foi restaurada.", erro=e))
     _PRONTA.unlink(missing_ok=True)
     shutil.rmtree(PASTA / "novo", ignore_errors=True)
     req_depois = (raiz_app / "requirements.txt").read_bytes() if (raiz_app / "requirements.txt").exists() else b""
@@ -215,7 +217,7 @@ def _restaurar(origem: Path, alvo: Path) -> None:
             _restaurar(item, alvo / item.name)
         shutil.rmtree(origem, ignore_errors=True)
     else:
-        raise ErroAtualizacao(f"Não deu para restaurar {alvo}: o arquivo está em uso.")
+        raise ErroAtualizacao(t("Não deu para restaurar {caminho}: o arquivo está em uso.", caminho=alvo))
 
 
 def reverter(raiz_app: Path | None = None) -> bool:

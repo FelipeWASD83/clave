@@ -13,6 +13,7 @@ from pathlib import Path
 
 import banco
 from config import DADOS
+from i18n import t
 
 IMAGENS = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -69,14 +70,13 @@ def _parece_texto(dados: bytes) -> bool:
 
 def salvar(nome: str, dados: bytes, projeto_id=None, origem="upload") -> dict:
     if len(dados) > LIMITE_BYTES:
-        raise ValueError("Arquivo grande demais (o limite é 30 MB).")
+        raise ValueError(t("Arquivo grande demais (o limite é 30 MB)."))
     tipo = tipo_de(nome, dados)
     if tipo == "application/vnd.ms-excel":
         nome, dados = _converter_xls(nome, dados)
         tipo = MIME_XLSX
     if tipo not in IMAGENS and tipo not in ("application/pdf", "text/plain", MIME_XLSX):
-        raise ValueError("Esse tipo de arquivo não dá para mandar ao Claude. Mande imagem (PNG, JPG, GIF, WebP), "
-                         "PDF, planilha do Excel (.xlsx) ou arquivo de texto e código.")
+        raise ValueError(t("Esse tipo de arquivo não dá para mandar ao Claude. Mande imagem (PNG, JPG, GIF, WebP), PDF, planilha do Excel (.xlsx) ou arquivo de texto e código."))
     reg = banco.registrar_anexo(nome, tipo, len(dados), projeto_id=projeto_id, origem=origem)
     caminho(reg["id"]).write_bytes(dados)
     return reg
@@ -87,7 +87,7 @@ def _converter_xls(nome: str, dados: bytes) -> tuple[str, bytes]:
     import tempfile
     from ferramentas import excel
     if not excel.excel_instalado():
-        raise ValueError("Planilha .xls (formato antigo): abra no Excel e salve como .xlsx antes de mandar.")
+        raise ValueError(t("Planilha .xls (formato antigo): abra no Excel e salve como .xlsx antes de mandar."))
     with tempfile.TemporaryDirectory() as tmp:
         entrada = Path(tmp) / "planilha.xls"
         entrada.write_bytes(dados)
@@ -95,7 +95,7 @@ def _converter_xls(nome: str, dados: bytes) -> tuple[str, bytes]:
         try:
             excel.no_excel(entrada, "converter_xlsx", saida)
         except excel.ErroExcel as e:
-            raise ValueError(f"Não deu para converter a planilha .xls: {e}")
+            raise ValueError(t("Não deu para converter a planilha .xls: {erro}", erro=e))
         return Path(nome).with_suffix(".xlsx").name, saida.read_bytes()
 
 
@@ -118,7 +118,7 @@ def expandir(bloco: dict) -> dict:
     try:
         dados = caminho(aid).read_bytes()
     except OSError:
-        return {"type": "text", "text": f"[O anexo \"{reg['nome']}\" não existe mais no computador.]"}
+        return {"type": "text", "text": t("[O anexo \"{nome}\" não existe mais no computador.]", nome=reg["nome"])}
     tipo = reg["tipo"]
     if tipo in IMAGENS:
         return {"type": "image", "source": {"type": "base64", "media_type": tipo,
@@ -155,7 +155,7 @@ def _planilha_como_texto(aid: str, reg: dict, dados: bytes) -> str:
         try:
             conteudo = excel.ler(arq, max_linhas=60)
         except excel.ErroExcel as e:
-            conteudo = f"(não deu para ler: {e})"
-    return (f"<planilha anexada id=\"{aid}\" nome=\"{reg['nome']}\">\n{conteudo}\n</planilha>\n"
-            f"(Para ver outras abas ou mais linhas, use planilha_ler com anexo_id \"{aid}\". Para devolver uma "
-            f"versão alterada, use planilha_criar com base_anexo_id \"{aid}\".)")
+            conteudo = t("(não deu para ler: {erro})", erro=e)
+    return (t("<planilha anexada id=\"{id}\" nome=\"{nome}\">\n{conteudo}\n</planilha>", id=aid, nome=reg["nome"],
+              conteudo=conteudo) + "\n"
+            + t("(Para ver outras abas ou mais linhas, use planilha_ler com anexo_id \"{id}\". Para devolver uma versão alterada, use planilha_criar com base_anexo_id \"{id}\".)", id=aid))

@@ -1,23 +1,23 @@
 ---
 name: limpar-dados
-description: Use para arrumar uma planilha ou CSV bagunçado: espaços sobrando, linhas repetidas, datas e números em formatos misturados, acentos quebrados. Salva o resultado num arquivo novo e conta o que mudou.
+description: Use to fix a messy spreadsheet or CSV: extra spaces, repeated rows, dates and numbers in mixed formats, broken accents. Saves the result in a new file and says what changed.
 ---
 
-# Limpar dados
+# Clean data
 
-## Antes
-1. Abra o arquivo e descreva o problema com exemplos reais (ex.: "a coluna Data tem 12/03/2026 e 2026-03-12").
-2. CSV brasileiro costuma usar `;` como separador e vírgula decimal. Acento quebrado (`SÃ£o Paulo`) é arquivo UTF-8 lido como Latin-1 (ou o contrário): descubra a codificação certa antes de mexer.
-3. Combine com a pessoa o que fazer com o que é duvidoso (ex.: linha sem nome: apagar ou marcar?).
+## Before
+1. Open the file and describe the problem with real examples (e.g. "the Date column has 12/03/2026 and 2026-03-12").
+2. CSV files from Brazil usually use `;` as the separator and a decimal comma. Broken accents (`SÃ£o Paulo`) mean a UTF-8 file was read as Latin-1 (or the other way around): find the right encoding before touching anything.
+3. Agree with the person on what to do with doubtful cases (e.g. a row with no name: delete or flag?).
 
-## Limpeza (nesta ordem)
-1. Tirar espaços no começo e no fim; padronizar maiúsculas onde fizer sentido (nomes, siglas de estado).
-2. Datas no formato dd/mm/aaaa (ou data de verdade, no Excel).
-3. Números: tirar `R$`, ponto de milhar e trocar vírgula decimal pelo formato numérico.
-4. Linhas repetidas: só remova as **idênticas**; as parecidas, liste para a pessoa decidir.
-5. Células vazias: não invente valor; marque ou deixe vazio.
+## Cleaning (in this order)
+1. Trim spaces at the start and end; standardize capitalization where it makes sense (names, state abbreviations).
+2. Dates in a single format, such as dd/mm/yyyy (or as a real date, in Excel).
+3. Numbers: remove `R$` and other currency symbols and thousands separators, and turn the decimal comma into the numeric format.
+4. Repeated rows: only remove the **identical** ones; list the similar ones for the person to decide.
+5. Empty cells: don't invent a value; flag them or leave them empty.
 
-## Depois
-- Salve num arquivo novo (ex.: `clientes - limpo.xlsx`) e mantenha a original intacta.
-- Mostre um resumo: quantas linhas antes e depois, o que foi corrigido em cada coluna, o que ficou para decidir.
-- Se a pessoa vai repetir isso todo mês, ofereça transformar a limpeza num script que ela roda de novo.
+## After
+- Save to a new file (e.g. `clientes - limpo.xlsx`) and keep the original intact.
+- Show a summary: how many rows before and after, what was fixed in each column, what was left to decide.
+- If the person will repeat this every month, offer to turn the cleaning into a script they can run again.

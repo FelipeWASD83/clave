@@ -1,9 +1,9 @@
 {
   "name": "crie-o-seu",
-  "displayName": "Crie o seu",
+  "displayName": "Build your own",
   "version": "1.0.0",
-  "description": "O Claude te ajuda a criar as suas próprias skills, agentes, comandos e plugins, no formato que também funciona no Claude Code.",
+  "description": "Claude helps you create your own skills, agents, commands and plugins, in a format that also works in Claude Code.",
   "author": {"name": "Clave"},
   "license": "MIT",
-  "keywords": ["skill", "agente", "comando", "plugin", "personalização"]
+  "keywords": ["skill", "agent", "command", "plugin", "customization"]
 }

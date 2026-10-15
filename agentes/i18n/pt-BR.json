@@ -1,0 +1,20 @@
+{
+  "executor": {
+    "description": "Faz o trabalho seguindo o plano: cria e muda arquivos, roda comandos e confere o resultado."
+  },
+  "pesquisador": {
+    "description": "Pesquisa na web um ângulo do assunto e traz os fatos com a fonte de cada um."
+  },
+  "planejador": {
+    "description": "Entende o pedido, olha a pasta e escreve um plano curto e verificável. Não muda nada."
+  },
+  "redator": {
+    "description": "Junta o material das etapas anteriores e escreve o texto final, claro e bem organizado."
+  },
+  "revisor": {
+    "description": "Revisa o resultado com olhar crítico e aponta problemas reais, do mais grave para o menos grave."
+  },
+  "testador": {
+    "description": "Confere se o que foi feito funciona de verdade, rodando testes e comandos, sem consertar nada."
+  }
+}

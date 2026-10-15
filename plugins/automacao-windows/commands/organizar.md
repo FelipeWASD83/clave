@@ -1,8 +1,8 @@
 ---
-description: Organiza uma pasta por tipo de arquivo, com prévia antes de mover e jeito de desfazer
-argument-hint: [pasta]
+description: Organizes a folder by file type, with a preview before moving and a way to undo
+argument-hint: [folder]
 ---
 
-Quero organizar a pasta $ARGUMENTS (se eu não disse qual, use a pasta de trabalho).
+I want to organize the folder $ARGUMENTS (if I didn't say which, use the working folder).
 
-Siga a skill automacao-windows:organizar-arquivos (carregue com usar_skill): olhe a pasta, me mostre a proposta numa tabela e só mova depois do meu OK. Nada de apagar.
+Follow the skill automacao-windows:organizar-arquivos (load it with usar_skill): look at the folder, show me the proposal in a table and only move files after my OK. Never delete anything.

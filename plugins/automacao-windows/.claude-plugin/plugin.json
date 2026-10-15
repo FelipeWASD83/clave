@@ -1,9 +1,9 @@
 {
   "name": "automacao-windows",
-  "displayName": "Automação no Windows",
+  "displayName": "Windows automation",
   "version": "1.0.0",
-  "description": "Scripts de PowerShell que dá para rodar de novo, Agendador de Tarefas e arrumação de arquivos com prévia e desfazer.",
+  "description": "PowerShell scripts you can run again, Task Scheduler and file tidying with preview and undo.",
   "author": {"name": "Clave"},
   "license": "MIT",
-  "keywords": ["powershell", "windows", "automação", "agendador", "arquivos"]
+  "keywords": ["powershell", "windows", "automation", "scheduler", "files"]
 }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="#1f1d1a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Opus: uma rede ligada a um cursor (projetos complexos, agentes que agem) -->
+  <g stroke-width="2">
+    <path d="M46 46 28 34M46 46l12-22M46 46l24 4M46 46 30 62M46 46H24"/>
+  </g>
+  <circle cx="46" cy="46" r="8" fill="#1f1d1a"/>
+  <g fill="#fbf8f1" stroke-width="2.2">
+    <circle cx="28" cy="34" r="4"/><circle cx="58" cy="24" r="4"/><circle cx="70" cy="50" r="4"/>
+    <circle cx="30" cy="62" r="4"/><circle cx="24" cy="46" r="3.4"/>
+  </g>
+  <path d="M58 58v42l10-10 9 18 9-4-9-18h14z" fill="#fbf8f1"/>
+</svg>

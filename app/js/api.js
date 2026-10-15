@@ -1,4 +1,5 @@
 // Conversa com o servidor local do Clave.
+import { t } from './i18n.js';
 
 export class ErroApi extends Error {
   constructor(msg, status, codigo) { super(msg); this.status = status; this.codigo = codigo; }
@@ -14,17 +15,17 @@ export async function api(caminho, { metodo = 'GET', corpo, bruto = false } = {}
   try {
     r = await fetch('/api' + caminho, opcoes);
   } catch {
-    throw new ErroApi('O Clave não está respondendo. Ele pode ter sido fechado: abra de novo pelo atalho.', 0, 'offline');
+    throw new ErroApi(t('O Clave não está respondendo. Ele pode ter sido fechado: abra de novo pelo atalho.'), 0, 'offline');
   }
   if (bruto) {
-    if (!r.ok) throw new ErroApi(`Erro ${r.status}`, r.status);
+    if (!r.ok) throw new ErroApi(t('Erro {status}', { status: r.status }), r.status);
     return r;
   }
   let dados = {};
   try { dados = await r.json(); } catch { /* resposta sem JSON */ }
   if (!r.ok) {
     if (r.status === 401) document.dispatchEvent(new CustomEvent('clave:sessao'));
-    throw new ErroApi(dados.erro || `Erro ${r.status}`, r.status, dados.codigo);
+    throw new ErroApi(dados.erro || t('Erro {status}', { status: r.status }), r.status, dados.codigo);
   }
   return dados;
 }
@@ -36,7 +37,7 @@ export async function enviarArquivo(arquivo, caminho = '/anexos') {
     body: arquivo,
   });
   const dados = await r.json().catch(() => ({}));
-  if (!r.ok) throw new ErroApi(dados.erro || `Erro ${r.status}`, r.status);
+  if (!r.ok) throw new ErroApi(dados.erro || t('Erro {status}', { status: r.status }), r.status);
   return dados.anexo;
 }
 

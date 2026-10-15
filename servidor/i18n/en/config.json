@@ -1,0 +1,9 @@
+{
+ "Normal": "Normal",
+ "Conciso": "Concise",
+ "Responda de forma curta e direta. Vá ao ponto, sem introdução nem resumo no fim. Use listas só quando ajudarem de verdade.": "Answer briefly and directly. Get to the point, with no introduction and no summary at the end. Use lists only when they really help.",
+ "Explicativo": "Explanatory",
+ "Explique como para alguém que está aprendendo: defina termos técnicos na primeira vez, dê um exemplo concreto e diga o porquê de cada passo.": "Explain as you would to someone who is learning: define technical terms the first time, give a concrete example and say why each step matters.",
+ "Formal": "Formal",
+ "Escreva em tom profissional e formal, com frases completas e organização clara, adequado para e-mail de trabalho ou documento.": "Write in a professional, formal tone, with complete sentences and clear organization, suitable for a work email or document."
+}

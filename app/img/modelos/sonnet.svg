@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="#1f1d1a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Sonnet: uma nuvem de pensamento com uma rede (o dia a dia, escrita) -->
+  <path d="M36 74c-10 0-15-10-9-17-5-10 5-19 14-15 2-11 17-14 24-6 7-8 22-4 22 7 11 0 15 13 7 19 6 9-3 19-12 15-4 8-18 9-22 1-7 7-21 5-24-4z" fill="#fbf8f1"/>
+  <circle cx="30" cy="88" r="5" fill="#fbf8f1"/>
+  <circle cx="21" cy="100" r="3" fill="#fbf8f1"/>
+  <g stroke-width="2">
+    <path d="M62 58 48 48M62 58l12-12M62 58h18M62 58l10 12M62 58 50 70M62 58V40"/>
+  </g>
+  <circle cx="62" cy="58" r="6" fill="#1f1d1a"/>
+  <g fill="#1f1d1a" stroke="none">
+    <circle cx="48" cy="48" r="3.6"/><circle cx="74" cy="46" r="3.6"/><circle cx="80" cy="58" r="3.6"/>
+    <circle cx="72" cy="70" r="3.6"/><circle cx="50" cy="70" r="3.6"/><circle cx="62" cy="40" r="3.6"/>
+  </g>
+</svg>

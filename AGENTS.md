@@ -1,7 +1,7 @@
 # AGENTS.md: Clave
 
-**A documentação deste projeto está em [`CLAUDE.md`](CLAUDE.md). Ler antes de
-mexer em qualquer coisa aqui.**
+**The documentation for this project is in [`CLAUDE.md`](CLAUDE.md). Read it
+before touching anything here.**
 
-Não é um arquivo só do Claude: é a documentação do projeto, escrita para
-qualquer agente.
+It is not a file only for Claude: it is the project's documentation, written for
+any agent.

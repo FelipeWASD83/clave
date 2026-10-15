@@ -20,6 +20,8 @@ from pathlib import Path
 
 import config
 import contexto_pasta
+import i18n
+from i18n import t
 
 EMBUTIDOS = config.RAIZ / "agentes"
 ALIAS = {"opus": "claude-opus-5-5", "sonnet": "claude-sonnet-5-5", "haiku": "claude-haiku-5-5",
@@ -37,7 +39,7 @@ _NOME = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 def _lista(valor) -> list[str]:
     if isinstance(valor, list):
         return [str(v).strip() for v in valor if str(v).strip()]
-    return [t for t in re.split(r"[,\s]+", str(valor or "")) if t and t != "-"]
+    return [x for x in re.split(r"[,\s]+", str(valor or "")) if x and x != "-"]
 
 
 def capacidades(tools, disallowed=None) -> list[str]:
@@ -73,10 +75,15 @@ def ler_arquivo(arq: Path, origem: str, prefixo: str = "") -> dict | None:
     nome = str(fm.get("name") or arq.stem).strip()
     if not nome:
         return None
+    descricao = str(fm.get("description") or "").strip()
+    if origem == "clave":  # agentes do app: a descrição em português guardada em agentes/i18n/pt-BR.json
+        descricao = (i18n.guardado_pt(arq.parent).get(nome) or {}).get("description") or descricao
+    elif origem.startswith("plugin:"):
+        descricao = (i18n.guardado_pt(arq.parent.parent).get("agents", {}).get(nome) or {}).get("description") or descricao
     return {
         "nome": f"{prefixo}:{nome}" if prefixo else nome,
         "nome_base": nome,
-        "descricao": str(fm.get("description") or "").strip(),
+        "descricao": descricao,
         "modelo": str(fm.get("model") or "inherit").strip(),
         "esforco": str(fm.get("effort") or "").strip(),
         "pode": capacidades(fm.get("tools"), fm.get("disallowedTools")),
@@ -136,10 +143,10 @@ def resolver_modelo(valor: str, padrao: str) -> str:
 def salvar(dados: dict, onde: str = "pessoal", pasta: str | Path | None = None) -> dict:
     nome = str(dados.get("nome") or "").strip().lower()
     if not _NOME.match(nome):
-        raise ValueError("Nome do agente: só letras minúsculas, números e hífen (ex.: revisor-de-texto).")
+        raise ValueError(t("Nome do agente: só letras minúsculas, números e hífen (ex.: revisor-de-texto)."))
     if onde == "pasta":
         if not pasta:
-            raise ValueError("Escolha a pasta onde o agente vai morar.")
+            raise ValueError(t("Escolha a pasta onde o agente vai morar."))
         base = Path(pasta) / ".claude" / "agents"
     else:
         base = Path.home() / ".claude" / "agents"
@@ -162,7 +169,7 @@ def apagar(caminho: str, pasta: str | Path | None = None) -> None:
     if pasta:
         permitidas.append((Path(pasta) / ".claude" / "agents").resolve())
     if p.suffix != ".md" or not any(p.parent == b for b in permitidas):
-        raise ValueError("Só dá para apagar agente pessoal ou da pasta.")
+        raise ValueError(t("Só dá para apagar agente pessoal ou da pasta."))
     p.unlink()
 
 

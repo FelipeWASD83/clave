@@ -1,4 +1,4 @@
-"""Cria uma pasta de trabalho a partir do modelo que vem com o Clave (modelo-de-pasta/)."""
+"""Cria uma pasta de trabalho a partir do modelo que vem com o Clave (modelo-de-pasta/; em inglês, modelo-de-pasta-en/)."""
 from __future__ import annotations
 
 import re
@@ -8,45 +8,58 @@ import sys
 from pathlib import Path
 
 from config import MODELO_DE_PASTA
+from i18n import idioma, t
 
 MARCADOR = "<!-- SOBRE-MIM -->"
+
+
+def _modelo_en() -> Path | None:
+    """Os textos do modelo em inglês (só os traduzidos; prints e scripts vêm do português), se for o caso."""
+    en = MODELO_DE_PASTA.with_name(MODELO_DE_PASTA.name + "-en")
+    return en if idioma() == "en" and en.is_dir() else None
 
 
 def _texto_sobre(r: dict) -> str:
     linhas = []
     if r.get("nome"):
-        linhas.append(f"- **Nome:** {r['nome'].strip()}")
+        linhas.append(t("- **Nome:** {valor}", valor=r["nome"].strip()))
     if r.get("ocupacao"):
-        linhas.append(f"- **O que eu faço:** {r['ocupacao'].strip()}")
+        linhas.append(t("- **O que eu faço:** {valor}", valor=r["ocupacao"].strip()))
     exp = {
         "nenhuma": "Não sei programar. Explique o que você fez e como usar, não como o código funciona por dentro.",
         "pouca": "Sei o básico de computador e um pouco de programação. Explique termos técnicos quando aparecerem.",
         "programo": "Sei programar. Pode usar termos técnicos normalmente.",
     }.get(r.get("experiencia") or "", "")
     if exp:
-        linhas.append(f"- **Experiência com programação:** {exp}")
+        linhas.append(t("- **Experiência com programação:** {valor}", valor=t(exp)))
     if r.get("linguagens"):
-        linhas.append(f"- **Linguagens e programas que uso:** {r['linguagens'].strip()}")
+        linhas.append(t("- **Linguagens e programas que uso:** {valor}", valor=r["linguagens"].strip()))
     if r.get("sistema"):
-        linhas.append(f"- **Meu computador:** {r['sistema'].strip()}")
+        linhas.append(t("- **Meu computador:** {valor}", valor=r["sistema"].strip()))
     if r.get("preferencias"):
-        linhas.append(f"- **Como prefiro as respostas:** {r['preferencias'].strip()}")
-    return "\n".join(linhas) if linhas else "- (preencha aqui quem você é e como prefere as respostas)"
+        linhas.append(t("- **Como prefiro as respostas:** {valor}", valor=r["preferencias"].strip()))
+    return "\n".join(linhas) if linhas else t("- (preencha aqui quem você é e como prefere as respostas)")
 
 
 def criar(destino: str, nome: str, respostas: dict | None = None, iniciar_git: bool = True) -> dict:
-    if not MODELO_DE_PASTA.is_dir():
-        raise ValueError("O modelo de pasta não veio junto com esta cópia do Clave.")
+    modelo = MODELO_DE_PASTA
+    if not modelo.is_dir():
+        raise ValueError(t("O modelo de pasta não veio junto com esta cópia do Clave."))
     base = Path(destino).expanduser()
     if not base.is_dir():
-        raise ValueError("A pasta escolhida para criar o modelo não existe.")
+        raise ValueError(t("A pasta escolhida para criar o modelo não existe."))
     nome = (nome or "").strip()
     if not nome or re.search(r'[<>:"/\\|?*]', nome) or nome in (".", ".."):
-        raise ValueError("Nome de pasta inválido.")
+        raise ValueError(t("Nome de pasta inválido."))
     alvo = base / nome
     if alvo.exists():
-        raise ValueError("Já existe uma pasta com esse nome aí.")
-    shutil.copytree(MODELO_DE_PASTA, alvo)
+        raise ValueError(t("Já existe uma pasta com esse nome aí."))
+    shutil.copytree(modelo, alvo, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    en = _modelo_en()
+    if en:
+        shutil.copytree(en, alvo, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        if (alvo / "READ-ME-FIRST.md").is_file():
+            (alvo / "LEIA-PRIMEIRO.md").unlink(missing_ok=True)
     claude_md = alvo / "CLAUDE.md"
     if claude_md.is_file():
         texto = claude_md.read_text(encoding="utf-8")

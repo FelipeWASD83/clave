@@ -21,6 +21,7 @@ import contexto_pasta
 import custo
 import modelos
 import fluxos
+import i18n
 import orcamento
 import pedido
 import permissoes
@@ -30,6 +31,7 @@ from ferramentas import github as fgithub
 from ferramentas import memoria as fmemoria
 from ferramentas import excel as fexcel
 from ferramentas import planilhas as fplanilhas
+from i18n import t
 
 MAX_VOLTAS = 60          # chamadas à API por envio (ferramentas incluídas)
 MUDAM_ARQUIVOS = ("escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app")
@@ -42,7 +44,7 @@ POR_CAPACIDADE = {
 SEMPRE = {"atualizar_tarefas", "usar_skill"}
 MODOS_PERMISSAO = {"executar_perguntar": "perguntar", "executar_aceitar": "aceitar_edicoes",
                    "executar_livre": "livre"}
-NOMES_MODO = {"perguntar": "Perguntar", "aceitar_edicoes": "Aceitar edições", "plano": "Plano", "livre": "Livre"}
+NOMES_MODO = {"perguntar": "Perguntar", "aceitar_edicoes": "Aceitar edições", "plano": "Plano", "livre": "Livre"}  # mostrar com t()
 # Aviso de modo que vai junto da mensagem para o modelo e não aparece na tela (servidor._nota_de_modo).
 MARCA_MODO, FIM_MARCA_MODO = "<modo-do-clave>", "</modo-do-clave>"
 
@@ -53,7 +55,7 @@ PLANO = {
                     "Se aprovar, o modo muda e você segue executando o plano na mesma resposta."),
     "eager_input_streaming": True,
     "input_schema": {"type": "object", "properties": {
-        "plano": {"type": "string", "description": "O plano em Markdown: o que vai mudar, em quais arquivos, em que ordem, e como vai conferir"}},
+        "plano": {"type": "string", "description": "O plano em Markdown: o que vai mudar, em quais arquivos, em que ordem, e como vai conferir, no idioma em que a pessoa escreve"}},
         "required": ["plano"]},
 }
 
@@ -67,10 +69,10 @@ SUGERIR = {
                     "por resposta, e não repita a sugestão no texto."),
     "eager_input_streaming": True,
     "input_schema": {"type": "object", "properties": {
-        "titulo": {"type": "string", "description": "Nome curto da tarefa, até 60 caracteres"},
+        "titulo": {"type": "string", "description": "Nome curto da tarefa, até 60 caracteres, no idioma em que a pessoa escreve"},
         "pedido": {"type": "string", "description": "O pedido completo para a conversa nova, como quem usa mandaria: "
                                                     "o que fazer, onde, o que já se sabe e como saber que terminou"},
-        "por_que": {"type": "string", "description": "Uma frase dizendo por que vale fazer isso"}},
+        "por_que": {"type": "string", "description": "Uma frase dizendo por que vale fazer isso, no idioma em que a pessoa escreve"}},
         "required": ["titulo", "pedido"]},
 }
 
@@ -104,7 +106,7 @@ def cliente() -> anthropic.Anthropic:
         return anthropic.Anthropic(api_key="chave-falsa", base_url=falsa, max_retries=0)
     chave = segredos.ler("anthropic")
     if not chave:
-        raise SemChave("Falta a chave da API. Cole a sua em Configurações > Conta e chave.")
+        raise SemChave(t("Falta a chave da API. Cole a sua em Configurações > Conta e chave."))
     return anthropic.Anthropic(api_key=chave, max_retries=2,
                                timeout=anthropic.Timeout(900.0, connect=20.0))
 
@@ -263,7 +265,7 @@ class Execucao:
         self.regras = permissoes.coletar(cfg, pasta, self.regras_tarefa)
         if modo == "code":
             if not pasta or not pasta.is_dir():
-                raise RuntimeError(f"A pasta de trabalho não existe mais: {pasta}")
+                raise RuntimeError(t("A pasta de trabalho não existe mais: {pasta}", pasta=pasta))
             skills = contexto_pasta.skills(pasta)
             mae = self.mae
             self.ctx = fcode.Contexto(raiz=pasta.resolve(), protegidos=list(cfg.get("protegidos") or []),
@@ -293,6 +295,7 @@ class Execucao:
             ferramentas_cliente.append(fluxos.definicao(str(pasta) if pasta else None))
         if modo in ("chat", "code") and not etapa and not op.get("rotina"):
             ferramentas_cliente.append(dict(SUGERIR))
+        ferramentas_cliente = i18n.traduzir_ferramentas(ferramentas_cliente)
         mcp = []
         for m in (cfg.get("conectores_mcp") or []) if modo in ("chat", "code") and not etapa else []:
             if m.get("ligado") and m.get("url") and m.get("nome"):
@@ -314,13 +317,14 @@ class Execucao:
                 self._erro(motivo, "teto")
                 return
             if self.cofre is not None and self.cofre.estourou():
-                self.emitir({"tipo": "aviso", "mensagem": f"{self.cofre.rotulo} chegou ao teto de gasto aprovado e parou."})
+                self.emitir({"tipo": "aviso", "mensagem": t("{rotulo} chegou ao teto de gasto aprovado e parou.",
+                                                        rotulo=t(self.cofre.rotulo))})
                 return
             teto_tarefa = float(cfg.get("teto_tarefa_code_usd") or 0)
             if modo == "code" and not etapa and teto_tarefa and self.custo_total >= teto_tarefa:
-                self.emitir({"tipo": "aviso", "mensagem": (
-                    f"Esta tarefa chegou ao teto por tarefa (US$ {teto_tarefa:.2f}) e foi pausada. Mande "
-                    "\"continue\" para seguir, ou aumente o teto em Configurações > Limite de gasto.")})
+                self.emitir({"tipo": "aviso", "mensagem": t(
+                    "Esta tarefa chegou ao teto por tarefa (US$ {teto}) e foi pausada. Mande \"continue\" para seguir, ou aumente o teto em Configurações > Limite de gasto.",
+                    teto=f"{teto_tarefa:.2f}")})
                 return
 
             caminho = banco.caminho(self.conversa_id)
@@ -343,8 +347,7 @@ class Execucao:
                 baixo = texto.lower()
                 if ("signature" in baixo or "thinking" in baixo and "block" in baixo) and not tentou_sem_pensamento:
                     tentou_sem_pensamento = True
-                    self.emitir({"tipo": "aviso", "mensagem": "O raciocínio das respostas anteriores não pôde ser "
-                                 "reaproveitado; a conversa segue sem ele."})
+                    self.emitir({"tipo": "aviso", "mensagem": t("O raciocínio das respostas anteriores não pôde ser reaproveitado; a conversa segue sem ele.")})
                     continue
                 if usados - extra_desligados:
                     desl = pedido.desligar_por_erro(modelo, texto, usados - extra_desligados)
@@ -401,15 +404,12 @@ class Execucao:
                 return
             if stop == "max_tokens":
                 if any(b.get("type") == "tool_use" for b in conteudo):
-                    self.emitir({"tipo": "aviso", "mensagem": "A resposta passou do tamanho máximo no meio de uma "
-                                 "ação. Peça para ele continuar em partes menores."})
+                    self.emitir({"tipo": "aviso", "mensagem": t("A resposta passou do tamanho máximo no meio de uma ação. Peça para ele continuar em partes menores.")})
                 else:
-                    self.emitir({"tipo": "aviso", "mensagem": "A resposta chegou ao tamanho máximo e foi cortada. "
-                                 "Mande \"continue\" para ele seguir."})
+                    self.emitir({"tipo": "aviso", "mensagem": t("A resposta chegou ao tamanho máximo e foi cortada. Mande \"continue\" para ele seguir.")})
                 return
             if stop == "model_context_window_exceeded":
-                self.emitir({"tipo": "aviso", "mensagem": "A conversa encheu a memória do modelo. Comece uma "
-                             "conversa nova (ou ligue a compactação nas configurações)."})
+                self.emitir({"tipo": "aviso", "mensagem": t("A conversa encheu a memória do modelo. Comece uma conversa nova (ou ligue a compactação nas configurações).")})
                 return
             if stop == "tool_use":
                 usos = [b for b in conteudo if b.get("type") == "tool_use"]
@@ -424,8 +424,7 @@ class Execucao:
                 continue
             return
         else:
-            self.emitir({"tipo": "aviso", "mensagem": "Parei depois de muitas voltas seguidas. Mande \"continue\" "
-                         "se quiser que ele siga."})
+            self.emitir({"tipo": "aviso", "mensagem": t("Parei depois de muitas voltas seguidas. Mande \"continue\" se quiser que ele siga.")})
 
     def _chamar(self, cli: anthropic.Anthropic, kw: dict):
         self.emitir({"tipo": "chamando", "modelo": kw["model"]})
@@ -484,7 +483,7 @@ class Execucao:
         if not textos:
             return
         conv = banco.conversa(self.conversa_id)
-        textos[-1]["text"] += "\n\n[resposta interrompida]"
+        textos[-1]["text"] += "\n\n" + t("[resposta interrompida]")
         uso = snap.usage.model_dump(mode="json", exclude_none=True) if snap.usage else {}
         c = _custo(modelo, uso)
         msg = banco.adicionar_mensagem(self.conversa_id, conv.get("folha_id"), "assistant", textos, modelo=modelo,
@@ -499,13 +498,13 @@ class Execucao:
         for u in usos:
             tid, nome, entrada = u["id"], u["name"], u.get("input")
             if self.parar.is_set():
-                resultados.append(_res(tid, "Interrompido por quem usa antes de rodar.", True))
+                resultados.append(_res(tid, t("Interrompido por quem usa antes de rodar."), True))
                 continue
             try:
                 resultados.append(self._uma(tid, nome, entrada, cfg, modo))
             except Exception as e:  # erro da ferramenta volta para o Claude, não derruba a conversa
                 traceback.print_exc()
-                resultados.append(_res(tid, f"Erro: {e}", True))
+                resultados.append(_res(tid, t("Erro: {erro}", erro=e), True))
                 self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": str(e)})
         return resultados
 
@@ -541,12 +540,12 @@ class Execucao:
         if nome == "usar_skill" and self.ctx is None:
             s = contexto_pasta.conteudo_skill(self.skills_chat, str((entrada or {}).get("nome", "")).strip().lstrip("/"))
             if not s:
-                nomes = ", ".join(x["nome"] for x in self.skills_chat) or "nenhuma"
-                self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": "skill não encontrada"})
-                return _res(tid, f"Skill não encontrada. Disponíveis: {nomes}", True)
+                nomes = ", ".join(x["nome"] for x in self.skills_chat) or t("nenhuma")
+                self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True,
+                             "resumo": t("skill não encontrada")})
+                return _res(tid, t("Skill não encontrada. Disponíveis: {nomes}", nomes=nomes), True)
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": s["nome"]})
-            return _res(tid, f"Skill \"{s['nome']}\" (aqui no chat não há pasta nem terminal: siga as partes que "
-                             f"não dependem deles).\n\n{s['texto']}")
+            return _res(tid, t("Skill \"{nome}\" (aqui no chat não há pasta nem terminal: siga as partes que não dependem deles).\n\n{conteudo}", nome=s["nome"], conteudo=s["texto"]))
 
         if nome in fgithub.FERRAMENTAS:
             risco = fgithub.FERRAMENTAS[nome]["risco"]
@@ -554,13 +553,14 @@ class Execucao:
                 acao, regra = permissoes.avaliar(self.regras, [("GitHub", nome)], None)
                 if acao == "deny":
                     self._log(nome, nome, "negar", "regra", regra)
-                    return _res(tid, f"Bloqueado pelo Clave: {regra.descrever()}.", True)
+                    return _res(tid, t("Bloqueado pelo Clave: {motivo}.", motivo=regra.descrever()), True)
                 if acao != "allow" or permissoes.generica(regra):
+                    motivo_gh = t("publica algo no GitHub")
                     if self.op.get("rotina"):
-                        return self._rotina_parou(tid, nome, nome, "publica algo no GitHub", f"GitHub({nome})")
-                    decisao = self._pedir_aprovacao(tid, nome, entrada, "publica algo no GitHub", None,
+                        return self._rotina_parou(tid, nome, nome, motivo_gh, f"GitHub({nome})")
+                    decisao = self._pedir_aprovacao(tid, nome, entrada, motivo_gh, None,
                                                     extra={"sugestao": f"GitHub({nome})", "pode_sempre": True})
-                    if not self._aplicar_escopo(decisao, tid, nome, "publica algo no GitHub"):
+                    if not self._aplicar_escopo(decisao, tid, nome, motivo_gh):
                         self._log(nome, nome, "recusar", "voce")
                         return self._recusado(tid, nome)
                     self._log(nome, nome, "permitir", "voce")
@@ -571,10 +571,10 @@ class Execucao:
             return _res(tid, saida)
 
         if modo != "code" or self.ctx is None or nome not in fcode.FERRAMENTAS:
-            return _res(tid, f"Ferramenta não disponível aqui: {nome}", True)
+            return _res(tid, t("Ferramenta não disponível aqui: {nome}", nome=nome), True)
         pode = self.op.get("pode") if self.op.get("etapa_de_fluxo") else None
         if pode is not None and nome not in SEMPRE and not any(nome in POR_CAPACIDADE.get(c, ()) for c in pode):
-            return _res(tid, "Esta etapa do fluxo não pode usar esta ferramenta.", True)
+            return _res(tid, t("Esta etapa do fluxo não pode usar esta ferramenta."), True)
 
         erro = fcode.validar(nome, entrada)
         if erro:
@@ -589,8 +589,9 @@ class Execucao:
         alvo = _resumo_alvo(nome, entrada, self.ctx)
         if decisao == "negar":
             self._log(nome, alvo, "negar", det["origem"], det.get("regra"))
-            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": f"Bloqueado: {motivo}"})
-            return _res(tid, f"Bloqueado pelo Clave: {motivo}.", True)
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True,
+                         "resumo": t("Bloqueado: {motivo}", motivo=motivo)})
+            return _res(tid, t("Bloqueado pelo Clave: {motivo}.", motivo=motivo), True)
         if decisao == "perguntar":
             sugestao = permissoes.sugerir(nome, entrada, self.ctx)
             if self.op.get("rotina"):
@@ -635,7 +636,7 @@ class Execucao:
         a = self.aprovacoes[tid]
         if self.parar.is_set():
             a["decisao"] = "recusar"
-            a["texto"] = "A tarefa foi interrompida."
+            a["texto"] = t("A tarefa foi interrompida.")
         self.emitir({"tipo": "aprovacao_decidida", "id": tid, "decisao": a["decisao"]})
         return a["decisao"] or "recusar"
 
@@ -649,19 +650,19 @@ class Execucao:
         texto_regra = str(dados.get("regra") or "").strip()
         if decisao in ("permitir_sempre", "permitir_tarefa"):
             risco = (fcode.FERRAMENTAS.get(nome) or {}).get("risco")
-            if motivo in ("mudar arquivo", "rodar comando") and risco:
+            if _motivo_e(motivo, "mudar arquivo", "rodar comando") and risco:
                 self.liberados.add(risco)
             elif texto_regra and not permissoes.validar(texto_regra):
                 self._nova_regra(permissoes.Regra("allow", texto_regra, "tarefa"))
             return True
         if not texto_regra or permissoes.validar(texto_regra):
-            self.emitir({"tipo": "aviso", "mensagem": "A regra não foi salva (" + (permissoes.validar(texto_regra) or
-                         "vazia") + "); a ação foi permitida só desta vez."})
+            self.emitir({"tipo": "aviso", "mensagem": t("A regra não foi salva ({motivo}); a ação foi permitida só desta vez.",
+                                                        motivo=permissoes.validar(texto_regra) or t("vazia"))})
             return True
         try:
             if decisao == "permitir_pasta":
                 if not self.ctx:
-                    raise ValueError("não há pasta de trabalho")
+                    raise ValueError(t("não há pasta de trabalho"))
                 arq = permissoes.salvar_na_pasta(self.ctx.raiz, "allow", texto_regra)
                 self._nova_regra(permissoes.Regra("allow", texto_regra, "pasta", str(arq)))
             else:
@@ -670,7 +671,8 @@ class Execucao:
             self.emitir({"tipo": "regra_salva", "regra": texto_regra,
                          "escopo": "pasta" if decisao == "permitir_pasta" else "app"})
         except (ValueError, OSError) as e:
-            self.emitir({"tipo": "aviso", "mensagem": f"A regra não foi salva ({e}); a ação foi permitida só desta vez."})
+            self.emitir({"tipo": "aviso", "mensagem": t("A regra não foi salva ({motivo}); a ação foi permitida só desta vez.",
+                                                        motivo=e)})
         return True
 
     def _nova_regra(self, regra) -> None:
@@ -695,19 +697,18 @@ class Execucao:
         self._log(nome, alvo, "negar", "rotina")
         self.emitir({"tipo": "rotina_parou", **self.pediu_ok})
         self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True,
-                     "resumo": f"A rotina parou: precisaria do seu OK ({motivo})"})
+                     "resumo": t("A rotina parou: precisaria do seu OK ({motivo})", motivo=motivo)})
         self.parar.set()
-        return _res(tid, "A rotina parou: esta ação precisaria do OK de quem usa, e numa rotina ninguém responde. "
-                         "Crie uma regra de permissão para ela, se quiser que a rotina faça isso sozinha.", True)
+        return _res(tid, t("A rotina parou: esta ação precisaria do OK de quem usa, e numa rotina ninguém responde. Crie uma regra de permissão para ela, se quiser que a rotina faça isso sozinha."), True)
 
     def _fluxo(self, tid: str, entrada: dict, cfg: dict, modo: str) -> dict:
         nome = "executar_fluxo"
         if self.op.get("rotina") or self.op.get("etapa_de_fluxo"):
-            return _res(tid, "Fluxo não roda aqui (rotina ou dentro de outro fluxo).", True)
+            return _res(tid, t("Fluxo não roda aqui (rotina ou dentro de outro fluxo)."), True)
         regra = permissoes.nega(self.regras, "Fluxo")
         if regra:
             self._log(nome, "fluxo", "negar", "regra", regra)
-            return _res(tid, f"Bloqueado pelo Clave: {regra.descrever()}.", True)
+            return _res(tid, t("Bloqueado pelo Clave: {motivo}.", motivo=regra.descrever()), True)
         conv = banco.conversa(self.conversa_id)
         pasta = conv.get("pasta") if modo == "code" else None
         modelo = self.op.get("modelo") or cfg.get("modelo_code" if modo == "code" else "modelo_chat")
@@ -715,7 +716,7 @@ class Execucao:
             proposta = fluxos.normalizar(entrada, fid=tid, pasta=pasta, modelo_padrao=modelo, regras=self.regras)
         except fluxos.ErroFluxo as e:
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": str(e)})
-            return _res(tid, f"Fluxo inválido: {e}. Corrija e proponha de novo.", True)
+            return _res(tid, t("Fluxo inválido: {erro}. Corrija e proponha de novo.", erro=e), True)
         banco.salvar_fluxo({**proposta, "conversa_id": self.conversa_id, "execucao_id": self.id})
         d = self._pedir_aprovacao(tid, nome, entrada, "fluxo", None, extra={"proposta": proposta},
                                   tipo="fluxo_proposta")
@@ -727,13 +728,14 @@ class Execucao:
         try:
             proposta = fluxos.aplicar_ajustes(proposta, (self.aprovacoes[tid].get("dados") or {}))
         except fluxos.ErroFluxo as e:
-            return _res(tid, f"O fluxo não rodou: {e}.", True)
+            return _res(tid, t("O fluxo não rodou: {erro}.", erro=e), True)
         self._log(nome, proposta["titulo"], "permitir", "voce")
         rodada = fluxos.Rodada(self, proposta, cfg)
         relatorio = rodada.rodar()
         self.custo_fluxos += float(proposta.get("custo_usd") or 0)
         self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": proposta["status"] == "erro",
-                     "resumo": f"Fluxo {proposta['status']}: US$ {proposta['custo_usd']:.4f}"})
+                     "resumo": t("Fluxo {status}: US$ {custo}", status=t(proposta["status"]),
+                                 custo=f"{proposta['custo_usd']:.4f}")})
         return _res(tid, relatorio, proposta["status"] == "erro")
 
     def _plano(self, tid: str, entrada: dict) -> dict:
@@ -743,39 +745,47 @@ class Execucao:
         novo = MODOS_PERMISSAO.get(d or "")
         if not novo:
             texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""
-            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": "continuar planejando"})
-            return _res(tid, "Quem usa quer continuar planejando antes de executar." +
-                        (f" Comentário: {texto}" if texto else " Pergunte o que mudar no plano."))
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False,
+                         "resumo": t("continuar planejando")})
+            return _res(tid, t("Quem usa quer continuar planejando antes de executar.") +
+                        (t(" Comentário: {comentario}", comentario=texto) if texto else t(" Pergunte o que mudar no plano.")))
         self.op["permissao"] = novo
         if self.ctx is not None:
             self._log(nome, "plano", "permitir", "voce")
         self.emitir({"tipo": "modo_mudou", "permissao": novo})
-        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": f"plano aprovado ({NOMES_MODO[novo]})"})
-        return _res(tid, f"Plano aprovado por quem usa. O modo de permissão agora é {NOMES_MODO[novo]}: execute o "
-                         "plano, passo a passo, conferindo o resultado no fim.")
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False,
+                     "resumo": t("plano aprovado ({modo})", modo=t(NOMES_MODO[novo]))})
+        return _res(tid, t("Plano aprovado por quem usa. O modo de permissão agora é {modo}: execute o plano, passo a passo, conferindo o resultado no fim.", modo=t(NOMES_MODO[novo])))
 
     def _sugerir(self, tid: str, entrada: dict, modo: str) -> dict:
         nome = "sugerir_conversa"
         titulo = " ".join(str(entrada.get("titulo") or "").split())[:80]
         pedido = str(entrada.get("pedido") or "").strip()[:8000]
         if not titulo or not pedido:
-            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": "faltou título ou pedido"})
-            return _res(tid, "Faltou o título ou o pedido da sugestão.", True)
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True,
+                         "resumo": t("faltou título ou pedido")})
+            return _res(tid, t("Faltou o título ou o pedido da sugestão."), True)
         self.emitir({"tipo": "sugestao_conversa", "id": tid, "titulo": titulo, "pedido": pedido,
                      "por_que": str(entrada.get("por_que") or "").strip()[:400], "modo": modo})
-        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": f"sugeriu: {titulo}"})
-        return _res(tid, "A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra "
-                         "conversa. Não repita a sugestão no texto.")
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False,
+                     "resumo": t("sugeriu: {titulo}", titulo=titulo)})
+        return _res(tid, t("A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra conversa. Não repita no texto a sugestão nem o que você já escreveu: se a resposta já foi dada, termine aqui."))
 
     def _recusado(self, tid, nome) -> dict:
         texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""
-        msg = "Quem usa recusou esta ação." + (f" Comentário: {texto}" if texto else "")
+        msg = t("Quem usa recusou esta ação.") + (t(" Comentário: {comentario}", comentario=texto) if texto else "")
         self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": msg})
         return _res(tid, msg, True)
 
 
+def _motivo_e(motivo: str, *chaves: str) -> bool:
+    """O motivo de fcode.decidir vem traduzido: compara com a chave em português e com as traduções dela
+    (o idioma pode ter mudado enquanto o cartão esperava a resposta)."""
+    return any(motivo in (c, t(c), t(c, "en")) for c in chaves)
+
+
 def _res(tid: str, conteudo, erro=False) -> dict:
-    r = {"type": "tool_result", "tool_use_id": tid, "content": conteudo if conteudo else "(vazio)"}
+    r = {"type": "tool_result", "tool_use_id": tid, "content": conteudo if conteudo else t("(vazio)")}
     if erro:
         r["is_error"] = True
     return r
@@ -849,43 +859,42 @@ def _texto_recusa(det: dict) -> str:
     nomes = {"cyber": "segurança digital", "bio": "biologia de risco", "reasoning_extraction":
              "pedido para mostrar o raciocínio interno", "frontier_llm": "desenvolvimento de modelos de IA",
              "general_harms": "política de uso"}
-    base = "O Claude recusou este pedido pelas regras de segurança da Anthropic"
+    base = t("O Claude recusou este pedido pelas regras de segurança da Anthropic")
     if cat:
-        base += f" (categoria: {nomes.get(cat, cat)})"
-    return base + ". Reformule o pedido ou tente outro modelo."
+        base += t(" (categoria: {categoria})", categoria=t(nomes[cat]) if cat in nomes else cat)
+    return base + t(". Reformule o pedido ou tente outro modelo.")
 
 
 def _explicar_erro(e: Exception) -> str:
     if isinstance(e, anthropic.AuthenticationError):
-        return "A chave da API foi recusada. Confira em Configurações > Conta e chave."
+        return t("A chave da API foi recusada. Confira em Configurações > Conta e chave.")
     if isinstance(e, anthropic.PermissionDeniedError):
-        return "A chave não tem permissão para isso (ou o modelo não está liberado na sua conta). " + _mensagem_api(e)
+        return t("A chave não tem permissão para isso (ou o modelo não está liberado na sua conta). ") + _mensagem_api(e)
     if isinstance(e, anthropic.NotFoundError):
-        return "Modelo não encontrado na sua conta. Escolha outro modelo. " + _mensagem_api(e)
+        return t("Modelo não encontrado na sua conta. Escolha outro modelo. ") + _mensagem_api(e)
     if isinstance(e, anthropic.RateLimitError):
-        return "A API pediu para esperar (limite de pedidos por minuto). Tente de novo daqui a pouco."
+        return t("A API pediu para esperar (limite de pedidos por minuto). Tente de novo daqui a pouco.")
     if isinstance(e, anthropic.BadRequestError):
         msg = _mensagem_api(e)
         if "credit balance" in msg.lower():
-            return ("Acabou o crédito da sua conta na API da Anthropic. Recarregue no Console "
-                    "(platform.claude.com) ou espere o crédito do mês seguinte.")
+            return t("Acabou o crédito da sua conta na API da Anthropic. Recarregue no Console (platform.claude.com) ou espere o crédito do mês seguinte.")
         if "prompt is too long" in msg.lower() or "too long" in msg.lower():
-            return "A conversa ficou grande demais para o modelo. Comece uma conversa nova. (" + msg + ")"
-        return "A API recusou o pedido: " + msg
+            return t("A conversa ficou grande demais para o modelo. Comece uma conversa nova. ({erro})", erro=msg)
+        return t("A API recusou o pedido: {erro}", erro=msg)
     if isinstance(e, anthropic.APIStatusError):
         if e.status_code in (500, 529) or e.status_code >= 500:
-            return "Os servidores da Anthropic estão sobrecarregados ou com problema agora. Tente de novo em instantes."
-        return f"Erro da API ({e.status_code}): {_mensagem_api(e)}"
+            return t("Os servidores da Anthropic estão sobrecarregados ou com problema agora. Tente de novo em instantes.")
+        return t("Erro da API ({status}): {erro}", status=e.status_code, erro=_mensagem_api(e))
     if isinstance(e, anthropic.APIConnectionError):
-        return "Sem conexão com a API da Anthropic. Confira a internet."
-    return f"Erro inesperado: {e}"
+        return t("Sem conexão com a API da Anthropic. Confira a internet.")
+    return t("Erro inesperado: {erro}", erro=e)
 
 
 def iniciar(conversa_id: str, opcoes: dict) -> Execucao:
     with _trava:
         atual = _por_conversa.get(conversa_id)
         if atual and _execucoes.get(atual) and _execucoes[atual].status in ("rodando", "esperando"):
-            raise RuntimeError("Esta conversa já está respondendo. Espere terminar ou aperte Parar.")
+            raise RuntimeError(t("Esta conversa já está respondendo. Espere terminar ou aperte Parar."))
         ex = Execucao(conversa_id, opcoes)
         _execucoes[ex.id] = ex
         _por_conversa[conversa_id] = ex.id
@@ -913,7 +922,7 @@ def gerar_titulo(conversa_id: str) -> None:
     if not primeira:
         return
     texto = _texto_puro(primeira)
-    padrao = (texto.strip().splitlines() or ["Conversa"])[0][:60] or "Conversa"
+    padrao = (texto.strip().splitlines() or [t("Conversa")])[0][:60] or t("Conversa")
     cfg = config.carregar()
     if not cfg.get("titulos_automaticos", True) or not orcamento.pode_gastar()[0]:
         banco.atualizar_conversa(conversa_id, titulo=padrao)
@@ -923,9 +932,8 @@ def gerar_titulo(conversa_id: str) -> None:
         r = cli.messages.create(
             model="claude-haiku-5-5", max_tokens=60, thinking={"type": "disabled"},
             output_config={"effort": "low"},
-            system="Crie um título curto (no máximo 6 palavras, sem aspas e sem ponto final) para uma conversa que "
-                   "começa com a mensagem abaixo, no mesmo idioma dela. Responda só com o título.",
-            messages=[{"role": "user", "content": texto[:4000] or "Conversa"}])
+            system=t("Crie um título curto (no máximo 6 palavras, sem aspas e sem ponto final) para uma conversa que começa com a mensagem abaixo, no mesmo idioma dela. Responda só com o título."),
+            messages=[{"role": "user", "content": texto[:4000] or t("Conversa")}])
         titulo = "".join(b.text for b in r.content if b.type == "text").strip().strip('"').strip()[:80]
         uso = r.usage.model_dump(mode="json", exclude_none=True)
         c = _custo("claude-haiku-5-5", uso)
@@ -961,7 +969,7 @@ def desfazer(execucao_id: str) -> list[str]:
                 p.unlink()
             feitos.append(str(p))
         except OSError as e:
-            feitos.append(f"{p} (falhou: {e})")
+            feitos.append(t("{caminho} (falhou: {erro})", caminho=p, erro=e))
     banco.marcar_desfeito(execucao_id)
     return feitos
 

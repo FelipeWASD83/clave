@@ -1,0 +1,39 @@
+# Patterns without a slash at the start apply at any level: they work for the
+# root and for each project (_organizacao/git-setup.ps1 copies this file to them).
+
+# Dependencies and builds: never version
+node_modules/
+dist/
+build/
+.vite/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Databases and runtime artifacts
+*.db-wal
+*.db-shm
+*.sqlite-journal
+uploads/
+
+# Secrets: never, under any circumstances
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Irreplaceable raw material: its backup is a file copy, not a commit
+_originais/
+
+# Loose packages
+*.zip
+*.rar
+*.7z
+
+# System and editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

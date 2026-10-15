@@ -1,13 +1,25 @@
 {
-  "nome": "Planilha grande",
-  "descricao": "Haiku 5.5 lê e resume a planilha, Sonnet 5.5 planeja e faz as mudanças numa cópia, Haiku confere os números.",
-  "pede": "a planilha e o que você quer fazer nela",
+  "nome": "Large spreadsheet",
+  "descricao": "Haiku 5.5 reads and summarizes the spreadsheet, Sonnet 5.5 plans and makes the changes on a copy, Haiku checks the numbers.",
+  "pede": "the spreadsheet and what you want to do with it",
   "etapas": [
-    {"nome": "Entender a planilha", "modelo": "haiku", "esforco": "medium",
-     "tarefa": "Leia a planilha e descreva as abas, as colunas, os tipos de dado e o que parece estranho.", "pode": ["ler"]},
-    {"nome": "Fazer as mudanças", "agente": "executor", "modelo": "sonnet", "esforco": "high",
-     "tarefa": "Faça o que foi pedido salvando numa cópia da planilha (nunca por cima da original sem pedir).", "pode": ["ler", "editar"]},
-    {"nome": "Conferir os números", "agente": "testador", "modelo": "haiku", "esforco": "medium",
-     "tarefa": "Abra a cópia e confira totais, fórmulas e linhas: bate com a original? Liste o que não bate.", "pode": ["ler"]}
-  ]
+    {"nome": "Understand the spreadsheet", "modelo": "haiku", "esforco": "medium",
+     "tarefa": "Read the spreadsheet and describe the sheets, the columns, the data types and what looks odd.", "pode": ["ler"]},
+    {"nome": "Make the changes", "agente": "executor", "modelo": "sonnet", "esforco": "high",
+     "tarefa": "Do what was asked, saving to a copy of the spreadsheet (never over the original without asking).", "pode": ["ler", "editar"]},
+    {"nome": "Check the numbers", "agente": "testador", "modelo": "haiku", "esforco": "medium",
+     "tarefa": "Open the copy and check totals, formulas and rows: does it match the original? List what doesn't match.", "pode": ["ler"]}
+  ],
+  "i18n": {
+    "pt-BR": {
+      "nome": "Planilha grande",
+      "descricao": "Haiku 5.5 lê e resume a planilha, Sonnet 5.5 planeja e faz as mudanças numa cópia, Haiku confere os números.",
+      "pede": "a planilha e o que você quer fazer nela",
+      "etapas": [
+        {"nome": "Entender a planilha", "tarefa": "Leia a planilha e descreva as abas, as colunas, os tipos de dado e o que parece estranho."},
+        {"nome": "Fazer as mudanças", "tarefa": "Faça o que foi pedido salvando numa cópia da planilha (nunca por cima da original sem pedir)."},
+        {"nome": "Conferir os números", "tarefa": "Abra a cópia e confira totais, fórmulas e linhas: bate com a original? Liste o que não bate."}
+      ]
+    }
+  }
 }

@@ -1,27 +1,27 @@
 ---
 name: criar-comando
-description: Use quando a pessoa quiser um atalho de barra (/nome) para um pedido que ela repete, com espaço para completar (ex.: /orcamento cliente valor).
+description: Use when the person wants a slash shortcut (/name) for a request they repeat, with room to fill in details (e.g. /orcamento client amount).
 ---
 
-# Criar um comando de barra
+# Create a slash command
 
-Um comando é um arquivo `.md` cujo texto vira a mensagem quando a pessoa digita `/nome`. Funciona no Clave e no Claude Code.
+A command is a `.md` file whose text becomes the message when the person types `/name`. It works in Clave and in Claude Code.
 
-## Arquivo
-`.claude/commands/<nome>.md` na pasta de trabalho (ou `~/.claude/commands/` para todas as pastas). Subpasta vira prefixo: `.claude/commands/vendas/orcamento.md` é `/vendas:orcamento`.
+## File
+`.claude/commands/<name>.md` in the working folder (or `~/.claude/commands/` for all folders). A subfolder becomes a prefix: `.claude/commands/vendas/orcamento.md` is `/vendas:orcamento`.
 
 ```markdown
 ---
-description: Monta um orçamento a partir do nome do cliente e do valor
-argument-hint: [cliente] [valor]
+description: Builds a quote from the client's name and the amount
+argument-hint: [client] [amount]
 ---
 
-Monte um orçamento para $0 no valor de R$ $1, usando o modelo modelo-orcamento.docx da pasta.
+Build a quote for $0 in the amount of $1, using the modelo-orcamento.docx template in the folder.
 ```
 
-## O que dá para usar no texto
-- `$ARGUMENTS`: tudo o que veio depois do comando.
-- `$0`, `$1`, ...: cada palavra (texto com espaço vai entre aspas: `/orcamento "Padaria Sol" 1500`).
-- Cabeçalho opcional: `model: haiku` (roda num modelo mais barato), `allowed-tools: Read, Bash(git status *)` (libera essas ações sem perguntar, só durante o comando; use com cuidado).
+## What you can use in the text
+- `$ARGUMENTS`: everything that came after the command.
+- `$0`, `$1`, ...: each word (text with spaces goes in quotes: `/orcamento "Sun Bakery" 1500`).
+- Optional header: `model: haiku` (runs on a cheaper model), `allowed-tools: Read, Bash(git status *)` (allows those actions without asking, only while the command runs; use with care).
 
-Teste digitando `/` na caixa de mensagem: o comando novo aparece na lista.
+Test it by typing `/` in the message box: the new command shows up in the list.

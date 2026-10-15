@@ -1,33 +1,33 @@
 ---
 name: organizar-arquivos
-description: Use para arrumar uma pasta bagunçada (Downloads, Documentos, fotos): separa por tipo ou data, mostra a prévia antes de mover, nunca apaga e deixa um jeito de desfazer.
+description: Use to tidy up a messy folder (Downloads, Documents, photos): sorts by type or date, shows a preview before moving, never deletes and leaves a way to undo.
 ---
 
-# Organizar arquivos
+# Organize files
 
-## 1. Olhar antes
-- Liste a pasta (com subpastas, se fizer sentido) e conte: quantos arquivos de cada tipo, os maiores, os mais antigos.
-- Ignore arquivos de sistema e escondidos (`desktop.ini`, `Thumbs.db`, os que começam com `~$`).
+## 1. Look first
+- List the folder (with subfolders, if it makes sense) and count: how many files of each type, the biggest, the oldest.
+- Ignore system and hidden files (`desktop.ini`, `Thumbs.db`, those that start with `~$`).
 
-## 2. Propor a organização
-Sugira um critério e mostre como ficaria, antes de mover qualquer coisa. Exemplo para Downloads:
+## 2. Propose the organization
+Suggest a criterion and show how it would look, before moving anything. Example for Downloads:
 
-| Pasta | O que vai para lá |
+| Folder | What goes there |
 |---|---|
-| Documentos | .pdf .docx .xlsx .txt .csv |
-| Imagens | .jpg .png .webp .heic |
-| Instaladores | .exe .msi |
-| Compactados | .zip .rar .7z |
-| Vídeos e áudios | .mp4 .mov .mp3 .wav |
-| Outros | o resto |
+| Documents | .pdf .docx .xlsx .txt .csv |
+| Images | .jpg .png .webp .heic |
+| Installers | .exe .msi |
+| Archives | .zip .rar .7z |
+| Videos and audio | .mp4 .mov .mp3 .wav |
+| Other | everything else |
 
-Pergunte se a pessoa quer separar também por ano (ex.: `Imagens\2026`).
+Ask whether the person also wants to split by year (e.g. `Images\2026`).
 
-## 3. Mover com registro
-- Mova, não apague. Duplicado com o mesmo nome no destino: acrescente ` (2)` ao nome, nunca sobrescreva.
-- Grave `organizacao-AAAA-MM-DD.csv` com origem e destino de cada arquivo.
-- Junto, crie `desfazer-organizacao.ps1`, que lê o CSV e devolve tudo ao lugar.
-- Para muitas pastas ou para repetir todo mês, faça um script com a skill `automacao-windows:script-powershell-seguro`.
+## 3. Move with a log
+- Move, don't delete. Duplicate with the same name at the destination: add ` (2)` to the name, never overwrite.
+- Save `organizacao-AAAA-MM-DD.csv` with the source and destination of each file.
+- Next to it, create `desfazer-organizacao.ps1`, which reads the CSV and puts everything back.
+- For many folders or to repeat every month, make a script with the skill `automacao-windows:script-powershell-seguro`.
 
-## 4. Fechar
-Conte quantos arquivos foram para cada pasta, onde estão o registro e o desfazer, e o que ficou de fora (e por quê).
+## 4. Wrap up
+Say how many files went to each folder, where the log and the undo script are, and what was left out (and why).

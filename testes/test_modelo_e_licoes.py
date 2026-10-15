@@ -28,7 +28,8 @@ def termos_pessoais():
 
 def procurar(regra_por_pasta):
     achados = []
-    for raiz in (MODELO, base.RAIZ / "tutoriais", base.RAIZ / "skills", base.RAIZ / "app" / "js"):
+    for raiz in (MODELO, base.RAIZ / "modelo-de-pasta-en", base.RAIZ / "tutoriais", base.RAIZ / "skills",
+                 base.RAIZ / "app" / "js", base.RAIZ / "app" / "i18n", base.RAIZ / "plugins", base.RAIZ / "agentes"):
         regras = regra_por_pasta(raiz)
         if not regras:
             continue
@@ -49,7 +50,7 @@ class TestModeloDePasta(unittest.TestCase):
         self.assertEqual(achados, [], "\n".join(achados))
 
     def test_modelo_e_licoes_nao_falam_de_outros_agentes(self):
-        achados = procurar(lambda raiz: [AGENTES] if raiz.name != "js" else [])
+        achados = procurar(lambda raiz: [AGENTES] if raiz.name not in ("js", "i18n") else [])
         self.assertEqual(achados, [], "\n".join(achados))
 
     def test_sem_agents_md(self):
@@ -58,7 +59,10 @@ class TestModeloDePasta(unittest.TestCase):
 
     def test_ver_video_igual_no_app_e_no_modelo(self):
         a, b = base.RAIZ / "skills" / "ver-video", MODELO / ".claude" / "skills" / "ver-video"
-        for nome in ("SKILL.md", "ver_video.py", "instalar.ps1"):
+        # a skill do app é a em inglês (igual à do modelo em inglês); os scripts são os mesmos nos dois modelos
+        en = base.RAIZ / "modelo-de-pasta-en" / ".claude" / "skills" / "ver-video"
+        self.assertTrue(filecmp.cmp(a / "SKILL.md", en / "SKILL.md", shallow=False))
+        for nome in ("ver_video.py", "instalar.ps1"):
             self.assertTrue(filecmp.cmp(a / nome, b / nome, shallow=False), nome)
 
     def test_criar_pasta_preenche_sobre_mim(self):

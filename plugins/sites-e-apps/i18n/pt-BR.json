@@ -1,0 +1,21 @@
+{
+  "displayName": "Sites e apps",
+  "description": "Páginas e pequenos apps num arquivo só, a conferência antes de dizer que acabou e como publicar de graça.",
+  "skills": {
+    "checklist-web": {
+      "description": "Use antes de dizer que uma página ou site está pronto. Confere celular, telas grandes, contraste, links, formulários, erros no console e peso das imagens."
+    },
+    "pagina-simples": {
+      "description": "Use para criar uma página ou um pequeno app que roda no navegador (calculadora, lista, formulário, página de apresentação), num arquivo HTML só, que funciona no celular e no computador."
+    },
+    "publicar-site": {
+      "description": "Use quando a pessoa quiser pôr uma página ou site no ar, de graça ou com domínio próprio. Explica as opções e faz o passo a passo, sempre pedindo OK antes de publicar."
+    }
+  },
+  "commands": {
+    "pagina": {
+      "description": "Cria uma página ou pequeno app num arquivo HTML só",
+      "argument-hint": "[o que a página deve fazer]"
+    }
+  }
+}

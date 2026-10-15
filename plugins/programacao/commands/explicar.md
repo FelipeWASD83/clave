@@ -1,8 +1,8 @@
 ---
-description: Explica um código ou projeto em linguagem simples
-argument-hint: [arquivo ou pasta]
+description: Explains code or a project in plain language
+argument-hint: [file or folder]
 ---
 
-Explique $ARGUMENTS para alguém que não programa (se eu não disse o quê, explique o projeto da pasta de trabalho).
+Explain $ARGUMENTS to someone who doesn't program (if I didn't say what, explain the project in the working folder).
 
-Siga a skill programacao:explicar-codigo (carregue com usar_skill). Não mude nada.
+Follow the skill programacao:explicar-codigo (load it with usar_skill). Don't change anything.

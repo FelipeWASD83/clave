@@ -1,0 +1,158 @@
+{
+  "_como_usar": "Uma ficha por modelo atual. lancado_em (AAAA-MM-DD) liga o cartão de apresentação (abre sozinho uma vez) e o banner de modelo novo por 14 dias; null deixa só o cartão em Preços e planos. familia escolhe a ilustração (app/img/modelos/<familia>.svg), a render do cartão de apresentação (app/img/modelos/render-<familia>.jpg, gerada por ferramentas/gerar_renders.py) e a cor. anterior é o id do modelo que ele substitui (precisa estar em modelos.MODELOS). inteligencia é a nota do índice de _inteligencia (a mesma régua para todos). Só fatos com fonte: preço da página oficial, números com a origem dita.",
+  "_inteligencia": {
+    "fonte": "https://artificialanalysis.ai/leaderboards/models",
+    "nota": {
+      "pt-BR": "Índice de inteligência da Artificial Analysis, com o raciocínio no máximo, em 14/10/2026.",
+      "en": "Artificial Analysis Intelligence Index, at max reasoning, on 2026-10-14."
+    }
+  },
+  "claude-fable-5-1": {
+    "familia": "fable",
+    "lancado_em": null,
+    "anterior": "claude-fable-5",
+    "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "etiquetas": {
+      "pt-BR": [
+        "O mais capaz",
+        "Pesquisa",
+        "Tarefas longas"
+      ],
+      "en": [
+        "Most capable",
+        "Research",
+        "Long tasks"
+      ]
+    },
+    "resumo": {
+      "pt-BR": "Para raciocínio muito longo e agentes que trabalham por horas. Tem a melhor escrita criativa entre os Claude.",
+      "en": "For very long reasoning and agents that work for hours. The best creative writing among the Claude models."
+    },
+    "novidades": {
+      "pt-BR": [
+        "Mesmo preço do Fable 5 (US$ 10 de entrada e 50 de saída por milhão de tokens).",
+        "Ler do cache custa 4 vezes menos: US$ 0,25 por milhão (era 1).",
+        "Contexto de 1 milhão de tokens."
+      ],
+      "en": [
+        "Same price as Fable 5 ($10 input and $50 output per million tokens).",
+        "Reading from the cache costs 4 times less: $0.25 per million (it was $1).",
+        "1 million token context."
+      ]
+    },
+    "inteligencia": 53,
+    "pagina": "https://www.anthropic.com/claude-fable-and-mythos-5-1"
+  },
+  "claude-opus-5-5": {
+    "familia": "opus",
+    "lancado_em": "2026-09-22",
+    "anterior": "claude-opus-5",
+    "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "etiquetas": {
+      "pt-BR": [
+        "Projetos complexos",
+        "Agentes",
+        "Programação"
+      ],
+      "en": [
+        "Complex projects",
+        "Agents",
+        "Coding"
+      ]
+    },
+    "resumo": {
+      "pt-BR": "O mais inteligente para o dia a dia. Bom para tudo, principalmente código e tarefas com muitos passos.",
+      "en": "The smartest for everyday work. Good at everything, especially code and multi-step tasks."
+    },
+    "novidades": {
+      "pt-BR": [
+        "20% mais barato que o Opus 5: US$ 4 de entrada e 20 de saída por milhão (era 5 e 25).",
+        "Nas tarefas comuns custa cerca de 40% menos que o Opus 5 e escreve mais de 30% mais rápido, pelos testes da Anthropic.",
+        "Ler do cache custa US$ 0,20 por milhão (era 0,50).",
+        "Primeiro lugar no índice de inteligência da Artificial Analysis em 14/10/2026."
+      ],
+      "en": [
+        "20% cheaper than Opus 5: $4 input and $20 output per million (it was $5 and $25).",
+        "On typical work it costs about 40% less than Opus 5 and writes more than 30% faster, according to Anthropic's tests.",
+        "Reading from the cache costs $0.20 per million (it was $0.50).",
+        "First place on the Artificial Analysis intelligence index on 2026-10-14."
+      ]
+    },
+    "inteligencia": 58,
+    "pagina": "https://www.anthropic.com/claude-opus-5-5"
+  },
+  "claude-sonnet-5-5": {
+    "familia": "sonnet",
+    "lancado_em": "2026-09-28",
+    "anterior": "claude-sonnet-5",
+    "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "etiquetas": {
+      "pt-BR": [
+        "Dia a dia",
+        "Escrita",
+        "Econômico"
+      ],
+      "en": [
+        "Everyday tasks",
+        "Writing",
+        "Economical"
+      ]
+    },
+    "resumo": {
+      "pt-BR": "Quase tão bom quanto o Opus pela metade do preço, e rápido.",
+      "en": "Almost as good as Opus for half the price, and fast."
+    },
+    "novidades": {
+      "pt-BR": [
+        "Mesmo preço do Sonnet 5 (US$ 2 de entrada e 10 de saída por milhão).",
+        "Ler do cache custa metade: US$ 0,10 por milhão (era 0,20).",
+        "No raciocínio máximo, chega perto do Opus 5.5 no índice da Artificial Analysis."
+      ],
+      "en": [
+        "Same price as Sonnet 5 ($2 input and $10 output per million).",
+        "Reading from the cache costs half: $0.10 per million (it was $0.20).",
+        "At max reasoning it comes close to Opus 5.5 on the Artificial Analysis index."
+      ]
+    },
+    "inteligencia": 56,
+    "pagina": "https://www.anthropic.com/claude-sonnet-5-5"
+  },
+  "claude-haiku-5-5": {
+    "familia": "haiku",
+    "lancado_em": "2026-10-07",
+    "anterior": "claude-haiku-4-5-20251001",
+    "fonte": "https://www.anthropic.com/claude-haiku-5-5",
+    "etiquetas": {
+      "pt-BR": [
+        "Mais rápido",
+        "Menor custo",
+        "Alto volume"
+      ],
+      "en": [
+        "Fastest",
+        "Lowest cost",
+        "High volume"
+      ]
+    },
+    "resumo": {
+      "pt-BR": "O mais rápido e o mais barato. Ótimo para tarefas simples, muito volume e para aprender.",
+      "en": "The fastest and the cheapest. Great for simple tasks, high volume and for learning."
+    },
+    "novidades": {
+      "pt-BR": [
+        "10 vezes mais barato que o Haiku 4.5: US$ 0,10 de entrada e 0,50 de saída por milhão (era 1 e 5).",
+        "Muito melhor em trabalho de escritório e usando o computador, pelos testes da Anthropic (OSWorld 2.1: 72,4%, o Haiku 4.5 fazia 15,7%).",
+        "Contexto de 1 milhão de tokens e conhecimento até junho de 2026.",
+        "O raciocínio dá para desligar no esforço Alto ou abaixo."
+      ],
+      "en": [
+        "10 times cheaper than Haiku 4.5: $0.10 input and $0.50 output per million (it was $1 and $5).",
+        "Much better at office work and using the computer, according to Anthropic's tests (OSWorld 2.1: 72.4%, Haiku 4.5 scored 15.7%).",
+        "1 million token context and knowledge up to June 2026.",
+        "Reasoning can be turned off at High effort or below."
+      ]
+    },
+    "inteligencia": 43,
+    "pagina": "https://www.anthropic.com/claude-haiku-5-5"
+  }
+}

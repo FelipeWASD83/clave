@@ -1,128 +1,163 @@
-# Novidades do Clave
+# What's new in Clave
 
-## 2.1.0 (14/10/2026)
+**English** · [Português](CHANGELOG.pt-BR.md)
 
-**Novo**
+## 3.0.0 (2026-10-15)
 
-- Página **Preços e planos**: o preço de cada modelo (e quanto sai uma mensagem curta, média ou longa), os
-  planos do Claude e a conta "API ou assinatura?". Você diz como usa o Claude normal (quantas janelas de 5
-  horas por semana e quanto do limite gasta, ou quantas mensagens por dia) e ela estima o custo na API de cada
-  modelo, comparado com o preço do plano. Quando você já tem respostas no Clave, aparece também a conta pelo
-  seu custo real.
-- Painel **Seu uso** na tela de conversa nova (chat e Code): tokens no total, dias seguidos de uso (e o
-  recorde), mapa de calor das últimas 20 semanas, modelo favorito, cada modelo nos últimos 7 dias e a
-  projeção do mês: no ritmo dos últimos 14 dias, quanto o ciclo fecha e em que dia o teto acaba. Dá para
-  esconder em Configurações > Aparência.
-- Painel **Ambiente** no Code, como no app oficial: as pastas recentes com a atual marcada, "Escolher
-  ambiente" e "Ativar modo automático" (o modo Livre). O Code já começa na última pasta usada.
-- **Sugestão de outra conversa**: quando aparece um trabalho separado, o Claude pode sugerir abrir outra
-  conversa. Vira um cartão com o título e o pedido; "Abrir em outra conversa" cria a conversa e o Claude já
-  começa a trabalhar nela, enquanto você continua na atual. Nada abre sem o seu clique.
+Clave now speaks English, shows you around the first time, and presents every new Claude model.
 
-**Mudou**
+**New**
 
-- O Code não tem mais a tela separada "Em qual pasta": a escolha fica no painel de ambientes.
+- **English**, alongside Brazilian Portuguese: the whole interface, the lessons and the glossary, the folder
+  template, the built-in plugins, agents and workflows, and what Clave tells Claude. A new install follows the
+  Windows language (English when it isn't Portuguese); if you already used Clave, it stays in Portuguese. Switch
+  in Settings > Appearance > Language.
+- **Guided tours**: the first time you open Clave, arrows point to each part of the screen and explain it (16
+  short steps you can skip). Code, Pricing & plans and Workflows have their own tour the first time you visit
+  them. "Take the tours again" is in Learn.
+- **New model card**: when Anthropic releases a model, a card opens once with its picture, what it is, what
+  changed from the previous version, its price next to the other models and an intelligence score for all of
+  them on the same scale (the Artificial Analysis index, with the source). A banner on the start screen stays for
+  14 days, and the same card opens from the "Models" row in Pricing & plans.
+- **Models** row in Pricing & plans, with a card and an illustration for each model.
+- Clave warns you when your Anthropic account already has a model that Clave doesn't know yet (it checks once a
+  day, for free) and offers to look for an update.
 
-## 2.0.1 (14/10/2026)
+**Changed**
 
-**Corrigido**
+- The repository is in English, with Portuguese copies of the README, this changelog and the project notes.
+- Workflow proposals, plans and suggestion cards are written in the language you use.
 
-- Se o Windows não deixar trocar uma pasta durante a atualização (por exemplo, a pasta do Clave aberta
-  num terminal ou presa pelo antivírus), a volta para a versão anterior não deixa mais o app sem abrir.
+**Fixed**
 
-## 2.0.0 (14/10/2026)
+- On the new conversation screen, when the banner and the panels made the page taller than the window, the text
+  box ended up above the top of the window, where scrolling couldn't reach it.
+- When suggesting another conversation, Claude sometimes repeated its whole answer after the card.
 
-Fluxos com vários modelos, permissões por regras, plugins, comandos de barra,
-rotinas e um modo Plano de verdade.
+## 2.1.0 (2026-10-14)
 
-**Novo**
+**New**
 
-- Fluxos: uma tarefa grande vira etapas, cada uma no modelo e no agente certo
-  (por exemplo, o Opus 5.5 planeja, o Sonnet 5.5 faz e testa, o Haiku 5.5
-  confere). Antes de rodar, sempre aparece um cartão com as etapas, a
-  estimativa de custo e um teto, e dá para trocar modelo e raciocínio de cada
-  etapa ou tirar etapas. Etapas podem rodar em paralelo, e dá para abrir cada
-  uma e ver o que ela está fazendo. Cinco fluxos prontos (Planejar, fazer e
-  testar; Pesquisa profunda; Revisão em paralelo; Planilha grande; Escrever e
-  revisar), com histórico de tudo o que rodou.
-- Agentes: seis prontos (planejador, executor, testador, revisor, pesquisador
-  e redator) e um editor para criar os seus, no mesmo formato do Claude Code
+- **Pricing & plans** page: the price of each model (and what a short, medium or long message costs), Claude's
+  plans and the "API or subscription?" calculation. You tell it how you use regular Claude (how many 5-hour
+  windows per week and how much of the limit you use, or how many messages per day) and it estimates the API
+  cost for each model, compared with the price of the plan. When you already have replies in Clave, the
+  calculation based on your real cost appears too.
+- **Your usage** panel on the new conversation screen (chat and Code): total tokens, streak of days of use (and
+  the record), heat map of the last 20 weeks, favorite model, each model over the last 7 days and the month's
+  projection: at the pace of the last 14 days, how much the cycle will total and on which day the cap runs out.
+  You can hide it in Settings > Appearance.
+- **Environment** panel in Code, as in the official app: recent folders with the current one marked, "Choose
+  environment" and "Turn on auto mode" (Auto mode). Code now starts in the last folder you used.
+- **Suggesting another conversation**: when a separate job comes up, Claude can suggest opening another
+  conversation. It becomes a card with the title and the request; "Open in another conversation" creates the
+  conversation and Claude starts working on it right away, while you carry on in the current one. Nothing opens
+  without your click.
+
+**Changed**
+
+- Code no longer has the separate "Which folder" screen: the choice now lives in the environments panel.
+
+## 2.0.1 (2026-10-14)
+
+**Fixed**
+
+- If Windows won't let a folder be swapped during the update (for example, Clave's folder open in a terminal or
+  held by the antivirus), going back to the previous version no longer leaves the app unable to open.
+
+## 2.0.0 (2026-10-14)
+
+Workflows with several models, permission rules, plugins, slash commands,
+routines and a real Plan mode.
+
+**New**
+
+- Workflows: a big task becomes steps, each on the right model and agent
+  (for example, Opus 5.5 plans, Sonnet 5.5 does the work and tests it, Haiku 5.5
+  checks it). Before running, a card always appears with the steps, the cost
+  estimate and a cap, and you can change the model and reasoning of each step or
+  remove steps. Steps can run in parallel, and you can open each one and see what
+  it is doing. Five ready-made workflows (Plan, do and test; Deep research;
+  Parallel review; Large spreadsheet; Write and review), with a history of
+  everything that ran.
+- Agents: six ready-made (planner, executor, tester, reviewer, researcher and
+  writer) and an editor to create your own, in the same format as Claude Code
   (`.claude/agents`).
-- Permissões por regras, no formato do Claude Code: Nunca, Sempre perguntar e
-  Fazer sem perguntar, para comandos, arquivos, sites, conectores, GitHub e
-  fluxos. Valem no Clave inteiro ou numa pasta (`.claude/settings.local.json`).
-  O cartão de aprovação ganhou "Mais opções" para liberar pelo resto da tarefa
-  ou salvar a regra sugerida. Página de permissões com teste ("esse comando
-  passaria?") e histórico de cada decisão.
-- Plugins no formato do Claude Code, com skills, agentes, comandos e fluxos.
-  Sete prontos (Escritório, Automação no Windows, Pesquisa, Escrita, Sites e
-  apps, Programação e Crie o seu) com 25 skills novas. Instalação de uma pasta
-  ou do GitHub (plugin único ou marketplace), sempre mostrando o conteúdo
-  antes.
-- Comandos de barra: `/novo`, `/modelo`, `/esforco`, `/plano`, `/custo`,
-  `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`, os comandos dos
-  plugins e os seus (`.claude/commands`), e as skills chamadas pelo nome.
-- Modo Plano com cartão de plano: você aprova e escolhe como ele executa
-  (perguntando, aceitando edições ou livre) ou pede para continuar planejando.
-- Rotinas: pedidos que o Claude faz sozinho todo dia, em alguns dias da semana
-  ou a cada poucas horas, com teto por rodada. Rodam com o Clave aberto ou,
-  se você quiser, pelo Agendador de Tarefas do Windows com ele fechado. Numa
-  rotina o Claude não pergunta nada: o que precisaria de OK faz a rotina parar
-  e contar a regra que faltou.
-- Skills também no chat (as que não são manuais).
-- Cinco lições novas (por que usar o Clave, fluxos e agentes, permissões,
-  rotinas, plugins e comandos) e oito termos novos no glossário.
-- No README, a seção "Por que você deveria usar o Clave".
+- Permission rules, in the Claude Code format: Never, Always ask and Do without
+  asking, for commands, files, sites, connectors, GitHub and workflows. They
+  apply to all of Clave or to one folder (`.claude/settings.local.json`).
+  The approval card gained "More options" to allow something for the rest of the
+  task or to save the suggested rule. Permissions page with a test ("would this
+  command pass?") and a history of every decision.
+- Plugins in the Claude Code format, with skills, agents, commands and
+  workflows. Seven ready-made (Office, Windows automation, Research, Writing,
+  Sites and apps, Programming and Make your own) with 25 new skills. Installing
+  from a folder or from GitHub (a single plugin or a marketplace), always
+  showing the content first.
+- Slash commands: `/novo`, `/modelo`, `/esforco`, `/plano`, `/custo`,
+  `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`, the plugins'
+  commands and your own (`.claude/commands`), and skills called by name.
+- Plan mode with a plan card: you approve and choose how it executes (asking,
+  accepting edits or auto) or ask it to keep planning.
+- Routines: requests that Claude carries out on its own every day, on some days
+  of the week or every few hours, with a cap per run. They run with Clave open or,
+  if you want, through the Windows Task Scheduler with it closed. In a routine
+  Claude asks nothing: whatever would need an OK makes the routine stop and tell
+  you which rule was missing.
+- Skills in chat too (the ones that aren't manual).
+- Five new lessons (why use Clave, workflows and agents, permissions,
+  routines, plugins and commands) and eight new glossary terms.
+- In the README, the "Why you should use Clave" section.
 
-**Mudou**
+**Changed**
 
-- Os avisos do Windows saem pela janela do Clave, piscam na barra de tarefas
-  e avisam também quando o Claude espera um OK, propõe um fluxo, termina um
-  plano ou quando um fluxo ou rotina termina.
-- O botão Atualizar também atualiza os plugins, agentes e fluxos que vêm com
-  o app.
+- Windows notifications now come out through Clave's window, flash in the
+  taskbar and also warn you when Claude is waiting for an OK, proposes a
+  workflow, finishes a plan, or when a workflow or routine finishes.
+- The Update button also updates the plugins, agents and workflows that ship
+  with the app.
 
-**Corrigido**
+**Fixed**
 
-- Menus compridos (como o de comandos) não saem mais da tela: abrem para baixo
-  quando não cabem para cima e rolam.
+- Long menus (like the commands one) no longer go off the screen: they open
+  downward when they don't fit upward, and they scroll.
 
-## 1.0.0 (14/10/2026)
+## 1.0.0 (2026-10-14)
 
-Primeira versão.
+First version.
 
-**Novo**
+**New**
 
-- Chat com o Claude pela API da Anthropic, com a sua chave: conversas, busca,
-  fixar, renomear, exportar em Markdown, editar mensagem e gerar outra resposta
-  com versões (setas < >).
-- Anexos: imagens, PDFs, planilhas do Excel e arquivos de texto e código;
-  arrastar, colar ou escolher, e também do GitHub.
-- Modelos Opus 5.5, Sonnet 5.5, Haiku 5.5 e Fable 5.1 (e os antigos, se quiser),
-  raciocínio de Baixo a Máximo, raciocínio visível, modo rápido e troca de
-  modelo quando o filtro de segurança recusa por engano.
-- Modo Code: o Claude trabalha numa pasta do computador com permissões
-  (Perguntar, Aceitar edições, Plano, Livre), cartões de aprovação com o antes e
-  depois, lista de passos, desfazer, arquivos protegidos, teto por tarefa,
-  regras CLAUDE.md da pasta e skills (chamadas com /nome).
-- Excel: ler, criar e alterar planilhas com fórmulas, formatação, tabelas,
-  gráficos, filtros, formatação condicional e listas de opção; recalcular,
-  exportar PDF e converter .xls pelo Excel do computador. No chat, a planilha
-  pronta vem com botões de baixar e abrir.
-- Projetos com instruções e arquivos de conhecimento.
-- Personalização: sobre você, como responder, estilos prontos e próprios.
-- Memória entre conversas em arquivos por assunto, com índice, e um editor de
-  memória (Sonnet 5.5) que muda as memórias do jeito que você pedir.
-- Teto de gasto mensal com alertas, custo de cada resposta, página de uso por
-  dia, modelo e conversa, e régua de contexto.
-- GitHub (pelo login do gh ou token), busca na web e conectores MCP.
-- Aprender: 19 lições e um glossário de mais de 60 termos para quem nunca usou
-  IA, com foco em automação e personalização, e um ajudante (Haiku 5.5) que
-  tira dúvidas de cada lição. O Claude indica a lição certa quando você
-  tropeça num termo, mesmo escrito errado.
-- Modelo de pasta de trabalho com regras, skills (ver vídeos, revisar código,
-  visual de sites e outras) e biblioteca de referências visuais.
-- Janela própria (Electron), instalador com atalhos e botão Atualizar que baixa
-  a versão nova do GitHub e volta atrás se ela não abrir.
-- Tema claro, escuro ou do sistema, tamanho e tipo de letra, largura da
-  conversa e avisos do Windows quando o Claude termina.
+- Chat with Claude through the Anthropic API, with your key: conversations,
+  search, pin, rename, export to Markdown, edit a message and generate another
+  reply with versions (< > arrows).
+- Attachments: images, PDFs, Excel spreadsheets and text and code files; drag,
+  paste or choose, and also from GitHub.
+- Models Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 (and the older ones, if
+  you want), reasoning from Low to Max, visible reasoning, fast mode and a model
+  switch when the safety filter refuses by mistake.
+- Code mode: Claude works in a folder on the computer with permissions (Ask,
+  Accept edits, Plan, Auto), approval cards with the before and after, a step
+  list, undo, protected files, a cap per task, the folder's CLAUDE.md rules and
+  skills (called with /name).
+- Excel: read, create and edit spreadsheets with formulas, formatting, tables,
+  charts, filters, conditional formatting and dropdown lists; recalculate,
+  export PDF and convert .xls through the computer's Excel. In chat, the
+  finished spreadsheet comes with download and open buttons.
+- Projects with instructions and knowledge files.
+- Personalization: about you, how to respond, ready-made and custom styles.
+- Memory across conversations in files by topic, with an index, and a memory
+  editor (Sonnet 5.5) that changes the memories however you ask.
+- Monthly spending cap with alerts, the cost of each reply, a usage page by day,
+  model and conversation, and a context gauge.
+- GitHub (through the gh login or a token), web search and MCP connectors.
+- Learn: 19 lessons and a glossary of more than 60 terms for people who have
+  never used AI, focused on automation and personalization, and a helper
+  (Haiku 5.5) that answers questions about each lesson. Claude points to the
+  right lesson when you trip on a term, even if it is misspelled.
+- Working folder template with rules, skills (watching videos, reviewing code,
+  visuals for sites and others) and a library of visual references.
+- Own window (Electron), installer with shortcuts and an Update button that
+  downloads the new version from GitHub and goes back if it doesn't open.
+- Light, dark or system theme, font size and typeface, conversation width and
+  Windows notifications when Claude finishes.

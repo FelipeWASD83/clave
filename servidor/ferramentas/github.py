@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 import github_api as gh
+from i18n import t
 
 
 def _f(nome, descricao, props, obrig, risco):
@@ -68,17 +69,17 @@ def executar(nome: str, e: dict) -> str:
         if nome == "github_ver_pasta":
             r = gh.conteudo(e["repo"], e.get("caminho", ""), e.get("ref"))
             if r["tipo"] != "pasta":
-                return "Isso é um arquivo, não uma pasta. Use github_ler_arquivo."
-            return "\n".join(f"{'[pasta] ' if i['tipo'] == 'dir' else ''}{i['caminho']}" for i in r["itens"])
+                return t("Isso é um arquivo, não uma pasta. Use github_ler_arquivo.")
+            return "\n".join((t("[pasta] ") if i["tipo"] == "dir" else "") + i["caminho"] for i in r["itens"])
         if nome == "github_ler_arquivo":
             r = gh.conteudo(e["repo"], e["caminho"], e.get("ref"))
             if r["tipo"] != "arquivo":
-                return "Isso é uma pasta. Use github_ver_pasta."
+                return t("Isso é uma pasta. Use github_ver_pasta.")
             if b"\x00" in r["bytes"][:4096]:
-                return f"{r['caminho']} é um arquivo binário ({r['tamanho']} bytes)."
+                return t("{caminho} é um arquivo binário ({n} bytes).", caminho=r["caminho"], n=r["tamanho"])
             texto = r["bytes"].decode("utf-8", errors="replace")
             if len(texto) > 60_000:
-                texto = texto[:60_000] + "\n[... arquivo cortado ...]"
+                texto = texto[:60_000] + "\n" + t("[... arquivo cortado ...]")
             return texto
         if nome == "github_buscar_codigo":
             return json.dumps(gh.buscar_codigo(e["consulta"]), ensure_ascii=False, indent=1)
@@ -90,7 +91,7 @@ def executar(nome: str, e: dict) -> str:
             texto = json.dumps(r, ensure_ascii=False, indent=1)
             if r.get("e_pr") and e.get("com_diff"):
                 diff = gh.pr_diff(e["repo"], int(e["numero"]))
-                texto += "\n\nDiff:\n" + (diff[:50_000] + ("\n[... diff cortado ...]" if len(diff) > 50_000 else ""))
+                texto += "\n\nDiff:\n" + (diff[:50_000] + ("\n" + t("[... diff cortado ...]") if len(diff) > 50_000 else ""))
             return texto
         if nome == "github_commits":
             return json.dumps(gh.commits(e["repo"], e.get("ref")), ensure_ascii=False, indent=1)
@@ -103,4 +104,4 @@ def executar(nome: str, e: dict) -> str:
                               ensure_ascii=False)
     except gh.ErroGitHub as erro:
         raise RuntimeError(str(erro))
-    raise RuntimeError(f"Ferramenta desconhecida: {nome}")
+    raise RuntimeError(t("Ferramenta desconhecida: {nome}", nome=nome))

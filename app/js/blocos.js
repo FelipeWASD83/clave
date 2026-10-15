@@ -2,38 +2,40 @@
 import { ic } from './icones.js';
 import { el, esc } from './ui.js';
 import { renderizar } from './markdown.js';
+import { t } from './i18n.js';
 
+// cada entrada é uma função, então o t() roda na hora de desenhar (o catálogo já carregou)
 const NOMES_FERRAMENTA = {
-  listar_pasta: (e) => ['pasta', 'Olhou a pasta', e.caminho || '.'],
-  ler_arquivo: (e) => ['arquivo', 'Leu', e.caminho],
-  buscar_texto: (e) => ['busca', 'Procurou', `"${e.padrao || ''}"`],
-  achar_arquivos: (e) => ['busca', 'Procurou arquivos', e.padrao],
-  escrever_arquivo: (e) => ['lapis', 'Escreveu', e.caminho],
-  editar_arquivo: (e) => ['lapis', 'Editou', e.caminho],
-  rodar_comando: (e) => ['terminal', e.descricao || 'Rodou um comando', e.comando],
-  atualizar_tarefas: () => ['feito', 'Atualizou a lista de passos', ''],
-  usar_skill: (e) => ['faisca', 'Usou a skill', e.nome],
-  memory: (e) => ['memoria', { view: 'Consultou a memória', create: 'Anotou na memória', str_replace: 'Atualizou a memória', insert: 'Atualizou a memória', delete: 'Apagou da memória', rename: 'Reorganizou a memória' }[e.command] || 'Memória', e.path || e.old_path || ''],
-  excel_ler: (e) => ['grafico', 'Leu a planilha', e.caminho + (e.aba ? ` (${e.aba})` : '')],
-  excel_alterar: (e) => ['grafico', 'Mexeu na planilha', e.caminho],
-  excel_no_app: (e) => ['grafico', { recalcular: 'Recalculou no Excel', pdf: 'Exportou para PDF', converter_xlsx: 'Converteu para .xlsx' }[e.acao] || 'Usou o Excel', e.caminho],
-  excel_abrir: (e) => ['externo', 'Abriu no Excel', e.caminho],
-  planilha_ler: (e) => ['grafico', 'Leu a planilha', e.aba || ''],
-  planilha_criar: (e) => ['grafico', 'Criou a planilha', e.nome_arquivo],
-  planilha_pdf: () => ['arquivo', 'Exportou a planilha para PDF', ''],
-  github_meus_repositorios: () => ['ramo', 'Listou seus repositórios do GitHub', ''],
-  github_ver_pasta: (e) => ['ramo', 'Olhou no GitHub', `${e.repo}/${e.caminho || ''}`],
-  github_ler_arquivo: (e) => ['ramo', 'Leu no GitHub', `${e.repo}/${e.caminho}`],
-  github_buscar_codigo: (e) => ['ramo', 'Buscou código no GitHub', e.consulta],
-  github_listar_issues: (e) => ['ramo', e.pull_requests ? 'Listou os PRs' : 'Listou as issues', e.repo],
-  github_ler_issue: (e) => ['ramo', 'Leu a issue/PR', `${e.repo}#${e.numero}`],
-  github_commits: (e) => ['ramo', 'Viu os commits', e.repo],
-  github_criar_issue: (e) => ['ramo', 'Criar issue', `${e.repo}: ${e.titulo}`],
-  github_comentar: (e) => ['ramo', 'Comentar', `${e.repo}#${e.numero}`],
-  github_criar_pr: (e) => ['ramo', 'Abrir pull request', `${e.repo}: ${e.titulo}`],
-  executar_fluxo: (e) => ['fluxo', 'Propôs um fluxo', e.titulo || ''],
-  apresentar_plano: () => ['lista', 'Apresentou o plano', ''],
-  sugerir_conversa: (e) => ['mais_tarefa', 'Sugeriu outra conversa', e.titulo || ''],
+  listar_pasta: (e) => ['pasta', t('Olhou a pasta'), e.caminho || '.'],
+  ler_arquivo: (e) => ['arquivo', t('Leu'), e.caminho],
+  buscar_texto: (e) => ['busca', t('Procurou'), `"${e.padrao || ''}"`],
+  achar_arquivos: (e) => ['busca', t('Procurou arquivos'), e.padrao],
+  escrever_arquivo: (e) => ['lapis', t('Escreveu'), e.caminho],
+  editar_arquivo: (e) => ['lapis', t('Editou'), e.caminho],
+  rodar_comando: (e) => ['terminal', e.descricao || t('Rodou um comando'), e.comando],
+  atualizar_tarefas: () => ['feito', t('Atualizou a lista de passos'), ''],
+  usar_skill: (e) => ['faisca', t('Usou a skill'), e.nome],
+  memory: (e) => ['memoria', { view: t('Consultou a memória'), create: t('Anotou na memória'), str_replace: t('Atualizou a memória'), insert: t('Atualizou a memória'), delete: t('Apagou da memória'), rename: t('Reorganizou a memória') }[e.command] || t('Memória'), e.path || e.old_path || ''],
+  excel_ler: (e) => ['grafico', t('Leu a planilha'), e.caminho + (e.aba ? ` (${e.aba})` : '')],
+  excel_alterar: (e) => ['grafico', t('Mexeu na planilha'), e.caminho],
+  excel_no_app: (e) => ['grafico', { recalcular: t('Recalculou no Excel'), pdf: t('Exportou para PDF'), converter_xlsx: t('Converteu para .xlsx') }[e.acao] || t('Usou o Excel'), e.caminho],
+  excel_abrir: (e) => ['externo', t('Abriu no Excel'), e.caminho],
+  planilha_ler: (e) => ['grafico', t('Leu a planilha'), e.aba || ''],
+  planilha_criar: (e) => ['grafico', t('Criou a planilha'), e.nome_arquivo],
+  planilha_pdf: () => ['arquivo', t('Exportou a planilha para PDF'), ''],
+  github_meus_repositorios: () => ['ramo', t('Listou seus repositórios do GitHub'), ''],
+  github_ver_pasta: (e) => ['ramo', t('Olhou no GitHub'), `${e.repo}/${e.caminho || ''}`],
+  github_ler_arquivo: (e) => ['ramo', t('Leu no GitHub'), `${e.repo}/${e.caminho}`],
+  github_buscar_codigo: (e) => ['ramo', t('Buscou código no GitHub'), e.consulta],
+  github_listar_issues: (e) => ['ramo', e.pull_requests ? t('Listou os PRs') : t('Listou as issues'), e.repo],
+  github_ler_issue: (e) => ['ramo', t('Leu a issue/PR'), `${e.repo}#${e.numero}`],
+  github_commits: (e) => ['ramo', t('Viu os commits'), e.repo],
+  github_criar_issue: (e) => ['ramo', t('Criar issue'), `${e.repo}: ${e.titulo}`],
+  github_comentar: (e) => ['ramo', t('Comentar'), `${e.repo}#${e.numero}`],
+  github_criar_pr: (e) => ['ramo', t('Abrir pull request'), `${e.repo}: ${e.titulo}`],
+  executar_fluxo: (e) => ['fluxo', t('Propôs um fluxo'), e.titulo || ''],
+  apresentar_plano: () => ['lista', t('Apresentou o plano'), ''],
+  sugerir_conversa: (e) => ['mais_tarefa', t('Sugeriu outra conversa'), e.titulo || ''],
 };
 
 export function descreverFerramenta(nome, entrada = {}) {
@@ -45,7 +47,7 @@ export function descreverFerramenta(nome, entrada = {}) {
 function textoResultado(conteudo) {
   if (conteudo == null) return '';
   if (typeof conteudo === 'string') return conteudo;
-  return conteudo.map((b) => b.type === 'text' ? b.text : b.type === 'image' ? '[imagem]' : b.type === 'document' ? '[documento]' : '').join('\n');
+  return conteudo.map((b) => b.type === 'text' ? b.text : b.type === 'image' ? t('[imagem]') : b.type === 'document' ? t('[documento]') : '').join('\n');
 }
 
 export function htmlDiff(texto) {
@@ -86,10 +88,10 @@ function citacoes(bloco) {
 export function blocoPensamento(texto, { aberto = false, ativo = false } = {}) {
   const corpo = el('div', { class: 'corpo-pensamento', texto: texto || '' });
   const det = el('details', { class: `pensamento ${ativo ? 'pensando' : ''}`, open: aberto },
-    el('summary', {}, el('span', { html: ic('dir', 'class="seta"') }), el('span', { class: 'rotulo-pensando', texto: ativo ? 'Pensando…' : 'Raciocínio' })),
+    el('summary', {}, el('span', { html: ic('dir', 'class="seta"') }), el('span', { class: 'rotulo-pensando', texto: ativo ? t('Pensando…') : t('Raciocínio') })),
     corpo);
   det._corpo = corpo;
-  det.finalizar = () => { det.classList.remove('pensando'); det.querySelector('.rotulo-pensando').textContent = 'Raciocínio'; };
+  det.finalizar = () => { det.classList.remove('pensando'); det.querySelector('.rotulo-pensando').textContent = t('Raciocínio'); };
   return det;
 }
 
@@ -105,7 +107,7 @@ export function blocoFerramenta(bloco) {
   det.definirEntrada = (entrada) => {
     detalhe.querySelector('.bloco-entrada')?.remove();
     const pre = entradaLegivel(bloco.name, entrada || {});
-    if (pre) detalhe.prepend(el('div', { class: 'bloco-entrada' }, el('div', { class: 'rotulo-detalhe', texto: 'O que ele pediu' }), pre));
+    if (pre) detalhe.prepend(el('div', { class: 'bloco-entrada' }, el('div', { class: 'rotulo-detalhe', texto: t('O que ele pediu') }), pre));
     const [, v, a] = descreverFerramenta(bloco.name, entrada);
     desc.replaceChildren(v + (a ? ' ' : ''), a ? el('code', { texto: String(a).slice(0, 200) }) : '');
   };
@@ -113,14 +115,14 @@ export function blocoFerramenta(bloco) {
     detalhe.querySelector('.bloco-resultado')?.remove();
     det.classList.toggle('erro', !!erro);
     det.classList.remove('rodando');
-    if (texto) detalhe.append(el('div', { class: 'bloco-resultado' }, el('div', { class: 'rotulo-detalhe', texto: erro ? 'Erro' : 'Resultado' }), el('pre', { texto: String(texto).slice(0, 6000) })));
+    if (texto) detalhe.append(el('div', { class: 'bloco-resultado' }, el('div', { class: 'rotulo-detalhe', texto: erro ? t('Erro') : t('Resultado') }), el('pre', { texto: String(texto).slice(0, 6000) })));
     det.querySelector('.arquivo-gerado')?.remove();
     const gerado = !erro && /^planilha_(criar|pdf)$/.test(bloco.name) && /:\s*([^\n]+?)\s*\(id ([0-9a-f]{16})\)/.exec(String(texto || ''));
     if (gerado) det.append(cartaoGerado(gerado[2], gerado[1]));
   };
   det.definirDiff = (diff) => {
     detalhe.querySelector('.bloco-diff')?.remove();
-    if (diff) detalhe.append(el('div', { class: 'bloco-diff' }, el('div', { class: 'rotulo-detalhe', texto: 'Mudanças' }), el('pre', { class: 'diff', html: htmlDiff(diff) })));
+    if (diff) detalhe.append(el('div', { class: 'bloco-diff' }, el('div', { class: 'rotulo-detalhe', texto: t('Mudanças') }), el('pre', { class: 'diff', html: htmlDiff(diff) })));
   };
   if (bloco.input && Object.keys(bloco.input).length) det.definirEntrada(bloco.input);
   return det;
@@ -131,11 +133,11 @@ export function cartaoGerado(id, nome) {
   const ext = (nome.split('.').pop() || '').slice(0, 4);
   return el('div', { class: 'arquivo-gerado' },
     el('span', { class: 'icone-arq', texto: ext }), el('b', { texto: nome }),
-    el('a', { class: 'botao pequeno primario', href: `/api/anexos/${id}?baixar=1`, download: nome, html: `${ic('baixar')}Baixar` }),
-    el('button', { class: 'botao pequeno', type: 'button', html: `${ic('externo')}Abrir`, title: 'Abre uma cópia no Excel (ou no programa padrão)',
+    el('a', { class: 'botao pequeno primario', href: `/api/anexos/${id}?baixar=1`, download: nome, html: `${ic('baixar')}${esc(t('Baixar'))}` }),
+    el('button', { class: 'botao pequeno', type: 'button', html: `${ic('externo')}${esc(t('Abrir'))}`, title: t('Abre uma cópia no Excel (ou no programa padrão)'),
       onclick: async () => {
         const r = await fetch(`/api/anexos/${id}/abrir`, { method: 'POST', credentials: 'same-origin' });
-        if (!r.ok) { const d = await r.json().catch(() => ({})); alert(d.erro || 'Não deu para abrir.'); }
+        if (!r.ok) { const d = await r.json().catch(() => ({})); alert(d.erro || t('Não deu para abrir.')); }
       } }));
 }
 
@@ -155,9 +157,9 @@ function entradaLegivel(nome, e) {
 export function blocoServidor(bloco) {
   const e = bloco.input || {};
   let icone = 'globo', texto = bloco.name, alvo = '';
-  if (bloco.name === 'web_search') { texto = 'Pesquisou na web'; alvo = e.query || ''; }
-  else if (bloco.name === 'web_fetch') { texto = 'Leu a página'; alvo = e.url || ''; }
-  else if (bloco.type === 'mcp_tool_use') { icone = 'conector'; texto = `Conector ${bloco.server_name || ''}`; alvo = bloco.name; }
+  if (bloco.name === 'web_search') { texto = t('Pesquisou na web'); alvo = e.query || ''; }
+  else if (bloco.name === 'web_fetch') { texto = t('Leu a página'); alvo = e.url || ''; }
+  else if (bloco.type === 'mcp_tool_use') { icone = 'conector'; texto = t('Conector {nome}', { nome: bloco.server_name || '' }); alvo = bloco.name; }
   const det = el('details', { class: 'ferramenta', dados: { toolId: bloco.id || '' } },
     el('summary', {}, el('span', { class: 'ic', html: ic(icone) }), el('span', { class: 'desc' }, texto + ' ', alvo ? el('code', { texto: alvo }) : null)),
     el('div', { class: 'detalhe' }));
@@ -174,10 +176,10 @@ export function preencherResultadoServidor(det, bloco) {
       alvo.replaceChildren(el('div', { class: 'fontes' }, ...c.filter((r) => r.url).slice(0, 12).map((r) =>
         el('a', { class: 'fonte', href: r.url, target: '_blank', rel: 'noopener noreferrer', title: r.title || r.url }, el('span', { html: ic('externo') }), el('span', { texto: r.title || r.url })))));
       det.open = false;
-    } else alvo.replaceChildren(el('pre', { texto: `A busca falhou: ${c?.error_code || 'erro'}` }));
+    } else alvo.replaceChildren(el('pre', { texto: t('A busca falhou: {codigo}', { codigo: c?.error_code || t('erro') }) }));
   } else if (bloco.type === 'web_fetch_tool_result') {
     const titulo = c?.content?.title || c?.url || '';
-    alvo.replaceChildren(el('pre', { texto: c?.error_code ? `Não deu para ler: ${c.error_code}` : `Página lida: ${titulo}` }));
+    alvo.replaceChildren(el('pre', { texto: c?.error_code ? t('Não deu para ler: {codigo}', { codigo: c.error_code }) : t('Página lida: {titulo}', { titulo }) }));
   } else if (bloco.type === 'mcp_tool_result') {
     alvo.replaceChildren(el('pre', { texto: textoResultado(c).slice(0, 6000) }));
     if (bloco.is_error) det.classList.add('erro');
@@ -191,7 +193,7 @@ export function nota(texto, tipo = '', botao) {
 }
 
 export function divisorCompactacao() {
-  return el('div', { class: 'compactacao', texto: 'A conversa foi resumida aqui para caber na memória do modelo' });
+  return el('div', { class: 'compactacao', texto: t('A conversa foi resumida aqui para caber na memória do modelo') });
 }
 
 // ---------- uma resposta inteira (histórico) ----------

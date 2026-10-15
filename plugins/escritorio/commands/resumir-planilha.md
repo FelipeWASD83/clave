@@ -1,13 +1,13 @@
 ---
-description: Lê uma planilha e faz um resumo do que tem nela
-argument-hint: [arquivo.xlsx]
+description: Reads a spreadsheet and summarizes what is in it
+argument-hint: [file.xlsx]
 ---
 
-Leia a planilha $ARGUMENTS (todas as abas) e me faça um resumo em linguagem simples:
+Read the spreadsheet $ARGUMENTS (all sheets) and give me a summary in plain language:
 
-1. Para que ela parece servir.
-2. As abas e, em cada uma, as colunas e quantas linhas tem.
-3. Totais e números principais (confira as contas).
-4. Problemas que você viu: células vazias onde não deveria, fórmulas quebradas, datas ou números em formatos misturados.
+1. What it seems to be for.
+2. The sheets and, in each one, the columns and how many rows it has.
+3. Totals and main numbers (check the math).
+4. Problems you saw: empty cells where there shouldn't be any, broken formulas, dates or numbers in mixed formats.
 
-Não mude nada na planilha.
+Don't change anything in the spreadsheet.

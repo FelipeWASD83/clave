@@ -1,32 +1,32 @@
 ---
 name: criar-agente
-description: Use quando a pessoa quiser criar um agente (um "especialista" com instruções, modelo e ferramentas próprios) para usar nos fluxos do Clave ou no Claude Code.
+description: Use when the person wants to create an agent (a "specialist" with its own instructions, model and tools) to use in Clave workflows or in Claude Code.
 ---
 
-# Criar um agente
+# Create an agent
 
-Um agente é um arquivo `.md` com instruções fixas, um modelo e o que ele pode usar. Nos fluxos, cada etapa pode ser feita por um agente (ex.: um "revisor-juridico" no Opus que só lê).
+An agent is a `.md` file with fixed instructions, a model and a list of what it may use. In workflows, each step can be done by an agent (e.g. a `revisor-juridico`, a legal reviewer, on Opus that only reads).
 
-## Perguntas
-- O que ele faz, e quando usar? (vira a descrição)
-- Qual modelo? `opus` (mais inteligente, mais caro), `sonnet` (equilíbrio), `haiku` (barato e rápido) ou `inherit` (o da conversa).
-- O que ele pode fazer? Só ler (`Read, Glob, Grep`), mudar arquivos (`Edit, Write`), rodar comandos (`Bash`), pesquisar na web (`WebSearch, WebFetch`). Dê só o necessário.
+## Questions
+- What does it do, and when should it be used? (becomes the description)
+- Which model? `opus` (smartest, most expensive), `sonnet` (balanced), `haiku` (cheap and fast) or `inherit` (the conversation's).
+- What can it do? Only read (`Read, Glob, Grep`), change files (`Edit, Write`), run commands (`Bash`), search the web (`WebSearch, WebFetch`). Give only what is needed.
 
-## Arquivo
-`.claude/agents/<nome>.md` na pasta (vale ali) ou `~/.claude/agents/<nome>.md` (pessoal):
+## File
+`.claude/agents/<name>.md` in the folder (applies there) or `~/.claude/agents/<name>.md` (personal):
 
 ```markdown
 ---
 name: revisor-juridico
-description: Revisa contratos e aponta cláusulas arriscadas
+description: Reviews contracts and points out risky clauses
 tools: Read, Glob, Grep
 model: opus
 effort: high
 ---
 
-Você revisa contratos em português. Para cada cláusula arriscada, diga ...
+You review contracts. For each risky clause, say ...
 ```
 
-O corpo é escrito como instrução para o agente ("Você é ..."), com o que entregar no fim.
+The body is written as an instruction to the agent ("You are ..."), including what to deliver at the end.
 
-Também dá para criar pela tela: barra da esquerda > **Fluxos** > aba **Agentes** > Novo agente.
+You can also create one from the screen: left sidebar > **Workflows** > **Agents** tab > New agent.

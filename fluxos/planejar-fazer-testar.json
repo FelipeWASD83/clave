@@ -1,15 +1,28 @@
 {
-  "nome": "Planejar, fazer e testar",
-  "descricao": "Opus 5.5 planeja, Sonnet 5.5 faz e testa, Opus revisa no fim. Para tarefas grandes no modo Code.",
-  "pede": "a tarefa, com o que deve ficar pronto",
+  "nome": "Plan, do and test",
+  "descricao": "Opus 5.5 plans, Sonnet 5.5 does and tests, Opus reviews at the end. For big tasks in Code mode.",
+  "pede": "the task, with what should be ready at the end",
   "etapas": [
-    {"nome": "Planejar", "agente": "planejador", "modelo": "opus", "esforco": "high",
-     "tarefa": "Entenda o pedido, olhe a pasta e escreva o plano: passos, arquivos e como conferir.", "pode": ["ler"]},
-    {"nome": "Fazer", "agente": "executor", "modelo": "sonnet", "esforco": "high",
-     "tarefa": "Siga o plano da etapa anterior e faça as mudanças, conferindo cada uma.", "pode": ["ler", "editar", "comandos"]},
-    {"nome": "Testar", "agente": "testador", "modelo": "sonnet", "esforco": "medium",
-     "tarefa": "Confira se o que foi feito funciona: rode os testes e o resultado, sem consertar nada.", "pode": ["ler", "comandos"]},
-    {"nome": "Revisar", "agente": "revisor", "modelo": "opus", "esforco": "high",
-     "tarefa": "Revise o resultado contra o pedido original e aponte o que ainda está errado.", "pode": ["ler"]}
-  ]
+    {"nome": "Plan", "agente": "planejador", "modelo": "opus", "esforco": "high",
+     "tarefa": "Understand the request, look at the folder and write the plan: steps, files and how to check the result.", "pode": ["ler"]},
+    {"nome": "Do", "agente": "executor", "modelo": "sonnet", "esforco": "high",
+     "tarefa": "Follow the plan from the previous step and make the changes, checking each one.", "pode": ["ler", "editar", "comandos"]},
+    {"nome": "Test", "agente": "testador", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Check whether what was done works: run the tests and the result, without fixing anything.", "pode": ["ler", "comandos"]},
+    {"nome": "Review", "agente": "revisor", "modelo": "opus", "esforco": "high",
+     "tarefa": "Review the result against the original request and point out what is still wrong.", "pode": ["ler"]}
+  ],
+  "i18n": {
+    "pt-BR": {
+      "nome": "Planejar, fazer e testar",
+      "descricao": "Opus 5.5 planeja, Sonnet 5.5 faz e testa, Opus revisa no fim. Para tarefas grandes no modo Code.",
+      "pede": "a tarefa, com o que deve ficar pronto",
+      "etapas": [
+        {"nome": "Planejar", "tarefa": "Entenda o pedido, olhe a pasta e escreva o plano: passos, arquivos e como conferir."},
+        {"nome": "Fazer", "tarefa": "Siga o plano da etapa anterior e faça as mudanças, conferindo cada uma."},
+        {"nome": "Testar", "tarefa": "Confira se o que foi feito funciona: rode os testes e o resultado, sem consertar nada."},
+        {"nome": "Revisar", "tarefa": "Revise o resultado contra o pedido original e aponte o que ainda está errado."}
+      ]
+    }
+  }
 }

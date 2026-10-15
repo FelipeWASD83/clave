@@ -1,0 +1,4 @@
+{
+ "O teto de gasto deste mês foi atingido (US$ {gasto} de US$ {teto}). Ele volta a zerar em {data}. Dá para aumentar o teto em Configurações > Limite de gasto.": "This month's spending cap was reached (${gasto} of ${teto}). It resets on {data}. You can raise the cap in Settings > Spending limit.",
+ "{dia}/{mes}/{ano}": "{mes}/{dia}/{ano}"
+}

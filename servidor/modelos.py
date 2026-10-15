@@ -6,8 +6,10 @@ Escrita de cache: 1,25x a entrada (5 min) ou 2x (1 h). Modelo que não está aqu
 """
 from __future__ import annotations
 
+from i18n import t
+
 ESFORCOS = ["low", "medium", "high", "xhigh", "max"]
-NOMES_ESFORCO = {"low": "Baixo", "medium": "Médio", "high": "Alto", "xhigh": "Muito alto", "max": "Máximo"}
+NOMES_ESFORCO = {"low": "Baixo", "medium": "Médio", "high": "Alto", "xhigh": "Muito alto", "max": "Máximo"}  # mostrar com t()
 
 # pensamento: "sempre" (não desliga), "disabled" (desliga com type disabled, esforço até high),
 # "between_tools" (o jeito do Sonnet 5.5 de desligar), "adaptativo_opcional" (sem thinking = desligado),
@@ -122,7 +124,7 @@ def lista_publica(antigos: bool = False, disponiveis: list[str] | None = None) -
         saida.append({
             "id": mid,
             "nome": i["nome"],
-            "resumo": i.get("resumo", ""),
+            "resumo": t(i["resumo"]) if i.get("resumo") else "",
             "atual": bool(i.get("atual")),
             "ordem": i.get("ordem", 50),
             "entrada": i["entrada"],

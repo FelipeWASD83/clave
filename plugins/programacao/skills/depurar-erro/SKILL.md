@@ -1,15 +1,15 @@
 ---
 name: depurar-erro
-description: Use quando algo dá erro ou não funciona como deveria. Acha a causa de verdade antes de mudar o código, corrige com a menor mudança possível e confere.
+description: Use when something fails or doesn't work as it should. Finds the real cause before changing the code, fixes it with the smallest possible change and checks the result.
 ---
 
-# Depurar um erro
+# Debug an error
 
-1. **Leia o erro inteiro**, de baixo para cima: a última linha diz o tipo, as de cima dizem onde. Peça a mensagem completa se a pessoa só disse "deu erro".
-2. **Reproduza:** rode o mesmo comando ou faça o mesmo passo e veja o erro acontecer. Sem reproduzir, você está chutando.
-3. **Hipótese:** escreva em uma frase o que você acha que causa o erro e por quê. Confirme lendo o código e, se precisar, imprimindo valores.
-4. **Corrija a causa, não o sintoma:** a menor mudança que resolve. Não reescreva o resto, não "melhore" o que não tem a ver.
-5. **Confira:** rode de novo o mesmo passo e mostre que o erro sumiu. Rode os testes, se houver.
-6. **Explique em linguagem simples:** o que causava o erro, o que você mudou e se pode voltar a acontecer.
+1. **Read the whole error**, from the bottom up: the last line says the type, the ones above say where. Ask for the full message if the person only said "it gave an error".
+2. **Reproduce it:** run the same command or do the same step and watch the error happen. If you can't reproduce it, you are guessing.
+3. **Hypothesis:** write in one sentence what you think causes the error and why. Confirm it by reading the code and, if needed, printing values.
+4. **Fix the cause, not the symptom:** the smallest change that solves it. Don't rewrite the rest, don't "improve" what is unrelated.
+5. **Check:** run the same step again and show that the error is gone. Run the tests, if there are any.
+6. **Explain in plain language:** what caused the error, what you changed and whether it can happen again.
 
-Se depois de duas tentativas a causa continuar escondida, pare e conte o que já descartou, em vez de sair mudando coisas.
+If after two attempts the cause is still hidden, stop and say what you have already ruled out, instead of changing things at random.

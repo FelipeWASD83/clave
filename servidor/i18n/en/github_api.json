@@ -1,0 +1,7 @@
+{
+ "O GitHub recusou o login (token inválido ou vencido).": "GitHub rejected the login (invalid or expired token).",
+ "Limite de pedidos do GitHub atingido. Tente de novo daqui a pouco (com login no GitHub o limite é bem maior).": "GitHub request limit reached. Try again in a moment (with a GitHub login the limit is much higher).",
+ "Não encontrado no GitHub (ou o repositório é privado e falta permissão).": "Not found on GitHub (or the repository is private and permission is missing).",
+ "GitHub respondeu {codigo}: {erro}": "GitHub answered {codigo}: {erro}",
+ "Sem conexão com o GitHub: {erro}": "No connection to GitHub: {erro}"
+}

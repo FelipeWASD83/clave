@@ -1,0 +1,15 @@
+{
+  "Seus repositórios": "Your repositories",
+  "Carregando…": "Loading…",
+  "privado": "private",
+  "Nenhum repositório encontrado.": "No repositories found.",
+  "Repositório grande: nem todos os arquivos aparecem.": "Large repository: not every file is shown.",
+  "Voltar": "Back",
+  "{n} arquivo(s) marcado(s)": "{n} file(s) selected",
+  "Marque os arquivos que o Claude deve ler.": "Select the files Claude should read.",
+  "Anexar do GitHub": "Attach from GitHub",
+  "Cancelar": "Cancel",
+  "Anexar": "Attach",
+  "Marque pelo menos um arquivo.": "Select at least one file.",
+  "Alguns arquivos não vieram: {erros}": "Some files could not be fetched: {erros}"
+}

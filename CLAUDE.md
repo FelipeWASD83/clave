@@ -1,171 +1,224 @@
 # CLAUDE.md: Clave
 
-App para Windows que usa o Claude pela API da Anthropic, com a chave de quem
-usa. Chat, modo Code (agente numa pasta), fluxos com vários modelos, agentes,
-permissões por regras, plugins, comandos de barra, rotinas, Excel, memória,
-teto de gasto, GitHub, lições para iniciantes e atualização pelo GitHub. **Repositório
-público, usado por outras pessoas**: nada pessoal entra no código, nas lições
-nem no modelo de pasta. O teste que confere lê os termos proibidos de
-`testes/privacidade-local.txt`, que fica **fora do git** (escrever a lista no
-teste seria publicar o que ela protege); sem o arquivo, esse teste é pulado.
-Licença MIT (`LICENSE`).
+A Windows app that uses Claude through the Anthropic API, with the user's own key.
+Chat, Code mode (an agent working in a folder), workflows with several models,
+agents, permission rules, plugins, slash commands, routines, Excel, memory,
+spending cap, GitHub, lessons for beginners and updating through GitHub. **Public
+repository, used by other people**: nothing personal goes into the code, the
+lessons or the folder template. The test that checks this reads the forbidden
+terms from `testes/privacidade-local.txt`, which stays **outside git** (writing
+the list in the test would publish what it protects); without the file, that
+test is skipped. MIT license (`LICENSE`).
 
-Versão atual: veja `versao.json` (vale também para `package.json` e o topo do
-`CHANGELOG.md`: os três andam juntos).
+Current version: see `versao.json` (it also applies to `package.json` and the top
+of `CHANGELOG.md`: the three move together).
 
-## 1. Como roda
+**Languages.** The app is bilingual (Brazilian Portuguese and English): the
+interface uses `t()` with Portuguese keys and English catalogs in `app/i18n/en/`
+and `servidor/i18n/en/`. The code identifiers and comments are in Portuguese on
+purpose (`precos.py`, `estatisticas.painel()`, `conversas.sistema`...) and are not
+renamed. The documentation is in English, with Brazilian Portuguese copies named
+`*.pt-BR.md` (`README.pt-BR.md`, `CHANGELOG.pt-BR.md`, `CLAUDE.pt-BR.md`,
+`video/CLAUDE.pt-BR.md`). The English file is the reference: when you change it,
+update the Portuguese copy in the same task.
+
+## 1. How it runs
 
 ```
-atalho / Clave.bat ─► ferramentas/abrir.pyw (preparar.py: baixa o Electron da versão pedida) ─► runtime/electron/electron.exe <pasta>
+shortcut / Clave.bat ─► ferramentas/abrir.pyw (preparar.py: downloads the requested Electron version) ─► runtime/electron/electron.exe <folder>
                                                               │
-electron/main.js ─► servidor/iniciar.py --sem-janela --pai <pid>   (supervisor: aplica atualização, reinicia)
-                        └─► servidor/servidor.py --porta 8040 --pai <pid>  (HTTP local + API + motor)
-janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e some da URL)
+electron/main.js ─► servidor/iniciar.py --sem-janela --pai <pid>   (supervisor: applies updates, restarts)
+                        └─► servidor/servidor.py --porta 8040 --pai <pid>  (local HTTP + API + engine)
+window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie and disappears from the URL)
 ```
 
-- **Sem Electron** (download falhou): `iniciar.py` sozinho abre a interface numa
-  janela de app do Edge (`--app=`) com perfil próprio em `dados/janela-edge`.
-- **Segurança local**: só 127.0.0.1; `Host` conferido; toda rota `/api` exige o
-  cookie de sessão (`dados/sessao.key`); pedido que muda algo com `Origin`
-  diferente é recusado. Isso é o que impede uma página da internet de mandar o
-  modo Code rodar comando. **Não afrouxar.** `--sem-senha` existe só para teste
-  e preview.
-- **Fim de vida**: fechar a janela mata a árvore do supervisor (`taskkill /T`).
-  Se a janela morrer à força, o servidor percebe pelo `--pai` em até 3 s e
-  fecha; sem janela por 10 min, fecha também (`--fechar-sem-janela`).
-- **Dados**: tudo em `dados/` (fora do git): `clave.db` (SQLite), `config.json`,
-  `segredos.json` (chave e tokens com DPAPI do Windows), `memoria/`, `anexos/`,
-  `logs/`, `atualizacao/`, `plugins/` (instalados), `fluxos/` (modelos do
-  usuário), `servidor.json` (porta do servidor aberto, para o
-  `rodar_rotina.py`). `CLAVE_DADOS` troca a pasta (os testes usam isso).
+- **Without Electron** (download failed): `iniciar.py` alone opens the interface
+  in an Edge app window (`--app=`) with its own profile in `dados/janela-edge`.
+- **Local security**: 127.0.0.1 only; `Host` is checked; every `/api` route
+  requires the session cookie (`dados/sessao.key`); a request that changes
+  something with a different `Origin` is refused. This is what stops a web page
+  from telling Code mode to run a command. **Do not loosen it.** `--sem-senha`
+  exists only for tests and preview.
+- **End of life**: closing the window kills the supervisor's tree (`taskkill /T`).
+  If the window dies abruptly, the server notices through `--pai` within 3 s and
+  shuts down; with no window for 10 min, it also shuts down
+  (`--fechar-sem-janela`).
+- **Data**: everything in `dados/` (outside git): `clave.db` (SQLite),
+  `config.json`, `segredos.json` (key and tokens, protected with Windows DPAPI),
+  `memoria/`, `anexos/`, `logs/`, `atualizacao/`, `plugins/` (installed),
+  `fluxos/` (the user's templates), `servidor.json` (port of the running server,
+  for `rodar_rotina.py`). `CLAVE_DADOS` changes the folder (the tests use this).
 
-## 2. Mapa do código
+## 2. Code map
 
-| Arquivo | O que faz |
+| File | What it does |
 |---|---|
-| `servidor/servidor.py` | Rotas HTTP, estáticos, prévia (`/previa/<id>` com CSP sandbox), segurança |
-| `servidor/execucao.py` | Motor de cada resposta: stream, ferramentas, aprovações, custo, desfazer, títulos |
-| `servidor/pedido.py` | Monta o pedido por modelo e desliga recurso opcional que a API recusar (`dados/compat.json`) |
-| `servidor/modelos.py` | Catálogo: preços (página oficial, 14/10/2026) e o que cada modelo aceita |
-| `servidor/custo.py`, `orcamento.py` | Custo pelo `usage` e o teto do mês (ciclo, alertas, bloqueio) |
-| `servidor/sistema.py` | Prompts de sistema (chat, Code, ajudante das lições, editor de memória) |
-| `servidor/contexto_pasta.py` | CLAUDE.md/AGENTS.md da pasta para cima e skills (pasta, pessoais, do app) |
-| `servidor/ferramentas/code.py` | Ferramentas do modo Code, decisão de permissão (`decidir`, com as regras) e comandos perigosos |
-| `servidor/permissoes.py` | Regras no formato do Claude Code: ler e salvar (app em `cfg["permissoes"]`, pasta em `.claude/settings*.json`), casar comando, caminho e domínio, sugerir regra, filtrar ferramentas de servidor |
-| `servidor/fluxos.py` | Fluxos: proposta (`normalizar`, estimativa, teto), `Rodada` (etapas como conversas escondidas, em grupos paralelos, com `Cofre` de custo) e modelos prontos |
-| `servidor/agentes.py`, `comandos.py`, `plugins.py` | Agentes (`.claude/agents`), comandos de barra (`.claude/commands`, `$ARGUMENTS`) e plugins (`.claude-plugin/plugin.json`, instalação de pasta e do GitHub) |
-| `servidor/precos.py` | Planos de assinatura, perfis de mensagem, custo de uma mensagem, a estimativa "API ou assinatura?" e a projeção do teto |
-| `servidor/estatisticas.py` | O painel "Seu uso": dias seguidos, mapa de calor, favorito, últimos 7 dias |
-| `servidor/rotinas.py`, `rodar_rotina.py` | Rotinas: horário, `Relogio` (dentro do app, a cada 30 s), Agendador de Tarefas (`schtasks`, pasta `Clave`) e o executor sem janela |
-| `servidor/ferramentas/excel.py`, `planilhas.py` | Excel com openpyxl e pelo Excel instalado (PowerShell + COM) |
-| `servidor/ferramentas/memoria.py` | Ferramenta `memory_20250818` em `dados/memoria`, com índice `MEMORY.md` |
-| `servidor/ferramentas/github.py`, `github_api.py` | GitHub REST (token do `gh` ou pessoal) |
-| `servidor/atualizador.py`, `iniciar.py` | Atualização pela release mais nova do GitHub e supervisor |
-| `servidor/api_falsa.py` | API do Claude de mentira (demonstração e testes) |
-| `app/js/*.js` | Interface sem build: `conversa.js` (tela e resposta ao vivo), `compositor.js` (caixa de texto e comandos de barra), `fluxo-ui.js` (cartões de aprovação, fluxo, plano, sugestão de outra conversa e avisos), `painel-uso.js` (painéis do início: uso e ambientes), `precos.js`, `fluxos.js`, `permissoes.js`, `plugins.js`, `rotinas.js`, `blocos.js`, `config.js`, `aprender.js`, `minichat.js`... |
-| `agentes/`, `fluxos/`, `plugins/` | Agentes, fluxos e plugins que vêm com o app (o atualizador troca essas pastas) |
-| `electron/` | Janela, menu de contexto, escolher pasta nativo, abrir links fora |
-| `tutoriais/*.md` | Lições (cabeçalho: titulo, trilha, ordem, duracao, resumo); `glossario.md` alimenta o prompt |
-| `modelo-de-pasta/` | O modelo de pasta de trabalho que o app copia |
-| `skills/ver-video/` | Skill que vem com o app; **cópia idêntica** em `modelo-de-pasta/.claude/skills/ver-video` (teste confere) |
+| `servidor/servidor.py` | HTTP routes, static files, preview (`/previa/<id>` with a sandbox CSP), security |
+| `servidor/execucao.py` | The engine of each reply: stream, tools, approvals, cost, undo, titles |
+| `servidor/pedido.py` | Builds the request per model and turns off any optional feature the API refuses (`dados/compat.json`) |
+| `servidor/modelos.py` | Catalog: prices (official page, 2026-10-14) and what each model accepts |
+| `servidor/custo.py`, `orcamento.py` | Cost from `usage` and the monthly cap (cycle, alerts, blocking) |
+| `servidor/sistema.py` | System prompts (chat, Code, lessons helper, memory editor) |
+| `servidor/contexto_pasta.py` | The folder's CLAUDE.md/AGENTS.md from the folder upward, and skills (folder, personal, app) |
+| `servidor/ferramentas/code.py` | Code mode tools, permission decision (`decidir`, with the rules) and dangerous commands |
+| `servidor/permissoes.py` | Rules in the Claude Code format: read and save (app in `cfg["permissoes"]`, folder in `.claude/settings*.json`), match command, path and domain, suggest a rule, filter server tools |
+| `servidor/fluxos.py` | Workflows: proposal (`normalizar`, estimate, cap), `Rodada` (steps as hidden conversations, in parallel groups, with a cost `Cofre`) and ready-made templates |
+| `servidor/agentes.py`, `comandos.py`, `plugins.py` | Agents (`.claude/agents`), slash commands (`.claude/commands`, `$ARGUMENTS`) and plugins (`.claude-plugin/plugin.json`, install from a folder and from GitHub) |
+| `servidor/precos.py` | Subscription plans, message profiles, cost of one message, the "API or subscription?" estimate and the cap projection |
+| `servidor/estatisticas.py` | The "Your usage" panel: streak of days, heat map, favorite, last 7 days |
+| `servidor/rotinas.py`, `rodar_rotina.py` | Routines: schedule, `Relogio` (inside the app, every 30 s), Task Scheduler (`schtasks`, `Clave` folder) and the windowless runner |
+| `servidor/ferramentas/excel.py`, `planilhas.py` | Excel with openpyxl and through the installed Excel (PowerShell + COM) |
+| `servidor/ferramentas/memoria.py` | The `memory_20250818` tool in `dados/memoria`, with a `MEMORY.md` index |
+| `servidor/ferramentas/github.py`, `github_api.py` | GitHub REST (the `gh` token or a personal one) |
+| `servidor/atualizador.py`, `iniciar.py` | Updating from the newest GitHub release, and the supervisor |
+| `servidor/api_falsa.py` | A fake Claude API (demo and tests) |
+| `servidor/i18n.py`, `servidor/i18n/en/*.json` | Server translation: `t("Portuguese text", name=value)`, `traduzir_ferramentas()` for tool descriptions, `guardado_pt()` for the Portuguese texts kept next to English packages |
+| `servidor/lancamentos.py`, `lancamentos.json` | Model launch cards: the presentation card (opens once for a new model), the "new model" banner, the "Models" cards, the intelligence score and its source (`_inteligencia`) and models the account has that Clave doesn't know yet (Models API, once a day) |
+| `app/js/i18n.js`, `app/i18n/en/*.json` | Interface translation (`t()`); the server merges the catalogs into `/i18n/en.json` |
+| `app/js/tour.js` | Guided tours with arrows (spotlight, bubble, Back/Next/Skip), one per screen, shown once (`cfg.tours_vistos`) |
+| `app/js/lancamentos.js`, `app/img/modelos/` | Presentation card, new model banner and "Models" cards; Clave's own illustrations (`<family>.svg`) and renders (`render-<family>.jpg`, made by `ferramentas/gerar_renders.py`) per model family |
+| `app/js/*.js` | Interface with no build step: `conversa.js` (screen and live reply), `compositor.js` (text box and slash commands), `fluxo-ui.js` (approval cards, workflow, plan, suggesting another conversation, and notices), `painel-uso.js` (the start screen panels: usage and environments), `precos.js`, `fluxos.js`, `permissoes.js`, `plugins.js`, `rotinas.js`, `blocos.js`, `config.js`, `aprender.js`, `minichat.js`... |
+| `agentes/`, `fluxos/`, `plugins/` | Agents, workflows and plugins that ship with the app (the updater replaces these folders) |
+| `electron/` | Window, context menu, native folder picker, opening links outside |
+| `tutoriais/*.md`, `tutoriais/en/*.md` | Lessons (header: titulo, trilha, ordem, duracao, resumo), same file names in both languages; `glossario.md` feeds the prompt. English glossary headings keep the Portuguese anchor: `## API key {#chave-da-api}` |
+| `modelo-de-pasta/`, `modelo-de-pasta-en/` | The working folder template. In English the app copies the Portuguese one (prints, scripts) and lays the translated texts from `modelo-de-pasta-en/` over it; `READ-ME-FIRST.md` replaces `LEIA-PRIMEIRO.md` |
+| `skills/ver-video/` | Skill that ships with the app (English `SKILL.md`, **identical** to `modelo-de-pasta-en/.claude/skills/ver-video/SKILL.md`; the scripts are identical to the Portuguese template's copy; a test checks) |
 
-## 3. Decisões que não se desfazem sem motivo
+## 3. Decisions that are not undone without a reason
 
-- **SDK oficial `anthropic` em versão fixa** (`requirements.txt`). O Smart App
-  Control do Windows pode barrar versão nova de pacote com parte nativa
-  (`pydantic_core`, `jiter`). Atualizar só testando o import no Windows.
-- **Sem executável próprio.** Empacotar o Electron (electron-builder) gera um
-  `.exe` novo, sem assinatura e sem reputação, que o Smart App Control bloqueia.
-  Por isso o Electron oficial é baixado (`ferramentas/preparar.py`, conferido
-  pelo `SHASUMS256.txt` da release) e roda a pasta do app.
-- **Prompt de sistema congelado por conversa** (`conversas.sistema`). Mudar a
-  personalização vale para conversas novas. Mantém o cache e o raciocínio
-  preservado (preserved thinking) válidos. Pela mesma razão o histórico só
-  cresce: editar mensagem cria um ramo novo (irmão), não reescreve.
-- **`block_binding: drop_block`** nos modelos atuais com raciocínio adaptativo:
-  se algo mudar o começo da conversa (tool ligada no meio, troca de modelo), a
-  API descarta o raciocínio antigo em vez de dar erro 400.
-- **Recursos opcionais desligam sozinhos** quando a API recusa (fallbacks,
-  updates, compactação, cache, eager streaming, web nova, modo rápido): ver
-  `pedido.desligar_por_erro`. Só o Haiku 5.5 foi testado de verdade no
-  desenvolvimento; os outros modelos dependem dessa rede.
-- **Ajudantes** (modo `tutor` no Haiku 5.5, modo `memoria` no Sonnet 5.5) são
-  conversas escondidas da lista (`banco.listar_conversas` filtra só chat e code)
-  com modelo forçado (`execucao.AJUDANTES`).
-- **Comandos perigosos sempre pedem OK**, mesmo no modo Livre
-  (`code.PERIGOSOS`: qualquer apagar, push, reset, publicar, deploy, registro),
-  a não ser que uma regra allow específica para aquele comando exista.
-  Protegidos: as ferramentas de arquivo negam sempre; comando que cita um deles
-  pede OK. No modo Plano, escrita e comando são negados. "Permitir nesta
-  tarefa" só libera escrita e comando dentro da pasta: caminho de fora pede OK
-  toda vez.
-- **O atalho abre pelo `ferramentas/abrir.pyw`**, não direto no `electron.exe`:
-  uma atualização pode trocar a versão do Electron (`versao.json`), e é o
-  `abrir.pyw` que baixa a nova antes de abrir. O "reiniciar" da janela também
-  passa por ele.
-- **Excel com openpyxl**: ele escreve fórmula mas não calcula; recalcular é pelo
-  Excel instalado (`excel.no_excel`). Ao salvar arquivo existente, imagens e
-  formas podem se perder: a descrição da ferramenta manda salvar cópia.
-- **Fluxo sempre pede OK** (cartão `fluxo_proposta`), em qualquer modo e com
-  qualquer regra; regra só consegue proibir (`deny` em `Fluxo`). Cada etapa é
-  uma conversa escondida (modo `etapa`) rodada por uma `Execucao` filha: os
-  eventos sobem para a mãe como `etapa_evento`, os pedidos de OK aparecem na
-  conversa mãe, o custo vai para a conversa mãe com origem `fluxo` e o
-  `execucao_id` é o da mãe (o Desfazer cobre as etapas). O teto do fluxo é um
-  `Cofre` dividido por todas as etapas.
-- **Ordem das regras**: deny, depois ask, depois allow, depois o modo. Comando
-  composto (`&&`, `|`, `;`...) é dividido: allow precisa cobrir todas as
-  partes; deny e ask casam com qualquer uma. Comando perigoso só passa sem
-  pergunta com allow específico (não genérico, como `Bash(*)`). Ferramenta de
-  servidor (web, MCP) não tem como perguntar: ask vira deny lá.
-- **Rotina nunca pergunta.** O que pediria OK faz a rotina parar
-  (`rotina_parou`) com a regra sugerida. Rotina não roda fluxo.
-- **Plugins**: hooks, MCP local e LSP de plugin são ignorados com aviso (rodar
-  programa sozinho é o que não queremos de pacote baixado); MCP remoto vira
-  sugestão de conector. Comando de plugin perde o `Bash` do `allowed-tools`.
-  Extração do zip confere zip-slip e pula link simbólico.
-- **SSE com enchimento**: a primeira coisa do `/eventos` é um comentário de
-  4 KB e os cabeçalhos `X-Accel-Buffering: no` e `Cache-Control: no-transform`.
-  Nesta máquina, o Edge headless segura o SSE até fechar (provavelmente o
-  antivírus); o Electron e o curl recebem na hora. Para testar a tela ao vivo,
-  usar `testes\prints_janela.py` (Electron), não o Edge headless.
-- **Sugestão de outra conversa nunca abre sozinha.** A ferramenta `sugerir_conversa` só mostra um cartão; `POST /api/sugestoes/<id>/abrir` (o clique) cria a conversa com o pedido gravado no `tool_use` (não com o que a tela mandar) e a tabela `sugestoes` impede abrir duas vezes.
-- **Estimativa pela assinatura é piso declarado.** A Anthropic não publica o limite das assinaturas em tokens; a conta usa o único número oficial (pelo menos 45 mensagens curtas por janela de 5 h no Pro, 5x e 20x no Max) e diz isso na tela. Os preços dos planos ficam editáveis porque o do Max 20x só aparece em guias de terceiros.
-- **Lições ensinam o que o app faz de verdade.** Não prometer recurso que não
-  existe (ex.: o app não gera Word).
-- **Demonstração não cobra**: com `CLAVE_API_FALSA`, o custo registrado é zero.
+- **Language.** `cfg["idioma"]` is "pt-BR" or "en". A new install follows Windows (`config.detectar_idioma()`:
+  UI language Portuguese → pt-BR, anything else or unreadable → English); a config written before the language
+  existed stays in Portuguese. `CLAVE_IDIOMA` forces it (the tests use pt-BR). Changing it in Settings >
+  Appearance reloads the window.
+- **Translation keys are the Portuguese text.** UI: `t('...')` from `i18n.js`; server: `t("...")` from
+  `i18n.py`; placeholders `{name}`. Never call `t()` at module top level (the catalog/language are read at call
+  time): make display constants functions. Every literal key must exist in the catalogs and tool descriptions
+  must be catalog keys (`testes/test_i18n.py` checks both). The server `t()` takes `lingua` as its 2nd argument,
+  so never name a placeholder `{texto}` or `{lingua}`.
+- **Built-in plugins, agents and workflows are English**, with the Portuguese names/descriptions kept beside
+  them (`plugins/<p>/i18n/pt-BR.json`, `agentes/i18n/pt-BR.json`, `"i18n": {"pt-BR": ...}` inside
+  `fluxos/*.json`); `i18n.guardado_pt()` and `fluxos._no_idioma()` apply them for Portuguese users. Ids (skill,
+  agent and command names) stay as they are. Workflow steps are told which language to write in.
+- **Tool field names are Portuguese** (`titulo`, `pedido`, `etapas`...) and they pull the model toward Portuguese:
+  on Haiku 5.5, "write in the person's language" was not enough. The English system prompt says it outright
+  ("write every value you put in tools ... in English"); keep it that way when adding a tool the person reads.
+- **Model launch cards are facts with a source.** `servidor/lancamentos.json` only holds verifiable data
+  (official prices, numbers with their origin). A new model: add it to `modelos.MODELOS` (price and what it
+  accepts), add its card to `lancamentos.json` with `lancado_em` (the presentation card opens once and the banner
+  shows for 14 days) and its `inteligencia` on the same index as the others, pick the family (or add an
+  illustration and a render for a new one), and publish a release. Don't fill a card before the official
+  announcement. The renders are Clave's own, generated by code: never Anthropic's images.
 
-## 4. Rodar, testar, publicar
+- **Official `anthropic` SDK at a pinned version** (`requirements.txt`). Windows
+  Smart App Control can block a new version of a package with a native part
+  (`pydantic_core`, `jiter`). Only update after testing the import on Windows.
+- **No executable of our own.** Packaging Electron (electron-builder) produces a
+  new `.exe`, unsigned and with no reputation, which Smart App Control blocks. So
+  the official Electron is downloaded (`ferramentas/preparar.py`, checked against
+  the release's `SHASUMS256.txt`) and runs the app folder.
+- **System prompt frozen per conversation** (`conversas.sistema`). Changing the
+  personalization applies to new conversations. This keeps the cache and the
+  preserved thinking valid. For the same reason the history only grows: editing a
+  message creates a new branch (a sibling), it does not rewrite.
+- **`block_binding: drop_block`** on the current models with adaptive reasoning:
+  if something changes the start of the conversation (a tool turned on midway, a
+  model switch), the API discards the old reasoning instead of returning a 400
+  error.
+- **Optional features turn themselves off** when the API refuses them (fallbacks,
+  updates, compaction, cache, eager streaming, new web, fast mode): see
+  `pedido.desligar_por_erro`. Only Haiku 5.5 was really tested during
+  development; the other models depend on this safety net.
+- **Helpers** (`tutor` mode on Haiku 5.5, `memoria` mode on Sonnet 5.5) are
+  conversations hidden from the list (`banco.listar_conversas` filters only chat
+  and code) with a forced model (`execucao.AJUDANTES`).
+- **Dangerous commands always ask for an OK**, even in Auto mode
+  (`code.PERIGOSOS`: any delete, push, reset, publish, deploy, registry), unless
+  a specific allow rule exists for that command. Protected files: the file tools
+  always deny; a command that mentions one asks for an OK. In Plan mode, writes
+  and commands are denied. "Allow for this task" only allows writes and commands
+  inside the folder: a path outside asks every time.
+- **The shortcut opens through `ferramentas/abrir.pyw`**, not straight into
+  `electron.exe`: an update may change the Electron version (`versao.json`), and
+  it is `abrir.pyw` that downloads the new one before opening. The window's
+  "restart" also goes through it.
+- **Excel with openpyxl**: it writes formulas but does not calculate them;
+  recalculating is done by the installed Excel (`excel.no_excel`). When saving an
+  existing file, images and shapes may be lost: the tool's description tells the
+  model to save a copy.
+- **A workflow always asks for an OK** (the `fluxo_proposta` card), in any mode
+  and with any rule; a rule can only forbid (`deny` on `Fluxo`). Each step is a
+  hidden conversation (`etapa` mode) run by a child `Execucao`: events go up to
+  the parent as `etapa_evento`, the OK requests appear in the parent
+  conversation, the cost goes to the parent conversation with origin `fluxo` and
+  the `execucao_id` is the parent's (Undo covers the steps). The workflow's cap is
+  a `Cofre` shared by all the steps.
+- **Order of the rules**: deny, then ask, then allow, then the mode. A compound
+  command (`&&`, `|`, `;`...) is split: allow must cover every part; deny and ask
+  match any of them. A dangerous command only passes without asking with a
+  specific allow (not a generic one such as `Bash(*)`). A server tool (web, MCP)
+  has no way to ask: ask becomes deny there.
+- **A routine never asks.** Whatever would ask for an OK makes the routine stop
+  (`rotina_parou`) with the suggested rule. A routine does not run workflows.
+- **Plugins**: hooks, local MCP and a plugin's LSP are ignored with a warning
+  (running a program on its own is what we don't want from a downloaded package);
+  a remote MCP becomes a connector suggestion. A plugin command loses the `Bash`
+  from `allowed-tools`. Zip extraction checks for zip-slip and skips symbolic
+  links.
+- **SSE with padding**: the first thing in `/eventos` is a 4 KB comment and the
+  headers `X-Accel-Buffering: no` and `Cache-Control: no-transform`. On this
+  machine, headless Edge holds the SSE until it closes (probably the antivirus);
+  Electron and curl receive it right away. To test the live screen, use
+  `testes\prints_janela.py` (Electron), not headless Edge.
+- **Suggesting another conversation never opens on its own.** The
+  `sugerir_conversa` tool only shows a card; `POST /api/sugestoes/<id>/abrir` (the
+  click) creates the conversation with the request recorded in the `tool_use`
+  (not with what the screen sends), and the `sugestoes` table prevents opening it
+  twice.
+- **The subscription estimate is a declared floor.** Anthropic does not publish
+  the subscriptions' limit in tokens; the calculation uses the only official
+  number (at least 45 short messages per 5 h window on Pro, 5x and 20x on Max)
+  and says so on the screen. The plan prices are editable because the Max 20x one
+  only appears in third-party guides.
+- **Lessons teach what the app really does.** Do not promise a feature that does
+  not exist (e.g. the app does not generate Word files).
+- **The demo does not charge**: with `CLAVE_API_FALSA`, the recorded cost is zero.
 
-- Demonstração: `.venv\Scripts\python.exe servidor\servidor.py --demo --sem-senha --porta 8041`
-  (dados em `%TEMP%\clave-demo`).
-- Testes: `.venv\Scripts\python.exe -m unittest discover -s testes -t testes`
-  (o `test_servidor` sobe o servidor de verdade com a API falsa; a API falsa
-  também propõe fluxo e plano quando a mensagem pede).
-- Janela de verdade: `.venv\Scripts\python.exe testes\testar_janela.py` (abre e
-  fecha uma janela; confere pela porta de depuração).
-- Prints de todas as telas: `testes\prints_demo.py <pasta> --porta 8041` com a
-  demonstração no ar (Edge headless).
-- Prints da tela ao vivo (fluxo rodando, aprovação, plano): `testes\prints_janela.py
-  <pasta>` (abre o Electron com a demonstração, `CLAVE_TESTE_DEMO=1`).
-- Teste real barato: `CLAVE_FORCAR_MODELO=claude-haiku-5-5` força todos os
-  pedidos (inclusive os ajudantes) para o Haiku 5.5.
-- Ícone: `ferramentas\gerar_icone.py` (gera `.png` e `.ico` a partir do SVG).
-- **Publicar versão**: subir a versão em `versao.json`, `package.json` e no
-  `CHANGELOG.md`, commitar, dar push e rodar `ferramentas\publicar-versao.ps1`,
-  que cria a release `vX.Y.Z` com o pacote `.zip`. O botão Atualizar dos outros
-  usuários baixa essa release. **Publicar é decisão do dono do repositório.**
+## 4. Run, test, publish
 
-## 5. Armadilhas
+- Demo: `.venv\Scripts\python.exe servidor\servidor.py --demo --sem-senha --porta 8041`
+  (data in `%TEMP%\clave-demo`).
+- Tests: `.venv\Scripts\python.exe -m unittest discover -s testes -t testes`
+  (`test_servidor` starts the real server with the fake API; the fake API also
+  proposes a workflow and a plan when the message asks for it).
+- Real window: `.venv\Scripts\python.exe testes\testar_janela.py` (opens and
+  closes a window; checks through the debugging port).
+- Screenshots of all screens: `testes\prints_demo.py <folder> --porta 8041 [--idioma en]`
+  with the demo running (headless Edge). It also takes the tours (they open on their
+  own the first time) in the chosen language.
+- Screenshots of the live screen (workflow running, approval, plan):
+  `testes\prints_janela.py <folder>` (opens Electron with the demo,
+  `CLAVE_TESTE_DEMO=1`).
+- Cheap real test: `CLAVE_FORCAR_MODELO=claude-haiku-5-5` forces every request
+  (including the helpers) to Haiku 5.5.
+- Icon: `ferramentas\gerar_icone.py` (generates `.png` and `.ico` from the SVG). Model renders:
+  `python ferramentas\gerar_renders.py` (numpy and Pillow, outside the app's venv).
+- **Publishing a version**: bump the version in `versao.json`, `package.json` and
+  `CHANGELOG.md`, commit, push and run `ferramentas\publicar-versao.ps1`, which
+  creates the `vX.Y.Z` release with the `.zip` package. The Update button of the
+  other users downloads that release. **Publishing is the repository owner's
+  decision.**
 
-- `.ps1` com acento precisa estar em **UTF-8 com BOM** (o PowerShell 5.1 lê sem
-  BOM como ANSI).
-- O Python do `.venv` no Windows é um lançador que abre outro processo: para
-  matar o servidor, mate a árvore (`taskkill /T`).
-- Edição de arquivo com barra invertida feita por heredoc no Git Bash perde as
-  barras: use a ferramenta de edição ou um script `.py` escrito direto.
-- Para conferir a sintaxe do JavaScript da interface, use
-  `node --input-type=module --check < app/js/arquivo.js`. O `node --check arquivo.js`
-  sozinho deixou passar um parêntese a mais que quebrou a tela inteira.
-- Fórmulas do openpyxl são em inglês (`SUM`, vírgula); o Excel em português
-  mostra `SOMA`.
+## 5. Pitfalls
+
+- A `.ps1` with accented characters must be **UTF-8 with BOM** (PowerShell 5.1
+  reads it without a BOM as ANSI).
+- The `.venv` Python on Windows is a launcher that starts another process: to
+  kill the server, kill the tree (`taskkill /T`).
+- Editing a file that contains backslashes through a heredoc in Git Bash loses
+  the backslashes: use the edit tool or a `.py` script written directly.
+- To check the syntax of the interface's JavaScript, use
+  `node --input-type=module --check < app/js/file.js`. Plain
+  `node --check file.js` once let through an extra parenthesis that broke the
+  whole screen.
+- openpyxl formulas are in English (`SUM`, comma); Excel in Portuguese shows
+  `SOMA`.

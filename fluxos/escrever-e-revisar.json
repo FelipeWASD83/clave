@@ -1,13 +1,25 @@
 {
-  "nome": "Escrever e revisar",
-  "descricao": "Sonnet 5.5 escreve o rascunho, Opus 5.5 critica e Sonnet faz a versão final. Bom no chat, para textos importantes.",
-  "pede": "o texto que você precisa, para quem e com qual objetivo",
+  "nome": "Write and review",
+  "descricao": "Sonnet 5.5 writes the draft, Opus 5.5 critiques it and Sonnet makes the final version. Good in chat, for important texts.",
+  "pede": "the text you need, for whom and with what goal",
   "etapas": [
-    {"nome": "Rascunho", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
-     "tarefa": "Escreva o primeiro rascunho completo do texto pedido.", "pode": []},
-    {"nome": "Crítica", "agente": "revisor", "modelo": "opus", "esforco": "high",
-     "tarefa": "Critique o rascunho: o que está fraco, confuso, longo demais ou faltando. Seja específico.", "pode": []},
-    {"nome": "Versão final", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
-     "tarefa": "Reescreva o rascunho aplicando a crítica e entregue a versão final pronta para usar.", "pode": []}
-  ]
+    {"nome": "Draft", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Write the first complete draft of the requested text.", "pode": []},
+    {"nome": "Critique", "agente": "revisor", "modelo": "opus", "esforco": "high",
+     "tarefa": "Critique the draft: what is weak, confusing, too long or missing. Be specific.", "pode": []},
+    {"nome": "Final version", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Rewrite the draft applying the critique and deliver the final version, ready to use.", "pode": []}
+  ],
+  "i18n": {
+    "pt-BR": {
+      "nome": "Escrever e revisar",
+      "descricao": "Sonnet 5.5 escreve o rascunho, Opus 5.5 critica e Sonnet faz a versão final. Bom no chat, para textos importantes.",
+      "pede": "o texto que você precisa, para quem e com qual objetivo",
+      "etapas": [
+        {"nome": "Rascunho", "tarefa": "Escreva o primeiro rascunho completo do texto pedido."},
+        {"nome": "Crítica", "tarefa": "Critique o rascunho: o que está fraco, confuso, longo demais ou faltando. Seja específico."},
+        {"nome": "Versão final", "tarefa": "Reescreva o rascunho aplicando a crítica e entregue a versão final pronta para usar."}
+      ]
+    }
+  }
 }

@@ -1,0 +1,18 @@
+{
+  "displayName": "Pesquisa",
+  "description": "Pesquisa na web com fonte e data em cada fato, e comparação de opções com recomendação clara.",
+  "skills": {
+    "comparar-opcoes": {
+      "description": "Use quando a pessoa precisa escolher entre opções (produtos, serviços, planos, programas, caminhos) e quer uma comparação honesta com recomendação."
+    },
+    "pesquisa-com-fontes": {
+      "description": "Use quando a resposta depende de informação atual ou verificável (preço, versão, regra, notícia, especificação). Pesquisa na web, prefere fonte primária e põe fonte e data em cada fato."
+    }
+  },
+  "commands": {
+    "pesquisar": {
+      "description": "Pesquisa um assunto na web e responde com as fontes",
+      "argument-hint": "[assunto ou pergunta]"
+    }
+  }
+}

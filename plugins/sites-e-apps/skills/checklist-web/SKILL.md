@@ -1,27 +1,27 @@
 ---
 name: checklist-web
-description: Use antes de dizer que uma página ou site está pronto. Confere celular, telas grandes, contraste, links, formulários, erros no console e peso das imagens.
+description: Use before saying that a page or site is ready. Checks phone, large screens, contrast, links, forms, console errors and image weight.
 ---
 
-# Checklist antes de dizer "pronto"
+# Checklist before saying "done"
 
-Confira cada item e diga quais você conferiu de verdade e quais não deu para conferir.
+Check each item and say which ones you really checked and which ones you couldn't check.
 
-**Funciona**
-- [ ] Abre sem erro no console do navegador.
-- [ ] Todos os links e botões levam aonde dizem. Nenhum `href="#"` esquecido.
-- [ ] Formulário: campos obrigatórios avisam, mensagem de sucesso e de erro aparecem.
+**It works**
+- [ ] Opens with no error in the browser console.
+- [ ] All links and buttons go where they say. No forgotten `href="#"`.
+- [ ] Form: required fields warn, success and error messages show up.
 
-**Em qualquer tela**
-- [ ] Celular (390 px de largura): nada corta, nada rola para o lado, texto legível sem zoom.
-- [ ] Notebook (1440 px) e monitor largo (2560 px ou mais): o conteúdo não fica esticado nem perdido num canto.
-- [ ] Tela em pé (1080 × 1920): o layout ainda faz sentido.
+**On any screen**
+- [ ] Phone (390 px wide): nothing is cut off, nothing scrolls sideways, text is readable without zooming.
+- [ ] Laptop (1440 px) and wide monitor (2560 px or more): the content is not stretched or lost in a corner.
+- [ ] Portrait screen (1080 × 1920): the layout still makes sense.
 
-**Dá para ler e usar**
-- [ ] Contraste do texto com o fundo de pelo menos 4,5:1 (texto pequeno).
-- [ ] Imagens com `alt`; campos com rótulo; dá para navegar com Tab.
-- [ ] Título da aba (`<title>`) e descrição (`<meta name="description">`) certos; ícone da aba.
+**Readable and usable**
+- [ ] Contrast between text and background of at least 4.5:1 (small text).
+- [ ] Images with `alt`; fields with labels; can be navigated with Tab.
+- [ ] Tab title (`<title>`) and description (`<meta name="description">`) are right; tab icon.
 
-**Leve**
-- [ ] Imagens no tamanho em que aparecem (nada de foto de 5 MB num quadradinho), em `.webp` ou `.jpg`.
-- [ ] Sem senha, chave ou token no código da página: tudo que está no HTML qualquer um vê.
+**Light**
+- [ ] Images at the size they are shown (no 5 MB photo in a tiny square), as `.webp` or `.jpg`.
+- [ ] No password, key or token in the page's code: anything in the HTML, anyone can see.

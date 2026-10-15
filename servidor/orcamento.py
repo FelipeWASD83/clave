@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 
 import banco
 import config
+from i18n import t
 
 ALERTAS = (50, 80, 95, 100)
 
@@ -65,9 +66,8 @@ def situacao() -> dict:
 def pode_gastar() -> tuple[bool, str]:
     s = situacao()
     if s["bloqueado"]:
-        return False, (f"O teto de gasto deste mês foi atingido (US$ {s['gasto']:.2f} de US$ {s['teto']:.2f}). "
-                       "Ele volta a zerar em " + _br(s["fim"], mais_um=True) + ". Dá para aumentar o teto em "
-                       "Configurações > Limite de gasto.")
+        return False, t("O teto de gasto deste mês foi atingido (US$ {gasto} de US$ {teto}). Ele volta a zerar em {data}. Dá para aumentar o teto em Configurações > Limite de gasto.",
+                        gasto=f"{s['gasto']:.2f}", teto=f"{s['teto']:.2f}", data=_br(s["fim"], mais_um=True))
     return True, ""
 
 
@@ -91,4 +91,4 @@ def _br(iso: str, mais_um=False) -> str:
     d = date.fromisoformat(iso)
     if mais_um:
         d += timedelta(days=1)
-    return d.strftime("%d/%m/%Y")
+    return t("{dia}/{mes}/{ano}", dia=f"{d.day:02d}", mes=f"{d.month:02d}", ano=d.year)

@@ -1,23 +1,23 @@
 ---
 name: pagina-simples
-description: Use para criar uma página ou um pequeno app que roda no navegador (calculadora, lista, formulário, página de apresentação), num arquivo HTML só, que funciona no celular e no computador.
+description: Use to create a page or a small app that runs in the browser (calculator, list, form, presentation page), in a single HTML file, that works on phone and computer.
 ---
 
-# Página simples
+# Simple page
 
-## Antes de escrever
-- Entenda para quem é e o que a pessoa precisa fazer na página. Escolha um visual que combine com isso (uma página de padaria não parece um painel de banco). Sem pedido de estilo, escolha você e diga a escolha em uma linha.
-- Num projeto maior (várias páginas, dados, login), avise que vale uma pasta organizada em vez de um arquivo só.
+## Before writing
+- Understand who it is for and what the person needs to do on the page. Choose a look that fits that (a bakery page doesn't look like a bank dashboard). With no style request, choose yourself and state the choice in one line.
+- In a bigger project (several pages, data, login), warn that an organized folder is worth more than a single file.
 
-## Como fazer
-- Um `index.html` com o CSS e o JavaScript dentro. Sem biblioteca da internet, a não ser que ela evite muito trabalho; se usar, diga qual e por quê.
-- Funciona no celular: `<meta name="viewport" content="width=device-width, initial-scale=1">`, layout que se ajusta, botões com área de toque de pelo menos 44 px.
-- Acessível: textos com contraste, `alt` nas imagens, rótulo em todo campo de formulário, dá para usar com o teclado.
-- Dados que a pessoa digita ficam no próprio navegador (`localStorage`) e nada vai para a internet sem ela saber.
-- Cores e tamanhos em variáveis CSS no topo, com comentário em português, para a pessoa conseguir trocar uma cor.
+## How to do it
+- One `index.html` with the CSS and JavaScript inside. No library from the internet, unless it saves a lot of work; if you use one, say which and why.
+- Works on phones: `<meta name="viewport" content="width=device-width, initial-scale=1">`, a layout that adjusts, buttons with a touch area of at least 44 px.
+- Accessible: text with enough contrast, `alt` on images, a label on every form field, usable with the keyboard.
+- Data the person types stays in their own browser (`localStorage`) and nothing goes to the internet without them knowing.
+- Colors and sizes in CSS variables at the top, with a comment in the person's language, so they can change a color.
 
-## Entregar
-- No chat: um bloco ```html com a página inteira (a pessoa vê a prévia ao lado).
-- No modo Code: salve o arquivo e ofereça abrir com `excel_abrir` (abre no navegador padrão).
-- Antes de dizer que acabou, passe pela skill `sites-e-apps:checklist-web`.
-- Explique como usar a página, não como o código funciona.
+## Deliver
+- In chat: an ```html block with the whole page (the person sees the preview next to it).
+- In Code mode: save the file and offer to open it with `excel_abrir` (opens in the default browser).
+- Before saying it's done, go through the skill `sites-e-apps:checklist-web`.
+- Explain how to use the page, not how the code works.

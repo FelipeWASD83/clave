@@ -1,0 +1,24 @@
+{
+  "displayName": "Crie o seu",
+  "description": "O Claude te ajuda a criar as suas próprias skills, agentes, comandos e plugins, no formato que também funciona no Claude Code.",
+  "skills": {
+    "criar-agente": {
+      "description": "Use quando a pessoa quiser criar um agente (um \"especialista\" com instruções, modelo e ferramentas próprios) para usar nos fluxos do Clave ou no Claude Code."
+    },
+    "criar-comando": {
+      "description": "Use quando a pessoa quiser um atalho de barra (/nome) para um pedido que ela repete, com espaço para completar (ex.: /orcamento cliente valor)."
+    },
+    "criar-plugin": {
+      "description": "Use quando a pessoa quiser juntar skills, agentes e comandos num pacote (plugin) para reaproveitar em outro computador ou compartilhar com outras pessoas, no formato do Claude Code."
+    },
+    "criar-skill": {
+      "description": "Use quando a pessoa quiser ensinar ao Claude um jeito fixo de fazer uma tarefa que ela repete (um procedimento, um checklist, um padrão de texto). Entrevista a pessoa e escreve a skill no formato do Claude Code."
+    }
+  },
+  "commands": {
+    "nova-skill": {
+      "description": "Cria uma skill sua com a ajuda do Claude",
+      "argument-hint": "[a tarefa que você repete]"
+    }
+  }
+}

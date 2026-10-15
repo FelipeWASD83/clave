@@ -1,8 +1,8 @@
 ---
-description: Escreve um e-mail de trabalho no tom certo
-argument-hint: [para quem e o que você quer]
+description: Writes a work email in the right tone
+argument-hint: [who it is for and what you want]
 ---
 
-Escreva um e-mail: $ARGUMENTS
+Write an email: $ARGUMENTS
 
-Siga a skill escrita:email-profissional (carregue com usar_skill).
+Follow the skill escrita:email-profissional (load it with usar_skill).

@@ -21,13 +21,15 @@ import banco
 import config
 import modelos
 import sistema
+import i18n
+from i18n import t
 
 MAX_ETAPAS = 8
 MAX_PARALELO = 4
 LIMITE_RESULTADO = 20_000  # caracteres do relatório de cada etapa que seguem adiante
 ESFORCOS = ["low", "medium", "high", "xhigh", "max"]
 NOMES_PODE = {"ler": "ler arquivos", "editar": "criar e mudar arquivos", "comandos": "rodar comandos",
-              "web": "pesquisar na web"}
+              "web": "pesquisar na web"}  # mostrar com t()
 
 DEFINICAO = {
     "name": "executar_fluxo",
@@ -38,19 +40,20 @@ DEFINICAO = {
         "roda sem o OK. Use quando a tarefa for grande o bastante para valer o custo extra, ou quando a pessoa "
         "pedir um fluxo; para tarefa pequena, faça você mesmo. As etapas não veem esta conversa: ponha no "
         "objetivo e em cada tarefa tudo o que elas precisam saber. O resultado volta com o relatório de cada "
-        "etapa; depois, resuma para a pessoa o que foi feito."),
+        "etapa; depois, resuma para a pessoa o que foi feito. Escreva o título, o objetivo, os nomes das etapas "
+        "e as tarefas no idioma em que a pessoa escreve."),
     "eager_input_streaming": True,
     "input_schema": {
         "type": "object",
         "properties": {
-            "titulo": {"type": "string", "description": "Nome curto do fluxo"},
+            "titulo": {"type": "string", "description": "Nome curto do fluxo, no idioma em que a pessoa escreve"},
             "objetivo": {"type": "string", "description": "O que o fluxo deve entregar, com o contexto necessário"},
             "etapas": {
                 "type": "array", "minItems": 1, "maxItems": MAX_ETAPAS,
                 "items": {
                     "type": "object",
                     "properties": {
-                        "nome": {"type": "string"},
+                        "nome": {"type": "string", "description": "Nome curto da etapa, no idioma em que a pessoa escreve"},
                         "agente": {"type": "string", "description": "Nome de um agente da lista (opcional)"},
                         "modelo": {"type": "string", "enum": ["opus", "sonnet", "haiku", "fable", "inherit"]},
                         "esforco": {"type": "string", "enum": ESFORCOS},
@@ -74,18 +77,23 @@ class ErroFluxo(Exception):
 
 
 def definicao(pasta: str | None) -> dict:
-    """A ferramenta executar_fluxo com a lista de agentes que existem agora (da pasta, pessoais, plugins e do app)."""
+    """A ferramenta executar_fluxo com a lista de agentes que existem agora (da pasta, pessoais, plugins e do app).
+
+    A descrição de cima muda com os agentes, então o catálogo das ferramentas (i18n.traduzir_ferramentas, que só troca
+    texto idêntico) não a acharia inteira: os pedaços fixos são traduzidos aqui. As descrições das propriedades
+    continuam com o catálogo."""
     d = json.loads(json.dumps(DEFINICAO))
+    d["description"] = t(DEFINICAO["description"])
     linhas = []
     for a in agentes.listar(pasta)[:30]:
-        pode = ", ".join(a["pode"]) or "nada"
+        pode = ", ".join(a["pode"]) or t("nada")
         modelo = agentes.NOME_MODELO.get(a["modelo"], a["modelo"])
-        linhas.append(f"- {a['nome']} (modelo: {modelo}; pode: {pode}): {a['descricao'][:160]}")
+        linhas.append(t("- {nome} (modelo: {modelo}; pode: {pode}): {descricao}", nome=a["nome"], modelo=modelo,
+                        pode=pode, descricao=a["descricao"][:160]))
     if linhas:
-        d["description"] += "\n\nAgentes disponíveis (use o nome no campo agente):\n" + "\n".join(linhas)
+        d["description"] += t("\n\nAgentes disponíveis (use o nome no campo agente):\n{lista}", lista="\n".join(linhas))
     if not pasta:
-        d["description"] += ("\n\nAqui é o chat, sem pasta de trabalho: as etapas só podem pesquisar na web e escrever. "
-                             "Para mexer em arquivos, a pessoa precisa usar o modo Code.")
+        d["description"] += t("\n\nAqui é o chat, sem pasta de trabalho: as etapas só podem pesquisar na web e escrever. Para mexer em arquivos, a pessoa precisa usar o modo Code.")
     return d
 
 
@@ -121,23 +129,23 @@ def _teto_sugerido(maximo: float) -> float:
 def normalizar(entrada: dict, *, fid: str, pasta: str | None, modelo_padrao: str, regras=None) -> dict:
     """Confere o que o Claude propôs e monta a proposta que vai para o cartão de aprovação."""
     if not isinstance(entrada, dict):
-        raise ErroFluxo("a entrada não é um objeto")
+        raise ErroFluxo(t("a entrada não é um objeto"))
     etapas_in = entrada.get("etapas")
     if not isinstance(etapas_in, list) or not etapas_in:
-        raise ErroFluxo("o fluxo precisa de pelo menos uma etapa")
+        raise ErroFluxo(t("o fluxo precisa de pelo menos uma etapa"))
     if len(etapas_in) > MAX_ETAPAS:
-        raise ErroFluxo(f"no máximo {MAX_ETAPAS} etapas")
+        raise ErroFluxo(t("no máximo {n} etapas", n=MAX_ETAPAS))
     import permissoes
     etapas, grupo, no_grupo = [], -1, 0
     for i, e in enumerate(etapas_in):
         if not isinstance(e, dict) or not str(e.get("tarefa") or "").strip():
-            raise ErroFluxo(f"a etapa {i + 1} não tem tarefa")
+            raise ErroFluxo(t("a etapa {n} não tem tarefa", n=i + 1))
         ag = agentes.pegar(str(e.get("agente") or ""), pasta) if e.get("agente") else None
         aviso = ""
         if e.get("agente") and not ag:
-            aviso = f"O agente \"{e['agente']}\" não existe; a etapa roda sem instruções de agente."
+            aviso = t("O agente \"{nome}\" não existe; a etapa roda sem instruções de agente.", nome=e["agente"])
         if ag and regras and permissoes.nega(regras, "Agent", ag["nome"]):
-            raise ErroFluxo(f"o agente \"{ag['nome']}\" está bloqueado por uma regra de permissão")
+            raise ErroFluxo(t("o agente \"{nome}\" está bloqueado por uma regra de permissão", nome=ag["nome"]))
         modelo = agentes.resolver_modelo(str(e.get("modelo") or (ag or {}).get("modelo") or "inherit"), modelo_padrao)
         esforco = str(e.get("esforco") or (ag or {}).get("esforco") or "medium")
         if esforco not in ESFORCOS:
@@ -152,7 +160,7 @@ def normalizar(entrada: dict, *, fid: str, pasta: str | None, modelo_padrao: str
         no_grupo += 1
         mn, mx = estimar_etapa(modelo, esforco, pode)
         etapas.append({
-            "i": i, "nome": str(e.get("nome") or f"Etapa {i + 1}")[:80], "agente": (ag or {}).get("nome"),
+            "i": i, "nome": str(e.get("nome") or t("Etapa {n}", n=i + 1))[:80], "agente": (ag or {}).get("nome"),
             "modelo": modelo, "modelo_nome": modelos.info(modelo).get("nome") or modelo, "esforco": esforco,
             "tarefa": str(e["tarefa"]).strip(), "pode": pode, "grupo": grupo, "aviso": aviso,
             "estimativa": {"min": mn, "max": mx}, "status": "esperando", "custo_usd": 0.0,
@@ -165,7 +173,7 @@ def normalizar(entrada: dict, *, fid: str, pasta: str | None, modelo_padrao: str
     except (TypeError, ValueError):
         teto = None
     return {
-        "id": fid, "titulo": str(entrada.get("titulo") or "Fluxo")[:100],
+        "id": fid, "titulo": str(entrada.get("titulo") or t("Fluxo"))[:100],
         "objetivo": str(entrada.get("objetivo") or "").strip(), "etapas": etapas,
         "estimativa": {"min": mn, "max": mx}, "teto_usd": teto if teto and teto > 0 else _teto_sugerido(mx),
         "pasta": pasta, "status": "proposto", "custo_usd": 0.0, "criado_em": time.time(),
@@ -191,7 +199,7 @@ def aplicar_ajustes(proposta: dict, ajustes: dict | None) -> dict:
         e["estimativa"] = {"min": mn, "max": mx}
         novas.append(e)
     if not novas:
-        raise ErroFluxo("todas as etapas foram tiradas")
+        raise ErroFluxo(t("todas as etapas foram tiradas"))
     proposta["etapas"] = novas
     proposta["estimativa"] = {"min": round(sum(x["estimativa"]["min"] for x in novas), 4),
                               "max": round(sum(x["estimativa"]["max"] for x in novas), 4)}
@@ -209,7 +217,7 @@ def aplicar_ajustes(proposta: dict, ajustes: dict | None) -> dict:
 class Cofre:
     """O gasto somado das etapas, para o teto do fluxo valer para todas juntas (inclusive em paralelo)."""
 
-    def __init__(self, limite: float, rotulo: str = "O fluxo"):
+    def __init__(self, limite: float, rotulo: str = "O fluxo"):  # rotulo: chave de t(), traduzida ao mostrar
         self.rotulo = rotulo
         self.limite = float(limite or 0)
         self.gasto = 0.0
@@ -234,32 +242,37 @@ def _texto_final(conversa_id: str) -> str:
 
 def _sistema_etapa(cfg: dict, pasta: str | None, etapa: dict, agente: dict | None, total: int) -> str:
     base = sistema.code(cfg, pasta) if pasta else sistema.chat(cfg)
-    partes = [base, (
-        f"Você está rodando a etapa {etapa['i'] + 1} de {total} de um fluxo (\"{etapa['nome']}\"). Outras etapas, "
-        "feitas por outros modelos, vêm antes ou depois de você. Ninguém acompanha esta etapa ao vivo para "
-        "responder perguntas: se faltar informação, faça a suposição mais razoável e diga qual foi. Faça só a "
-        "sua parte. Termine com um relatório claro do que fez, do que encontrou e do que ficou pendente: ele é "
-        "o que segue para as próximas etapas.")]
+    partes = [base, " ".join([
+        t("Você está rodando a etapa {n} de {total} de um fluxo (\"{nome}\").", n=etapa["i"] + 1, total=total,
+          nome=etapa["nome"]),
+        t("Outras etapas, feitas por outros modelos, vêm antes ou depois de você."),
+        t("Ninguém acompanha esta etapa ao vivo para responder perguntas: se faltar informação, faça a suposição mais razoável e diga qual foi."),
+        t("Faça só a sua parte."),
+        t("Termine com um relatório claro do que fez, do que encontrou e do que ficou pendente: ele é o que segue para as próximas etapas."),
+        t("Escreva em português do Brasil (as instruções do agente podem vir em inglês)."),
+    ])]
     pode = etapa["pode"]
-    partes.append("Nesta etapa você pode: " + (", ".join(NOMES_PODE[p] for p in pode) if pode else
-                                                "só pensar e escrever (sem ferramentas de arquivo, comando ou web)")
-                  + ". O resto fica bloqueado.")
+    partes.append(t("Nesta etapa você pode: {lista}. O resto fica bloqueado.",
+                    lista=", ".join(t(NOMES_PODE[p]) for p in pode) if pode else
+                    t("só pensar e escrever (sem ferramentas de arquivo, comando ou web)")))
     if agente and agente.get("instrucoes"):
-        partes.append(f"<agente nome=\"{agente['nome']}\">\n{agente['instrucoes']}\n</agente>")
+        partes.append(t("<agente nome=\"{nome}\">\n{instrucoes}\n</agente>", nome=agente["nome"],
+                        instrucoes=agente["instrucoes"]))
     return "\n\n".join(partes)
 
 
 def _mensagem_etapa(proposta: dict, etapa: dict, anteriores: list[dict]) -> str:
-    partes = [f"<objetivo_do_fluxo titulo=\"{proposta['titulo']}\">\n{proposta['objetivo']}\n</objetivo_do_fluxo>",
-              f"<sua_etapa nome=\"{etapa['nome']}\">\n{etapa['tarefa']}\n</sua_etapa>"]
+    partes = [t("<objetivo_do_fluxo titulo=\"{titulo}\">\n{objetivo}\n</objetivo_do_fluxo>", titulo=proposta["titulo"],
+                objetivo=proposta["objetivo"]),
+              t("<sua_etapa nome=\"{nome}\">\n{tarefa}\n</sua_etapa>", nome=etapa["nome"], tarefa=etapa["tarefa"])]
     if anteriores:
         blocos = []
         for a in anteriores:
-            texto = (a.get("resultado") or "(sem relatório)")[:LIMITE_RESULTADO]
-            blocos.append(f"<etapa nome=\"{a['nome']}\" modelo=\"{a['modelo_nome']}\" status=\"{a['status']}\">\n"
-                          f"{texto}\n</etapa>")
-        partes.append("<resultados_das_etapas_anteriores>\n" + "\n".join(blocos) +
-                      "\n</resultados_das_etapas_anteriores>")
+            texto = (a.get("resultado") or t("(sem relatório)"))[:LIMITE_RESULTADO]
+            blocos.append(t("<etapa nome=\"{nome}\" modelo=\"{modelo}\" status=\"{status}\">\n{conteudo}\n</etapa>",
+                            nome=a["nome"], modelo=a["modelo_nome"], status=t(a["status"]), conteudo=texto))
+        partes.append(t("<resultados_das_etapas_anteriores>\n{blocos}\n</resultados_das_etapas_anteriores>",
+                        blocos="\n".join(blocos)))
     return "\n\n".join(partes)
 
 
@@ -298,10 +311,10 @@ class Rodada:
             anteriores = list(feitas)
             threads = [threading.Thread(target=self._etapa, args=(e, anteriores, execucao), daemon=True)
                        for e in lote]
-            for t in threads:
-                t.start()
-            for t in threads:
-                t.join()
+            for th in threads:
+                th.start()
+            for th in threads:
+                th.join()
             feitas += lote
             if any(e["status"] == "erro" for e in lote):
                 break
@@ -362,7 +375,7 @@ class Rodada:
                 e["status"] = "parada"
             else:
                 e["status"] = "erro"
-                e["erro"] = filho.ultimo_erro or "a etapa não terminou"
+                e["erro"] = filho.ultimo_erro or t("a etapa não terminou")
             if filho.mudou_arquivos:
                 mae.mudou_arquivos = True
             e["resultado"] = _texto_final(conv["id"])
@@ -372,18 +385,18 @@ class Rodada:
 
     def relatorio(self) -> str:
         p = self.p
-        linhas = [f"Fluxo \"{p['titulo']}\": {p['status']}. Gasto: US$ {p['custo_usd']:.4f} "
-                  f"(teto US$ {p['teto_usd']:.2f})."]
+        linhas = [t("Fluxo \"{titulo}\": {status}. Gasto: US$ {gasto} (teto US$ {teto}).", titulo=p["titulo"],
+                    status=t(p["status"]), gasto=f"{p['custo_usd']:.4f}", teto=f"{p['teto_usd']:.2f}")]
         if p["status"] == "teto":
-            linhas.append("O fluxo parou porque chegou ao teto de gasto aprovado.")
+            linhas.append(t("O fluxo parou porque chegou ao teto de gasto aprovado."))
         if p["status"] == "parado":
-            linhas.append("Quem usa parou o fluxo antes do fim.")
+            linhas.append(t("Quem usa parou o fluxo antes do fim."))
         for e in p["etapas"]:
-            cab = f"\n## Etapa {e['i'] + 1}: {e['nome']} ({e['modelo_nome']}, {e['status']}, US$ {e['custo_usd']:.4f})"
-            corpo = (e.get("resultado") or e.get("erro") or "(sem relatório)")[:LIMITE_RESULTADO]
+            cab = "\n" + t("## Etapa {n}: {nome} ({modelo}, {status}, US$ {custo})", n=e["i"] + 1, nome=e["nome"],
+                           modelo=e["modelo_nome"], status=t(e["status"]), custo=f"{e['custo_usd']:.4f}")
+            corpo = (e.get("resultado") or e.get("erro") or t("(sem relatório)"))[:LIMITE_RESULTADO]
             linhas.append(cab + "\n" + corpo)
-        linhas.append("\nResuma para a pessoa, em linguagem simples, o que o fluxo fez, o que mudou e o que ficou "
-                      "pendente. Não repita o relatório inteiro.")
+        linhas.append("\n" + t("Resuma para a pessoa, em linguagem simples, o que o fluxo fez, o que mudou e o que ficou pendente. Não repita o relatório inteiro."))
         return "\n".join(linhas)
 
 
@@ -396,6 +409,21 @@ def _dirs_modelos() -> list[tuple[str, Path]]:
         dirs.append((f"plugin:{nome_plugin}", d))
     dirs.append(("clave", config.RAIZ / "fluxos"))
     return dirs
+
+
+def _no_idioma(dados: dict) -> dict:
+    """Os fluxos do app vêm em inglês, com o português em "i18n" > "pt-BR" (nome, descrição, pedido e etapas)."""
+    pt = (dados.get("i18n") or {}).get("pt-BR") if i18n.idioma() == "pt-BR" else None
+    dados = {k: v for k, v in dados.items() if k != "i18n"}
+    if not pt:
+        return dados
+    for campo in ("nome", "descricao", "pede"):
+        if pt.get(campo):
+            dados[campo] = pt[campo]
+    etapas_pt = pt.get("etapas") or []
+    dados["etapas"] = [{**e, **{k: v for k, v in (etapas_pt[i] if i < len(etapas_pt) else {}).items() if v}}
+                       for i, e in enumerate(dados.get("etapas") or [])]
+    return dados
 
 
 def listar_modelos() -> list[dict]:
@@ -411,7 +439,7 @@ def listar_modelos() -> list[dict]:
             ident = arq.stem
             if ident in vistos or not isinstance(dados.get("etapas"), list):
                 continue
-            vistos[ident] = {**dados, "id": ident, "origem": origem, "editavel": origem == "meus"}
+            vistos[ident] = {**_no_idioma(dados), "id": ident, "origem": origem, "editavel": origem == "meus"}
     return sorted(vistos.values(), key=lambda m: (m["origem"] != "meus", m.get("nome", m["id"])))
 
 
@@ -422,19 +450,19 @@ def modelo(ident: str) -> dict | None:
 def salvar_modelo(dados: dict) -> dict:
     nome = str(dados.get("nome") or "").strip()
     if not nome:
-        raise ErroFluxo("Dê um nome ao fluxo.")
+        raise ErroFluxo(t("Dê um nome ao fluxo."))
     etapas = dados.get("etapas")
     if not isinstance(etapas, list) or not etapas or len(etapas) > MAX_ETAPAS:
-        raise ErroFluxo(f"O fluxo precisa de 1 a {MAX_ETAPAS} etapas.")
+        raise ErroFluxo(t("O fluxo precisa de 1 a {n} etapas.", n=MAX_ETAPAS))
     limpas = []
     for e in etapas:
         if not isinstance(e, dict) or not str(e.get("nome") or "").strip():
-            raise ErroFluxo("Toda etapa precisa de nome.")
+            raise ErroFluxo(t("Toda etapa precisa de nome."))
         limpas.append({k: e[k] for k in ("nome", "agente", "modelo", "esforco", "tarefa", "pode", "paralelo")
                        if k in e and e[k] not in (None, "")})
     ident = str(dados.get("id") or "") or re.sub(r"[^a-z0-9]+", "-", nome.lower()).strip("-") or "fluxo"
     if not re.fullmatch(r"[a-z0-9-]{1,60}", ident):
-        raise ErroFluxo("Identificador inválido.")
+        raise ErroFluxo(t("Identificador inválido."))
     d = config.DADOS / "fluxos"
     d.mkdir(parents=True, exist_ok=True)
     corpo = {"nome": nome, "descricao": str(dados.get("descricao") or ""), "pede": str(dados.get("pede") or ""),
@@ -445,16 +473,18 @@ def salvar_modelo(dados: dict) -> dict:
 
 def apagar_modelo(ident: str) -> None:
     if not re.fullmatch(r"[a-z0-9-]{1,60}", ident or ""):
-        raise ErroFluxo("Identificador inválido.")
+        raise ErroFluxo(t("Identificador inválido."))
     arq = config.DADOS / "fluxos" / f"{ident}.json"
     if not arq.is_file():
-        raise ErroFluxo("Só dá para apagar fluxo seu.")
+        raise ErroFluxo(t("Só dá para apagar fluxo seu."))
     arq.unlink()
 
 
 def texto_para_comando(m: dict, pedido: str) -> str:
     """O que vai para o Claude quando a pessoa escolhe um modelo de fluxo (/fluxo nome tarefa)."""
     etapas = json.dumps(m["etapas"], ensure_ascii=False, indent=1)
-    return (f"Quero rodar o fluxo \"{m.get('nome', m['id'])}\" para este pedido:\n\n{pedido or '(sem pedido escrito)'}\n\n"
-            f"Etapas do modelo (adapte as tarefas ao pedido, mantendo os agentes e os modelos):\n```json\n{etapas}\n```\n\n"
-            "Se o pedido estiver claro, proponha o fluxo com executar_fluxo; se faltar algo essencial, pergunte antes.")
+    return (t("Quero rodar o fluxo \"{nome}\" para este pedido:", nome=m.get("nome", m["id"])) + "\n\n"
+            + (pedido or t("(sem pedido escrito)")) + "\n\n"
+            + t("Etapas do modelo (adapte as tarefas ao pedido, mantendo os agentes e os modelos):")
+            + f"\n```json\n{etapas}\n```\n\n"
+            + t("Se o pedido estiver claro, proponha o fluxo com executar_fluxo; se faltar algo essencial, pergunte antes."))

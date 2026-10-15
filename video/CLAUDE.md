@@ -1,68 +1,72 @@
-# CLAUDE.md: video (o vídeo "Por que usar o Clave")
+# CLAUDE.md: video (the "Why use Clave" video)
 
-Subprojeto do Clave. Um vídeo de ~87 s em motion graphics, 1920×1080, com narração em português, que
-convence a pessoa a usar o Clave e a API: pagar pelo uso, sem limite de 5 horas, dados no computador, o modelo
-certo para cada tarefa (fluxos), automação no modo Code e rotinas, lições do zero. Feito em código com
-**Remotion 4** (React). O texto é o mesmo argumento da seção "Por que você deveria usar o Clave" do README e da
-lição `tutoriais/por-que-o-clave.md`: mudou um, conferir os outros.
+A subproject of Clave. A ~87 s motion graphics video, 1920×1080, narrated in Brazilian Portuguese, that
+convinces people to use Clave and the API: pay for what you use, no 5-hour limit, data on your computer, the
+right model for each task (workflows), automation in Code mode and routines, lessons from zero. Made in code
+with **Remotion 4** (React). The text is the same argument as the "Why you should use Clave" section of the
+README and of the lesson `tutoriais/por-que-o-clave.md`: if one changes, check the others.
 
-## Como rodar
+The code identifiers, file names and the narration are in Portuguese on purpose.
+
+## How to run
 
 ```powershell
-npm install                                   # uma vez (node_modules fora do git)
-python -m venv .venv                          # uma vez, para a voz
+npm install                                   # once (node_modules stays outside git)
+python -m venv .venv                          # once, for the voice
 .venv\Scripts\pip install edge-tts==7.3.1
-npm run narrar                                # gera a narração (precisa de internet)
-npm run sons                                  # gera os efeitos e a trilha
-npm run studio                                # abre o Remotion Studio para ver e ajustar
-npm run video                                 # renderiza e normaliza o áudio em -16 LUFS: saida/por-que-o-clave.mp4 (~5 min)
-npm run capa                                  # um quadro em saida/capa.png
+npm run narrar                                # generates the narration (needs internet)
+npm run sons                                  # generates the sound effects and the music
+npm run studio                                # opens Remotion Studio to preview and adjust
+npm run video                                 # renders and normalizes the audio to -16 LUFS: saida/por-que-o-clave.mp4 (~5 min)
+npm run capa                                  # a single frame in saida/capa.png
 ```
 
-## Como está montado
+## How it is put together
 
-- `ferramentas/narrar.py`: as falas de cada cena, a voz (`pt-BR-ThalitaMultilingualNeural`, a voz neural do
-  Edge pelo `edge-tts`) e a velocidade. Grava `public/narracao/<cena>.mp3` e `src/narracao.gerado.json`, com a
-  duração de cada fala e **o tempo de cada palavra**.
-- `src/tema.ts`: cores e fontes do app (papel, tinta, verde-azulado; Source Serif 4 e IBM Plex), e a linha do
-  tempo, calculada a partir da narração: cada cena dura a fala dela mais as folgas (`TROCA`, `ANTES`,
-  `DEPOIS`, `EXTRA`). `quando(cena, palavra)` dá o quadro em que a palavra é dita: **as animações ficam presas
-  à fala**, então mudar uma fala não desalinha nada.
-- `src/Video.tsx`: as cenas em sequência, a folha em cada troca, a narração e a lista de efeitos sonoros.
-- `src/cenas/`: Gancho, Apresenta, Custo (a fita de recibo), Limite, Dados, Fluxo, Code, Aprender, Fecho.
-- `src/componentes/`: Base (fundo, logo, texto que sobe palavra por palavra, rótulo, nota), Icones (os do
-  app), Troca (a folha, a única transição).
-- `ferramentas/sons.py`: toque, tique, impressora, folha, selo e uma trilha calma de acordes, tudo sintetizado
-  em numpy (sem amostra de ninguém).
+- `ferramentas/narrar.py`: the lines of each scene, the voice (`pt-BR-ThalitaMultilingualNeural`, the Edge
+  neural voice through `edge-tts`) and the speed. It writes `public/narracao/<scene>.mp3` and
+  `src/narracao.gerado.json`, with the duration of each line and **the time of each word**.
+- `src/tema.ts`: the app's colors and fonts (paper, ink, teal; Source Serif 4 and IBM Plex), and the timeline,
+  computed from the narration: each scene lasts its line plus the gaps (`TROCA`, `ANTES`, `DEPOIS`, `EXTRA`).
+  `quando(cena, palavra)` gives the frame in which the word is spoken: **the animations are tied to the
+  speech**, so changing a line does not throw anything out of sync.
+- `src/Video.tsx`: the scenes in sequence, the sheet at each transition, the narration and the list of sound
+  effects.
+- `src/cenas/`: Gancho, Apresenta, Custo (the receipt tape), Limite, Dados, Fluxo, Code, Aprender, Fecho.
+- `src/componentes/`: Base (background, logo, text that rises word by word, label, note), Icones (the app's),
+  Troca (the sheet, the only transition).
+- `ferramentas/sons.py`: chime, tick, printer, sheet, stamp and a calm chord track, all synthesized in numpy
+  (no one's samples).
 
-## Decisões que não se desfazem sem motivo
+## Decisions that are not undone without a reason
 
-1. **Grafia de pronúncia na fala, nome certo na tela.** A voz em português lê "Claude" como "Cloud" e
-   "Haiku" sem o H. Na fala vai "Clód", "Ráicu", "A P I" e "Guít Râb"; a tela mostra Claude, Haiku, API e
-   GitHub. Conferido transcrevendo a narração com o Whisper. "pela A P I" antes de "não" virou "PIN": por
-   isso a fala de privacidade começa com "Na A P I".
-2. **Todo número tem fonte e o que é estimativa diz que é**: preços da página oficial da Anthropic de
-   14/10/2026 (mensagem curta sem raciocínio: Haiku 5.5 ≈ US$ 0,40 por mil, Sonnet 5.5 ≈ US$ 7,20 por mil);
-   a política de dados de privacy.claude.com (API não treina por padrão, apaga em até 30 dias); a estimativa do
-   fluxo (US$ 0,19 a 1,23) é a que o próprio Clave calculou num fluxo de verdade.
-3. **Nada que imite o app da Anthropic.** O cartão de "Limite atingido" é genérico, e o fecho diz que o Clave é
-   independente e que Claude é marca da Anthropic.
-4. **A narração e o vídeo não vão para o git** (`.gitignore` daqui): a voz é gerada por um serviço da
-   Microsoft e o MP4 é grande. O vídeo pronto é anexo da release **v2.0.0** no GitHub, e o README aponta para
-   `releases/download/v2.0.0/por-que-o-clave.mp4` com a `capa.jpg` daqui (o último quadro, 1280 px, a única
-   saída que fica no git). Regravou o vídeo? `gh release upload v2.0.0 saida/por-que-o-clave.mp4 --clobber`
-   troca o anexo sem mudar o link. O botão Atualizar só baixa anexo `.zip`, então o MP4 na release não
-   atrapalha.
-5. **Remotion fixado em 4.0.534** (versão exata no `package.json`). Grátis para pessoa física e empresa de
-   até 3 pessoas.
-6. **Sem o endereço do repositório na tela** (decisão do dono do repositório, 14/10/2026): o fecho mostra a
-   marca, os selos e o slogan; a fala diz "é só baixar no GitHub" e basta.
+1. **Pronunciation spelling in the speech, correct name on the screen.** The Portuguese voice reads "Claude"
+   as "Cloud" and "Haiku" without the H. The speech uses "Clód", "Ráicu", "A P I" and "Guít Râb"; the screen
+   shows Claude, Haiku, API and GitHub. Checked by transcribing the narration with Whisper. "pela A P I"
+   before "não" became "PIN": that is why the privacy line starts with "Na A P I".
+2. **Every number has a source, and what is an estimate says so**: prices from Anthropic's official page of
+   2026-10-14 (short message without reasoning: Haiku 5.5 ≈ $0.40 per thousand, Sonnet 5.5 ≈ $7.20 per
+   thousand); the data policy from privacy.claude.com (the API doesn't train by default, deletes within 30
+   days); the workflow estimate ($0.19 to $1.23) is the one Clave itself calculated on a real workflow.
+3. **Nothing that imitates Anthropic's app.** The "Limit reached" card is generic, and the closing says Clave
+   is independent and that Claude is a trademark of Anthropic.
+4. **The narration and the video do not go to git** (`.gitignore` here): the voice is generated by a Microsoft
+   service and the MP4 is big. The finished video is an attachment of the **v2.0.0** release on GitHub, and the
+   README points to `releases/download/v2.0.0/por-que-o-clave.mp4` with the `capa.jpg` from here (the last
+   frame, 1280 px, the only output that stays in git). Re-rendered the video?
+   `gh release upload v2.0.0 saida/por-que-o-clave.mp4 --clobber` swaps the attachment without changing the
+   link. The Update button only downloads `.zip` attachments, so the MP4 on the release does not get in the way.
+5. **Remotion pinned at 4.0.534** (exact version in `package.json`). Free for individuals and companies of up
+   to 3 people.
+6. **No repository address on the screen** (decision of the repository owner, 2026-10-14): the closing shows
+   the brand, the badges and the slogan; the speech says "é só baixar no GitHub" ("just download it on GitHub")
+   and that is enough.
 
-## Armadilhas
+## Pitfalls
 
-- **O Chrome que o Remotion baixa é barrado pelo Smart App Control** ("spawn UNKNOWN"). O `remotion.config.ts`
-  aponta para o Edge do Windows, que roda.
-- O `edge-tts` usa o serviço de leitura em voz alta do Edge: precisa de internet e pode mudar sem aviso. Se ele
-  parar, a narração antiga continua em `public/narracao/` até alguém rodar `npm run narrar` de novo.
-- Texto que sobe palavra por palavra (`Sobe`) separa as palavras com margem, não com espaço: espaço no fim de
-  um `inline-block` some.
+- **The Chrome that Remotion downloads is blocked by Smart App Control** ("spawn UNKNOWN"). `remotion.config.ts`
+  points to the Windows Edge, which runs.
+- `edge-tts` uses Edge's read-aloud service: it needs internet and may change without notice. If it stops, the
+  old narration stays in `public/narracao/` until someone runs `npm run narrar` again.
+- Text that rises word by word (`Sobe`) separates the words with a margin, not a space: a space at the end of
+  an `inline-block` disappears.

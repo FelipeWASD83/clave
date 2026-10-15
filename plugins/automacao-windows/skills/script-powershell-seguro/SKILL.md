@@ -1,24 +1,24 @@
 ---
 name: script-powershell-seguro
-description: Use ao criar um script de PowerShell que a pessoa vai rodar de novo (organizar, renomear, copiar, gerar relatório). O script mostra antes o que faria, guarda um registro e nunca apaga direto.
+description: Use when creating a PowerShell script that the person will run again (organize, rename, copy, generate a report). The script shows what it would do first, keeps a log and never deletes directly.
 ---
 
-# Script de PowerShell seguro
+# Safe PowerShell script
 
-## Regras do script
-- **Ensaio por padrão:** o script começa com `param([switch]$Valendo)`. Sem `-Valendo`, ele só mostra o que faria. Explique isso para a pessoa.
-- **Nada de apagar:** em vez de `Remove-Item`, mova para uma pasta `_lixeira` ao lado, com data no nome. Quem decide esvaziar é a pessoa.
-- **Registro:** cada ação vai para um arquivo `registro-AAAA-MM-DD.csv` (data, ação, origem, destino). Com ele dá para desfazer.
-- **Acentos:** salve o `.ps1` em UTF-8 **com BOM** (o PowerShell 5.1 do Windows lê sem BOM como outra codificação e estraga os acentos). Se o `escrever_arquivo` gravar sem BOM, avise e ofereça um `.bat` que chama o script.
-- **Caminhos com espaço** sempre entre aspas; use `Join-Path` em vez de juntar texto.
-- Erro para o script: `$ErrorActionPreference = 'Stop'` e `try/catch` com mensagem clara em português.
-- Nunca use `Set-ExecutionPolicy` para o computador inteiro.
+## Script rules
+- **Dry run by default:** the script starts with `param([switch]$Valendo)` ("Valendo" means "for real"). Without `-Valendo`, it only shows what it would do. Explain this to the person.
+- **Never delete:** instead of `Remove-Item`, move to a `_lixeira` folder next to it, with the date in the name. The person decides when to empty it.
+- **Log:** every action goes to a `registro-AAAA-MM-DD.csv` file (date, action, source, destination). With it, undoing is possible.
+- **Accents and special characters:** save the `.ps1` as UTF-8 **with BOM** (Windows PowerShell 5.1 reads a file without BOM in another encoding and breaks them). If `escrever_arquivo` writes without BOM, warn the person and offer a `.bat` that calls the script.
+- **Paths with spaces** always in quotes; use `Join-Path` instead of joining text.
+- An error stops the script: `$ErrorActionPreference = 'Stop'` and `try/catch` with a clear message in the person's language.
+- Never use `Set-ExecutionPolicy` for the whole computer.
 
-## Como entregar
-1. Mostre o script e explique em 3 a 5 linhas o que ele faz.
-2. Rode em modo ensaio e mostre o resultado.
-3. Só rode com `-Valendo` depois do OK da pessoa.
-4. Ensine a rodar de novo com dois cliques: crie um `.bat` ao lado:
+## How to deliver
+1. Show the script and explain in 3 to 5 lines what it does.
+2. Run it in dry-run mode and show the result.
+3. Only run with `-Valendo` after the person's OK.
+4. Teach how to run it again with a double click: create a `.bat` next to it:
 
 ```bat
 @echo off
@@ -26,4 +26,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0meu-script.ps1" -Valen
 pause
 ```
 
-5. Se for para rodar sozinho todo dia, ofereça a skill `automacao-windows:agendar-tarefa` ou uma Rotina do Clave.
+5. If it is meant to run on its own every day, offer the skill `automacao-windows:agendar-tarefa` or a Clave routine.

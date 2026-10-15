@@ -1,0 +1,9 @@
+{
+ "Não achei o arquivo com id {id}.": "Couldn't find the file with id {id}.",
+ "O arquivo {nome} não é uma planilha .xlsx.": "The file {nome} is not an .xlsx spreadsheet.",
+ "Fórmulas calculadas pelo Excel; use planilha_ler para conferir os valores.": "Formulas calculated by Excel; use planilha_ler to check the values.",
+ "(Não deu para recalcular: {erro})": "(Couldn't recalculate: {erro})",
+ "Arquivo pronto para a pessoa baixar: {nome} (id {id}). Diga a ela que o botão de baixar aparece aqui na conversa.": "File ready for the person to download: {nome} (id {id}). Tell them the download button appears here in the conversation.",
+ "PDF pronto para a pessoa baixar: {nome} (id {id}).": "PDF ready for the person to download: {nome} (id {id}).",
+ "Ferramenta desconhecida: {nome}": "Unknown tool: {nome}"
+}

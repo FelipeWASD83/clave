@@ -4,6 +4,7 @@ import { estado, ouvir, avisar, carregarConversas } from './estado.js';
 import { ic } from './icones.js';
 import { el, menu, confirmar, perguntarTexto, aviso, grupoData, usd, dataBr } from './ui.js';
 import { abrirAtualizacao } from './atualizar.js';
+import { t } from './i18n.js';
 
 let raiz, lista, tinteiro, seloAtualizar;
 
@@ -15,39 +16,39 @@ export function alternarLateral() {
 
 export function montarLateral(alvo) {
   raiz = alvo;
-  const busca = el('input', { type: 'search', placeholder: 'Buscar conversas', 'aria-label': 'Buscar conversas' });
+  const busca = el('input', { type: 'search', placeholder: t('Buscar conversas'), 'aria-label': t('Buscar conversas') });
   let espera;
   busca.addEventListener('input', () => {
     clearTimeout(espera);
     espera = setTimeout(() => { estado.busca = busca.value.trim(); carregarConversas(); }, 220);
   });
 
-  lista = el('nav', { class: 'lista-conversas', 'aria-label': 'Conversas' });
-  tinteiro = el('a', { class: 'tinteiro', href: '#/uso', title: 'Quanto do teto de gasto deste mês já foi usado' });
-  seloAtualizar = el('button', { class: 'selo-atualizar', type: 'button', hidden: true, onclick: () => abrirAtualizacao() }, 'Atualizar');
+  lista = el('nav', { class: 'lista-conversas', 'aria-label': t('Conversas') });
+  tinteiro = el('a', { class: 'tinteiro', href: '#/uso', dados: { tour: 'gasto' }, title: t('Quanto do teto de gasto deste mês já foi usado') });
+  seloAtualizar = el('button', { class: 'selo-atualizar', type: 'button', hidden: true, onclick: () => abrirAtualizacao() }, t('Atualizar'));
 
   raiz.replaceChildren(
     el('div', { class: 'lateral-topo' },
       el('a', { class: 'marca', href: '#/novo' }, el('img', { src: 'img/icone.svg', alt: '' }), el('b', { texto: 'Clave' })),
-      el('button', { class: 'icone-botao', type: 'button', title: 'Recolher a barra (Ctrl+B)', 'aria-label': 'Recolher a barra', html: ic('painel'), onclick: alternarLateral })),
+      el('button', { class: 'icone-botao', type: 'button', title: t('Recolher a barra (Ctrl+B)'), 'aria-label': t('Recolher a barra'), html: ic('painel'), onclick: alternarLateral })),
     el('div', { class: 'lateral-acoes' },
       el('button', { class: 'nova-conversa', type: 'button', onclick: () => { location.hash = '#/novo'; } },
-        el('span', { html: ic('mais') }), 'Nova conversa', el('span', { class: 'atalho', texto: 'Ctrl Shift O' })),
+        el('span', { html: ic('mais') }), t('Nova conversa'), el('span', { class: 'atalho', texto: 'Ctrl Shift O' })),
       el('button', { class: 'nova-conversa', type: 'button', onclick: () => { location.hash = '#/code'; } },
-        el('span', { html: ic('terminal') }), 'Novo trabalho no Code')),
+        el('span', { html: ic('terminal') }), t('Novo trabalho no Code'))),
     el('div', { class: 'navegacao' },
-      el('a', { href: '#/projetos', dados: { secao: 'projetos' } }, el('span', { html: ic('camadas') }), 'Projetos'),
-      el('a', { href: '#/fluxos', dados: { secao: 'fluxos' } }, el('span', { html: ic('fluxo') }), 'Fluxos e agentes'),
-      el('a', { href: '#/rotinas', dados: { secao: 'rotinas' } }, el('span', { html: ic('calendario') }), 'Rotinas'),
-      el('a', { href: '#/plugins', dados: { secao: 'plugins' } }, el('span', { html: ic('peca') }), 'Plugins'),
-      el('a', { href: '#/aprender', dados: { secao: 'aprender' } }, el('span', { html: ic('livro') }), 'Aprender'),
-      el('a', { href: '#/uso', dados: { secao: 'uso' } }, el('span', { html: ic('grafico') }), 'Uso e gasto'),
-      el('a', { href: '#/precos', dados: { secao: 'precos' } }, el('span', { html: ic('etiqueta') }), 'Preços e planos')),
+      el('a', { href: '#/projetos', dados: { secao: 'projetos' } }, el('span', { html: ic('camadas') }), t('Projetos')),
+      el('a', { href: '#/fluxos', dados: { secao: 'fluxos' } }, el('span', { html: ic('fluxo') }), t('Fluxos e agentes')),
+      el('a', { href: '#/rotinas', dados: { secao: 'rotinas' } }, el('span', { html: ic('calendario') }), t('Rotinas')),
+      el('a', { href: '#/plugins', dados: { secao: 'plugins' } }, el('span', { html: ic('peca') }), t('Plugins')),
+      el('a', { href: '#/aprender', dados: { secao: 'aprender' } }, el('span', { html: ic('livro') }), t('Aprender')),
+      el('a', { href: '#/uso', dados: { secao: 'uso' } }, el('span', { html: ic('grafico') }), t('Uso e gasto')),
+      el('a', { href: '#/precos', dados: { secao: 'precos' } }, el('span', { html: ic('etiqueta') }), t('Preços e planos'))),
     el('div', { class: 'busca-lateral' }, busca),
     lista,
     tinteiro,
     el('div', { class: 'lateral-base' },
-      el('a', { class: 'botao-config', href: '#/config', dados: { secao: 'config' } }, el('span', { html: ic('ajustes') }), 'Configurações'),
+      el('a', { class: 'botao-config', href: '#/config', dados: { secao: 'config' } }, el('span', { html: ic('ajustes') }), t('Configurações')),
       seloAtualizar),
   );
   ouvir('conversas', desenharLista);
@@ -63,7 +64,7 @@ export function montarLateral(alvo) {
 function desenharSelo() {
   const at = estado.info?.atualizacao;
   seloAtualizar.hidden = !(at && at.nova);
-  if (at?.nova) seloAtualizar.title = `Versão ${at.ultima} disponível`;
+  if (at?.nova) seloAtualizar.title = t('Versão {versao} disponível', { versao: at.ultima });
 }
 
 function desenharTinteiro() {
@@ -76,9 +77,9 @@ function desenharTinteiro() {
   tinteiro.replaceChildren(
     el('div', { class: 'tinteiro-linha' },
       el('span', { class: 'tinteiro-valor', texto: usd(o.gasto, 2) }),
-      el('span', { class: 'tinteiro-teto', texto: o.teto ? `de ${usd(o.teto, 0)}` : 'sem teto' })),
+      el('span', { class: 'tinteiro-teto', texto: o.teto ? t('de {teto}', { teto: usd(o.teto, 0) }) : t('sem teto') })),
     vidro,
-    el('div', { class: 'tinteiro-rodape', texto: o.teto ? `${pct.toFixed(0)}% do mês · zera em ${dataBr(proximoDia(o.fim))}` : 'Defina um teto em Configurações' }));
+    el('div', { class: 'tinteiro-rodape', texto: o.teto ? t('{pct}% do mês · zera em {data}', { pct: pct.toFixed(0), data: dataBr(proximoDia(o.fim)) }) : t('Defina um teto em Configurações') }));
 }
 
 function proximoDia(iso) {
@@ -91,12 +92,12 @@ function desenharLista() {
   if (!lista) return;
   const conversas = estado.conversas || [];
   if (!conversas.length) {
-    lista.replaceChildren(el('div', { class: 'grupo-titulo', texto: estado.busca ? 'Nada encontrado' : 'Nenhuma conversa ainda' }));
+    lista.replaceChildren(el('div', { class: 'grupo-titulo', texto: estado.busca ? t('Nada encontrado') : t('Nenhuma conversa ainda') }));
     return;
   }
   const grupos = new Map();
   for (const c of conversas) {
-    const g = c.fixada ? 'Fixadas' : grupoData(c.atualizada_em);
+    const g = c.fixada ? t('Fixadas') : grupoData(c.atualizada_em);
     if (!grupos.has(g)) grupos.set(g, []);
     grupos.get(g).push(c);
   }
@@ -110,11 +111,11 @@ function desenharLista() {
 }
 
 function itemConversa(c) {
-  const mais = el('button', { class: 'icone-botao mais', type: 'button', 'aria-label': 'Opções da conversa', html: ic('pontos') });
-  const a = el('a', { class: 'item-conversa', href: `#/c/${c.id}`, dados: { id: c.id }, title: c.titulo || 'Conversa sem título' },
+  const mais = el('button', { class: 'icone-botao mais', type: 'button', 'aria-label': t('Opções da conversa'), html: ic('pontos') });
+  const a = el('a', { class: 'item-conversa', href: `#/c/${c.id}`, dados: { id: c.id }, title: c.titulo || t('Conversa sem título') },
     el('span', { class: 'marcador-modo', html: ic(c.modo === 'code' ? 'terminal' : 'chat') }),
-    el('span', { class: 'nome', texto: c.titulo || 'Nova conversa' }),
-    estado.rodando.has(c.id) ? el('span', { class: 'rodando', title: 'Respondendo' }) : null,
+    el('span', { class: 'nome', texto: c.titulo || t('Nova conversa') }),
+    estado.rodando.has(c.id) ? el('span', { class: 'rodando', title: t('Respondendo') }) : null,
     mais);
   mais.addEventListener('click', (e) => {
     e.preventDefault(); e.stopPropagation();
@@ -125,15 +126,15 @@ function itemConversa(c) {
 
 export function menuConversa(ancora, c, { aoApagar } = {}) {
   menu(ancora, [
-    { texto: c.fixada ? 'Desafixar' : 'Fixar no topo', icone: 'alfinete', acao: async () => { await api(`/conversas/${c.id}`, { metodo: 'PATCH', corpo: { fixada: !c.fixada } }); avisar('conversas-mudaram'); } },
-    { texto: 'Renomear', icone: 'lapis', acao: async () => {
-      const t = await perguntarTexto('Renomear conversa', { valor: c.titulo || '' });
-      if (t) { await api(`/conversas/${c.id}`, { metodo: 'PATCH', corpo: { titulo: t } }); avisar('conversas-mudaram'); avisar('titulo', { id: c.id, titulo: t }); }
+    { texto: c.fixada ? t('Desafixar') : t('Fixar no topo'), icone: 'alfinete', acao: async () => { await api(`/conversas/${c.id}`, { metodo: 'PATCH', corpo: { fixada: !c.fixada } }); avisar('conversas-mudaram'); } },
+    { texto: t('Renomear'), icone: 'lapis', acao: async () => {
+      const novo = await perguntarTexto(t('Renomear conversa'), { valor: c.titulo || '' });
+      if (novo) { await api(`/conversas/${c.id}`, { metodo: 'PATCH', corpo: { titulo: novo } }); avisar('conversas-mudaram'); avisar('titulo', { id: c.id, titulo: novo }); }
     } },
-    { texto: 'Exportar em Markdown', icone: 'baixar', acao: () => { location.href = `/api/conversas/${c.id}/exportar`; } },
+    { texto: t('Exportar em Markdown'), icone: 'baixar', acao: () => { location.href = `/api/conversas/${c.id}/exportar`; } },
     '-',
-    { texto: 'Apagar', icone: 'lixo', acao: async () => {
-      if (!await confirmar(`Apagar "${c.titulo || 'esta conversa'}"? Não dá para desfazer.`, { titulo: 'Apagar conversa', sim: 'Apagar', perigo: true })) return;
+    { texto: t('Apagar'), icone: 'lixo', acao: async () => {
+      if (!await confirmar(t('Apagar "{titulo}"? Não dá para desfazer.', { titulo: c.titulo || t('esta conversa') }), { titulo: t('Apagar conversa'), sim: t('Apagar'), perigo: true })) return;
       try {
         await api(`/conversas/${c.id}`, { metodo: 'DELETE' });
         avisar('conversas-mudaram');

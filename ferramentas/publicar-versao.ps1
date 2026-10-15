@@ -30,13 +30,24 @@ if ($r.codigo -ne 0) { throw 'Este ramo não está ligado ao GitHub. Rode: git p
 if ($local -ne $r.saida) { throw 'O commit atual ainda não foi enviado (git push) ou está atrás do GitHub.' }
 if ((Rodar gh @('release', 'view', "v$versao", '--repo', $repo)).codigo -eq 0) { throw "A release v$versao já existe." }
 
-# notas: só a seção desta versão do CHANGELOG
-$linhas = $changelog -split "`r?`n"
-$inicio = [array]::IndexOf($linhas, ($linhas | Where-Object { $_ -match "^## $([regex]::Escape($versao)) " } | Select-Object -First 1))
-$notas = @()
-for ($i = $inicio + 1; $i -lt $linhas.Length; $i++) {
-    if ($linhas[$i] -match '^## ') { break }
-    $notas += $linhas[$i]
+# notas: só a seção desta versão do CHANGELOG (inglês) e, embaixo, a do CHANGELOG.pt-BR (português)
+function SecaoDaVersao([string]$texto) {
+    $linhas = $texto -split "`r?`n"
+    $achou = $linhas | Where-Object { $_ -match "^## $([regex]::Escape($versao)) " } | Select-Object -First 1
+    if (-not $achou) { return @() }
+    $inicio = [array]::IndexOf($linhas, $achou)
+    $saida = @()
+    for ($i = $inicio + 1; $i -lt $linhas.Length; $i++) {
+        if ($linhas[$i] -match '^## ') { break }
+        $saida += $linhas[$i]
+    }
+    return $saida
+}
+$notas = SecaoDaVersao $changelog
+$arqPt = Join-Path $raiz 'CHANGELOG.pt-BR.md'
+if (Test-Path $arqPt) {
+    $pt = SecaoDaVersao (Get-Content $arqPt -Raw -Encoding UTF8)
+    if ($pt.Count) { $notas += @('', '---', '', '### Português', '') + $pt }
 }
 $tmp = Join-Path $env:TEMP "clave-release-$versao"
 New-Item -ItemType Directory -Force $tmp | Out-Null

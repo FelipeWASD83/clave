@@ -1,0 +1,23 @@
+{
+  "Aprender": "Learn",
+  "Lições curtas para quem nunca usou o Claude. Comece pela primeira trilha; o foco é fazer o Claude trabalhar para você e do seu jeito. Cada lição tem botões para experimentar na hora.": "Short lessons for anyone who has never used Claude. Start with the first track; the focus is getting Claude to work for you, your way. Every lesson has buttons to try things right away.",
+  "{ok} de {total} feitas": "{ok} of {total} done",
+  "{n} lições": "{n} lessons",
+  "feita": "done",
+  "Lição feita": "Lesson done",
+  "Marcar como feita": "Mark as done",
+  "Ficou com dúvida? Pergunte ao ajudante": "Have a question? Ask the helper",
+  "Ele conhece esta lição e o glossário e explica com calma, do jeito mais simples. Roda no Haiku 5.5: cada pergunta custa uma fração de centavo.": "It knows this lesson and the glossary and explains calmly, as simply as possible. Runs on Haiku 5.5: each question costs a fraction of a cent.",
+  "Escreva a sua dúvida, do seu jeito. Ex.: não entendi o que é um token": "Write your question, in your own words. E.g.: I didn't get what a token is",
+  "O que é JSON, com um exemplo?": "What is JSON, with an example?",
+  "Qual a diferença entre Git e GitHub?": "What's the difference between Git and GitHub?",
+  "Pode explicar de um jeito mais simples?": "Can you explain it more simply?",
+  "Me dá um exemplo do dia a dia": "Give me an everyday example",
+  "Todas as lições": "All lessons",
+  "Experimente no modo Code": "Try it in Code mode",
+  "Experimente": "Try it",
+  "Abrir no Code com este pedido": "Open in Code with this request",
+  "Mandar para uma conversa nova": "Send to a new chat",
+  "Refazer os tours": "Take the tours again",
+  "Mostra de novo as setinhas que explicam cada parte do app": "Shows again the arrows that explain each part of the app"
+}

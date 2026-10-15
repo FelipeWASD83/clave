@@ -14,7 +14,10 @@ import shlex
 from pathlib import Path
 
 import contexto_pasta
+import i18n
+from i18n import t
 
+# as descrições são mostradas com t() (em listar)
 EMBUTIDOS_APP = [
     ("novo", "Começa uma conversa nova"),
     ("modelo", "Troca o modelo desta conversa (opus, sonnet, haiku, fable)"),
@@ -41,7 +44,7 @@ def _bases(pasta: str | Path | None) -> list[tuple[str, str, Path]]:
 
 
 def listar(pasta: str | Path | None = None, com_skills: bool = True) -> list[dict]:
-    vistos: dict[str, dict] = {nome: {"nome": nome, "descricao": desc, "origem": "app", "tipo": "app"}
+    vistos: dict[str, dict] = {nome: {"nome": nome, "descricao": t(desc), "origem": "app", "tipo": "app"}
                                for nome, desc in EMBUTIDOS_APP}
     if com_skills:
         for s in contexto_pasta.skills(pasta):
@@ -60,8 +63,10 @@ def listar(pasta: str | Path | None = None, com_skills: bool = True) -> list[dic
                 fm = contexto_pasta._frontmatter(arq.read_text(encoding="utf-8", errors="replace"))
             except OSError:
                 continue
-            vistos[nome] = {"nome": nome, "descricao": str(fm.get("description") or "").strip(), "origem": origem,
-                            "tipo": "comando", "argumentos": str(fm.get("argument-hint") or ""), "caminho": str(arq)}
+            pt = (i18n.guardado_pt(base.parent).get("commands", {}).get(rel) or {}) if origem.startswith("plugin:") else {}
+            vistos[nome] = {"nome": nome, "descricao": pt.get("description") or str(fm.get("description") or "").strip(),
+                            "origem": origem, "tipo": "comando",
+                            "argumentos": pt.get("argument-hint") or str(fm.get("argument-hint") or ""), "caminho": str(arq)}
     return sorted(vistos.values(), key=lambda c: ({"app": 0, "comando": 1, "skill": 2}[c["tipo"]], c["nome"]))
 
 
@@ -116,8 +121,9 @@ def expandir(texto: str, pasta: str | Path | None = None) -> dict | None:
             if not c:
                 return None
             corpo = substituir(c["texto"].replace("${CLAUDE_SKILL_DIR}", c["pasta"]), args)
-            return {"texto": (f"<skill nome=\"{nome}\" pasta=\"{c['pasta']}\">\n{corpo.strip()}\n</skill>\n\n"
-                              + (f"Pedido: {args}" if args else "Siga a skill acima.")),
+            return {"texto": (t("<skill nome=\"{nome}\" pasta=\"{pasta}\">\n{corpo}\n</skill>", nome=nome, pasta=c["pasta"],
+                                corpo=corpo.strip()) + "\n\n"
+                              + (t("Pedido: {pedido}", pedido=args) if args else t("Siga a skill acima."))),
                     "nome": nome, "tipo": "skill", "modelo": c.get("modelo") or "", "ferramentas_permitidas": []}
     for cmd in listar(pasta, com_skills=False):
         if cmd["nome"] == nome and cmd["tipo"] == "comando":
@@ -125,10 +131,10 @@ def expandir(texto: str, pasta: str | Path | None = None) -> dict | None:
             bruto = arq.read_text(encoding="utf-8", errors="replace")
             fm = contexto_pasta._frontmatter(bruto)
             corpo = contexto_pasta._FRONT.sub("", bruto, count=1)
-            permitidas = [t for t in _lista_ferramentas(fm.get("allowed-tools")) if t]
+            permitidas = [f for f in _lista_ferramentas(fm.get("allowed-tools")) if f]
             if cmd["origem"].startswith("plugin:"):
                 # comando de plugin não libera terminal sozinho: só leitura e edição
-                permitidas = [t for t in permitidas if not t.startswith(("Bash", "PowerShell"))]
+                permitidas = [f for f in permitidas if not f.startswith(("Bash", "PowerShell"))]
             return {"texto": substituir(corpo.strip(), args), "nome": nome, "tipo": "comando",
                     "modelo": str(fm.get("model") or ""), "ferramentas_permitidas": permitidas}
     return None

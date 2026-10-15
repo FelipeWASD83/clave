@@ -1,6 +1,7 @@
 // Início do app: carrega o estado, monta a barra lateral e troca de tela conforme o endereço (#/...).
 import { api } from './api.js';
 import { estado, carregarEstado, carregarConversas, ouvir } from './estado.js';
+import { carregarIdioma, t } from './i18n.js';
 import { montarLateral, marcarAtual, alternarLateral } from './lateral.js';
 import { abrirConversa, novaConversa } from './conversa.js';
 import { telaProjetos, telaProjeto } from './projetos.js';
@@ -15,6 +16,8 @@ import { telaRotinas } from './rotinas.js';
 import { telaPrecos } from './precos.js';
 import { telaPermissoes } from './permissoes.js';
 import { notificar } from './fluxo-ui.js';
+import { tourDaTela } from './tour.js';
+import { apresentarNovidade } from './lancamentos.js';
 import { aviso, el } from './ui.js';
 
 const principal = document.getElementById('principal');
@@ -50,9 +53,10 @@ async function trocarTela() {
   } catch (e) {
     console.error(e);
     principal.replaceChildren(el('div', { class: 'vazio' }, el('p', { texto: e.message || String(e) }),
-      el('a', { href: '#/novo', texto: 'Voltar ao início' })));
+      el('a', { href: '#/novo', texto: t('Voltar ao início') })));
   }
   marcarAtual();
+  tourDaTela(a);
 }
 
 function atalhos(e) {
@@ -65,14 +69,16 @@ function atalhos(e) {
 
 function sessaoInvalida() {
   principal.replaceChildren(el('div', { class: 'vazio' },
-    el('h2', { texto: 'Abra o Clave pelo atalho' }),
-    el('p', { texto: 'Esta janela não tem a sessão do Clave (ela é criada quando você abre pelo atalho Clave na área de trabalho ou pelo Clave.bat). Feche e abra de novo por lá.' })));
+    el('h2', { texto: t('Abra o Clave pelo atalho') }),
+    el('p', { texto: t('Esta janela não tem a sessão do Clave (ela é criada quando você abre pelo atalho Clave na área de trabalho ou pelo Clave.bat). Feche e abra de novo por lá.') })));
 }
 
 async function iniciar() {
   document.addEventListener('clave:sessao', sessaoInvalida, { once: true });
   try {
     await carregarEstado();
+    await carregarIdioma(estado.info.cfg.idioma);
+    document.getElementById('lateral').setAttribute('aria-label', t('Navegação'));
   } catch (e) {
     if (e.status === 401) return sessaoInvalida();
     principal.replaceChildren(el('div', { class: 'vazio', texto: e.message }));
@@ -84,7 +90,12 @@ async function iniciar() {
   document.addEventListener('keydown', atalhos);
   await trocarTela();
   if (!estado.info.cfg.configurado) boasVindas();
-  else if (estado.info.cfg.checar_atualizacoes && !estado.info.dev) checarAtualizacao({ silencioso: true });
+  else {
+    if (estado.info.cfg.checar_atualizacoes && !estado.info.dev) checarAtualizacao({ silencioso: true });
+    apresentarNovidade();
+  }
+  // quem acabou de chegar vê o modelo novo depois do tour das boas-vindas
+  addEventListener('clave:tour-fechou', () => apresentarNovidade());
   ouvir('conversas-mudaram', () => carregarConversas().catch(() => {}));
   // sinal de vida: sem a janela aberta por muito tempo, o servidor fecha sozinho (no modo navegador)
   setInterval(() => api('/saude').catch(() => {}), 60_000);
@@ -104,8 +115,8 @@ async function acompanharAvisos() {
       if (visto !== null) {
         for (const a of r.avisos) {
           if (a.tipo !== 'rotina') continue;
-          const texto = `Rotina "${a.nome}": ${a.status}.`;
-          aviso(texto, /parou|erro|bloquead/.test(a.status) ? 'erro' : '');
+          const texto = t('Rotina "{nome}": {status}.', { nome: a.nome, status: a.status });
+          aviso(texto, /parou|erro|bloquead|stopped|error|blocked/i.test(a.status) ? 'erro' : '');
           notificar('Clave', texto);
         }
         if (r.avisos.length) import('./estado.js').then((m) => m.avisar('conversas-mudaram'));

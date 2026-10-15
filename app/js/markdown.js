@@ -4,6 +4,7 @@ import DOMPurify from '../vendor/dompurify/purify.es.mjs';
 import hljs from '../vendor/highlight/highlight.min.js';
 import { ic } from './icones.js';
 import { esc } from './ui.js';
+import { t } from './i18n.js';
 
 const PREVIAVEIS = new Set(['html', 'svg', 'xml']);
 
@@ -15,9 +16,9 @@ const marked = new Marked({
       const lingua = String(lang || '').trim().split(/\s+/)[0].toLowerCase();
       const previa = PREVIAVEIS.has(lingua) && (lingua !== 'xml' || /<svg[\s>]/i.test(text));
       return `<div class="bloco-codigo" data-lingua="${esc(lingua)}">`
-        + `<div class="bloco-codigo-topo"><span class="lingua">${esc(lingua || 'texto')}</span>`
-        + (previa ? `<button type="button" data-acao="previa">${ic('olho')}Prévia</button>` : '')
-        + `<button type="button" data-acao="copiar-codigo">${ic('copiar')}Copiar</button></div>`
+        + `<div class="bloco-codigo-topo"><span class="lingua">${esc(lingua || t('texto'))}</span>`
+        + (previa ? `<button type="button" data-acao="previa">${ic('olho')}${esc(t('Prévia'))}</button>` : '')
+        + `<button type="button" data-acao="copiar-codigo">${ic('copiar')}${esc(t('Copiar'))}</button></div>`
         + `<pre><code class="${lingua ? 'language-' + esc(lingua) : ''}">${esc(text)}</code></pre></div>`;
     },
     link({ href, title, tokens }) {
@@ -44,16 +45,16 @@ const PURIFY_COM_BOTOES = { ...PURIFY, FORBID_TAGS: ['style', 'form', 'input', '
 // Separa código (que não pode virar fórmula) do resto e extrai as fórmulas.
 function protegerFormulas(md) {
   const codigos = [];
-  let t = md.replace(/(^|\n)(```|~~~)[^\n]*\n[\s\S]*?(\n\2[ \t]*(?=\n|$)|$)/g, (m) => { codigos.push(m); return `\u0000C${codigos.length - 1}\u0000`; });
-  t = t.replace(/`[^`\n]+`/g, (m) => { codigos.push(m); return `\u0000C${codigos.length - 1}\u0000`; });
+  let s = md.replace(/(^|\n)(```|~~~)[^\n]*\n[\s\S]*?(\n\2[ \t]*(?=\n|$)|$)/g, (m) => { codigos.push(m); return `\u0000C${codigos.length - 1}\u0000`; });
+  s = s.replace(/`[^`\n]+`/g, (m) => { codigos.push(m); return `\u0000C${codigos.length - 1}\u0000`; });
   const formulas = [];
   const guardar = (tex, bloco) => { formulas.push({ tex, bloco }); return `<span class="mat" data-i="${formulas.length - 1}"></span>`; };
-  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => guardar(tex, true));
-  t = t.replace(/\\\[([\s\S]+?)\\\]/g, (_, tex) => guardar(tex, true));
-  t = t.replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => guardar(tex, false));
-  t = t.replace(/(^|[^\\$\w])\$(?!\s)([^$\n]+?)(?<!\s)\$(?![\d\w])/g, (m, antes, tex) => antes + guardar(tex, false));
-  t = t.replace(/\u0000C(\d+)\u0000/g, (_, i) => codigos[+i]);
-  return { texto: t, formulas };
+  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => guardar(tex, true));
+  s = s.replace(/\\\[([\s\S]+?)\\\]/g, (_, tex) => guardar(tex, true));
+  s = s.replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => guardar(tex, false));
+  s = s.replace(/(^|[^\\$\w])\$(?!\s)([^$\n]+?)(?<!\s)\$(?![\d\w])/g, (m, antes, tex) => antes + guardar(tex, false));
+  s = s.replace(/\u0000C(\d+)\u0000/g, (_, i) => codigos[+i]);
+  return { texto: s, formulas };
 }
 
 let katex = null;

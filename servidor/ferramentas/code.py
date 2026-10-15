@@ -23,6 +23,7 @@ import banco
 import contexto_pasta
 import permissoes
 from ferramentas import excel
+from i18n import t
 
 IGNORAR_PASTAS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".mypy_cache", ".pytest_cache",
                   ".next", ".cache", ".idea", ".vs"}
@@ -271,7 +272,7 @@ def decidir(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) 
 
     f = FERRAMENTAS.get(nome)
     if not f:
-        return r("negar", "ferramenta desconhecida", "clave")
+        return r("negar", t("ferramenta desconhecida"), "clave")
     risco = f["risco"]
     if nome in ("atualizar_tarefas", "usar_skill"):
         return r("auto")
@@ -282,51 +283,48 @@ def decidir(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) 
             alvo = ctx.resolver(entrada[campo])
             prot = ctx.protegido(alvo)
             if prot:
-                return r("negar", f"o caminho está na lista de arquivos protegidos ({prot})", "protegido")
+                return r("negar", t("o caminho está na lista de arquivos protegidos ({padrao})", padrao=prot), "protegido")
             alvos.append(alvo)
 
     if nome == "excel_abrir" and alvos and alvos[0].suffix.lower() not in ABRIVEIS:
-        return r("negar", "só dá para abrir planilha (.xlsx, .csv), PDF, imagem ou texto; outros tipos podem "
-                 "executar programas", "clave")
+        return r("negar", t("só dá para abrir planilha (.xlsx, .csv), PDF, imagem ou texto; outros tipos podem executar programas"), "clave")
 
     acao, regra = permissoes.avaliar(ctx.regras, permissoes.alvos(nome, entrada, ctx.resolver), ctx.raiz)
     if acao == "deny":
-        return r("negar", f"bloqueado pela {regra.descrever()}", "regra", regra)
+        return r("negar", t("bloqueado pela {regra}", regra=regra.descrever()), "regra", regra)
 
     if risco == "comando":
         cmd = str(entrada.get("comando", ""))
         if modo == "plano":
-            return r("negar", "o modo Plano só lê; termine de investigar e apresente o plano com apresentar_plano "
-                              "(aprovado, o modo muda)")
+            return r("negar", t("o modo Plano só lê; termine de investigar e apresente o plano com apresentar_plano (aprovado, o modo muda)"))
         if acao == "ask":
-            return r("perguntar", f"pedido pela {regra.descrever()}", "regra", regra)
+            return r("perguntar", t("pedido pela {regra}", regra=regra.descrever()), "regra", regra)
         especifica = acao == "allow" and not permissoes.generica(regra)
         if perigoso(cmd) and not especifica:
-            return r("perguntar", "comando que pode apagar ou publicar algo", "perigoso")
+            return r("perguntar", t("comando que pode apagar ou publicar algo"), "perigoso")
         citado = _cita_protegido(cmd, ctx.protegidos)
         if citado and not especifica:
-            return r("perguntar", f"o comando cita um arquivo protegido ({citado})", "protegido")
+            return r("perguntar", t("o comando cita um arquivo protegido ({padrao})", padrao=citado), "protegido")
         if acao == "allow":
             return r("auto", "", "regra", regra)
         if modo == "livre" or "comando" in liberados:
             return r("auto", "", "tarefa" if "comando" in liberados else "modo")
-        return r("perguntar", "rodar comando")
+        return r("perguntar", t("rodar comando"))
 
     fora = any(not ctx.dentro(a) for a in alvos)
     if risco == "escrita" and modo == "plano":
-        return r("negar", "o modo Plano só lê" + ("" if fora else "; termine de investigar e apresente o plano com "
-                                                                  "apresentar_plano (aprovado, o modo muda)"))
+        return r("negar", t("o modo Plano só lê") + ("" if fora else t("; termine de investigar e apresente o plano com apresentar_plano (aprovado, o modo muda)")))
     if acao == "ask":
-        return r("perguntar", f"pedido pela {regra.descrever()}", "regra", regra)
+        return r("perguntar", t("pedido pela {regra}", regra=regra.descrever()), "regra", regra)
     if acao == "allow":
         return r("auto", "", "regra", regra)
     if fora:
-        return r("perguntar", "caminho fora da pasta de trabalho")
+        return r("perguntar", t("caminho fora da pasta de trabalho"))
     if risco == "leitura":
         return r("auto")
     if modo in ("aceitar_edicoes", "livre") or "escrita" in liberados:
         return r("auto", "", "tarefa" if "escrita" in liberados and modo not in ("aceitar_edicoes", "livre") else "modo")
-    return r("perguntar", "mudar arquivo")
+    return r("perguntar", t("mudar arquivo"))
 
 
 # ---------------- execução ----------------
@@ -335,7 +333,7 @@ def _numerar(linhas: list[str], inicio: int) -> str:
     saida = []
     for i, linha in enumerate(linhas, start=inicio):
         if len(linha) > 2000:
-            linha = linha[:2000] + "… [linha cortada]"
+            linha = linha[:2000] + t("… [linha cortada]")
         saida.append(f"{i:>6}\t{linha}")
     return "\n".join(saida)
 
@@ -343,7 +341,7 @@ def _numerar(linhas: list[str], inicio: int) -> str:
 def _ler_texto(p: Path) -> tuple[str, str]:
     dados = p.read_bytes()
     if b"\x00" in dados[:8192]:
-        raise ErroFerramenta("O arquivo parece binário; não dá para ler como texto.")
+        raise ErroFerramenta(t("O arquivo parece binário; não dá para ler como texto."))
     for cod in ("utf-8-sig", "utf-8"):
         try:
             return dados.decode(cod), cod
@@ -356,7 +354,7 @@ def _limitar(texto: str) -> str:
     if len(texto) <= LIMITE_SAIDA:
         return texto
     meio = LIMITE_SAIDA // 2
-    return texto[:meio] + f"\n\n[... {len(texto) - LIMITE_SAIDA} caracteres cortados ...]\n\n" + texto[-meio:]
+    return texto[:meio] + "\n\n" + t("[... {n} caracteres cortados ...]", n=len(texto) - LIMITE_SAIDA) + "\n\n" + texto[-meio:]
 
 
 def _diff(antes: str, depois: str, rel: str) -> str:
@@ -374,14 +372,14 @@ def executar(nome: str, entrada: dict, ctx: Contexto):
     """Roda a ferramenta. Devolve o conteúdo do tool_result (texto ou lista de blocos)."""
     fn = globals().get("_f_" + nome)
     if fn is None:
-        raise ErroFerramenta(f"Ferramenta desconhecida: {nome}")
+        raise ErroFerramenta(t("Ferramenta desconhecida: {nome}", nome=nome))
     return fn(entrada, ctx)
 
 
 def _f_listar_pasta(e, ctx: Contexto):
     base = ctx.resolver(e.get("caminho") or ".")
     if not base.is_dir():
-        raise ErroFerramenta(f"Não é uma pasta: {base}")
+        raise ErroFerramenta(t("Não é uma pasta: {caminho}", caminho=base))
     prof = max(1, min(3, int(e.get("profundidade") or 1)))
     linhas, total = [], 0
 
@@ -390,7 +388,7 @@ def _f_listar_pasta(e, ctx: Contexto):
         try:
             itens = sorted(d.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))
         except OSError as erro:
-            linhas.append(f"{prefixo}[sem acesso: {erro.strerror}]")
+            linhas.append(prefixo + t("[sem acesso: {erro}]", erro=erro.strerror))
             return
         for item in itens:
             if total >= 400:
@@ -398,7 +396,7 @@ def _f_listar_pasta(e, ctx: Contexto):
             total += 1
             if item.is_dir():
                 pulada = item.name in IGNORAR_PASTAS
-                linhas.append(f"{prefixo}{item.name}/" + ("  (ignorada)" if pulada else ""))
+                linhas.append(f"{prefixo}{item.name}/" + (t("  (ignorada)") if pulada else ""))
                 if nivel < prof and not pulada:
                     andar(item, nivel + 1, prefixo + "  ")
             else:
@@ -410,8 +408,8 @@ def _f_listar_pasta(e, ctx: Contexto):
 
     andar(base, 1, "")
     if total >= 400:
-        linhas.append("[... lista cortada em 400 itens ...]")
-    return f"{base}\n" + ("\n".join(linhas) if linhas else "(pasta vazia)")
+        linhas.append(t("[... lista cortada em 400 itens ...]"))
+    return f"{base}\n" + ("\n".join(linhas) if linhas else t("(pasta vazia)"))
 
 
 def _tam(n: int) -> str:
@@ -425,20 +423,20 @@ def _tam(n: int) -> str:
 def _f_ler_arquivo(e, ctx: Contexto):
     p = ctx.resolver(e["caminho"])
     if not p.is_file():
-        raise ErroFerramenta(f"Arquivo não encontrado: {p}")
+        raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=p))
     ext = p.suffix.lower()
     if ext in IMAGENS:
         dados = p.read_bytes()
         if len(dados) > 5 * 1024 * 1024:
-            raise ErroFerramenta("Imagem maior que 5 MB; reduza antes (por exemplo, com um script Python).")
+            raise ErroFerramenta(t("Imagem maior que 5 MB; reduza antes (por exemplo, com um script Python)."))
         ctx.lidos.add(str(p))
-        return [{"type": "text", "text": f"Imagem: {p}"},
+        return [{"type": "text", "text": t("Imagem: {caminho}", caminho=p)},
                 {"type": "image", "source": {"type": "base64", "media_type": IMAGENS[ext],
                                              "data": base64.b64encode(dados).decode("ascii")}}]
     if ext == ".pdf":
         dados = p.read_bytes()
         if len(dados) > 30 * 1024 * 1024:
-            raise ErroFerramenta("PDF maior que 30 MB.")
+            raise ErroFerramenta(t("PDF maior que 30 MB."))
         ctx.lidos.add(str(p))
         return [{"type": "text", "text": f"PDF: {p}"},
                 {"type": "document", "source": {"type": "base64", "media_type": "application/pdf",
@@ -450,10 +448,11 @@ def _f_ler_arquivo(e, ctx: Contexto):
     trecho = linhas[inicio - 1: inicio - 1 + qtd]
     ctx.lidos.add(str(p))
     if not linhas:
-        return f"{p}\n(arquivo vazio)"
+        return f"{p}\n" + t("(arquivo vazio)")
     rodape = ""
     if inicio - 1 + qtd < len(linhas):
-        rodape = f"\n\n[o arquivo tem {len(linhas)} linhas; leia o resto com linha_inicial={inicio + qtd}]"
+        rodape = "\n\n" + t("[o arquivo tem {n} linhas; leia o resto com linha_inicial={proxima}]", n=len(linhas),
+                               proxima=inicio + qtd)
     return _limitar(_numerar(trecho, inicio)) + rodape
 
 
@@ -485,7 +484,7 @@ def _f_buscar_texto(e, ctx: Contexto):
     try:
         rx = re.compile(e["padrao"], re.I if e.get("ignorar_maiusculas") else 0)
     except re.error as erro:
-        raise ErroFerramenta(f"Expressão regular inválida: {erro}")
+        raise ErroFerramenta(t("Expressão regular inválida: {erro}", erro=erro))
     limite = max(1, min(500, int(e.get("max_resultados") or 150)))
     achados = []
     for arq in _arquivos_em(base, e.get("filtro"), 25):
@@ -506,9 +505,9 @@ def _f_buscar_texto(e, ctx: Contexto):
                 if len(achados) >= limite:
                     break
         if len(achados) >= limite:
-            achados.append(f"[... parei em {limite} resultados ...]")
+            achados.append(t("[... parei em {n} resultados ...]", n=limite))
             break
-    return "\n".join(achados) if achados else "Nenhum resultado."
+    return "\n".join(achados) if achados else t("Nenhum resultado.")
 
 
 def _f_achar_arquivos(e, ctx: Contexto):
@@ -516,7 +515,7 @@ def _f_achar_arquivos(e, ctx: Contexto):
     padrao = e["padrao"].replace("\\", "/")
     resultados = []
     if ".." in padrao.split("/"):
-        raise ErroFerramenta("O padrão não pode subir de pasta (..). Use o parâmetro caminho para procurar em outro lugar.")
+        raise ErroFerramenta(t("O padrão não pode subir de pasta (..). Use o parâmetro caminho para procurar em outro lugar."))
     for pd in _expandir_chaves(padrao):
         try:
             for p in base.glob(pd):
@@ -529,23 +528,23 @@ def _f_achar_arquivos(e, ctx: Contexto):
                 if len(resultados) > 2000:
                     break
         except (ValueError, OSError) as erro:
-            raise ErroFerramenta(f"Padrão inválido: {erro}")
+            raise ErroFerramenta(t("Padrão inválido: {erro}", erro=erro))
     resultados = sorted(set(resultados), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
     linhas = [ctx.relativo(p) for p in resultados[:500]]
     if len(resultados) > 500:
-        linhas.append(f"[... mais {len(resultados) - 500} arquivos ...]")
-    return "\n".join(linhas) if linhas else "Nenhum arquivo encontrado."
+        linhas.append(t("[... mais {n} arquivos ...]", n=len(resultados) - 500))
+    return "\n".join(linhas) if linhas else t("Nenhum arquivo encontrado.")
 
 
 def _f_escrever_arquivo(e, ctx: Contexto):
     p = ctx.resolver(e["caminho"])
     if p.is_dir():
-        raise ErroFerramenta("O caminho é uma pasta.")
+        raise ErroFerramenta(t("O caminho é uma pasta."))
     antes = ""
     existia = p.exists()
     if existia:
         if str(p) not in ctx.lidos and str(p) not in ctx.criados and p.stat().st_size > 0:
-            raise ErroFerramenta("Esse arquivo já existe e você ainda não o leu nesta tarefa. Leia antes de substituir.")
+            raise ErroFerramenta(t("Esse arquivo já existe e você ainda não o leu nesta tarefa. Leia antes de substituir."))
         try:
             antes, _ = _ler_texto(p)
         except ErroFerramenta:
@@ -562,29 +561,28 @@ def _f_escrever_arquivo(e, ctx: Contexto):
     ctx.emitir({"tipo": "arquivo_mudou", "caminho": rel, "acao": "criou" if novo else "substituiu",
                 "diff": _diff(antes, conteudo, rel)})
     linhas = conteudo.count("\n") + (1 if conteudo and not conteudo.endswith("\n") else 0)
-    return f"{'Criado' if novo else 'Substituído'}: {p} ({linhas} linhas)."
+    return (t("Criado: {caminho} ({n} linhas).", caminho=p, n=linhas) if novo
+            else t("Substituído: {caminho} ({n} linhas).", caminho=p, n=linhas))
 
 
 def _f_editar_arquivo(e, ctx: Contexto):
     p = ctx.resolver(e["caminho"])
     if not p.is_file():
-        raise ErroFerramenta(f"Arquivo não encontrado: {p}")
+        raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=p))
     if str(p) not in ctx.lidos and str(p) not in ctx.criados:
-        raise ErroFerramenta("Leia o arquivo com ler_arquivo antes de editar.")
+        raise ErroFerramenta(t("Leia o arquivo com ler_arquivo antes de editar."))
     texto, cod = _ler_texto(p)
     crlf = "\r\n" in texto
     base = texto.replace("\r\n", "\n") if crlf else texto
     atual = e["trecho_atual"].replace("\r\n", "\n") if crlf else e["trecho_atual"]
     novo = e["trecho_novo"].replace("\r\n", "\n") if crlf else e["trecho_novo"]
     if atual == novo:
-        raise ErroFerramenta("trecho_atual e trecho_novo são iguais.")
+        raise ErroFerramenta(t("trecho_atual e trecho_novo são iguais."))
     n = base.count(atual) if atual else 0
     if n == 0:
-        raise ErroFerramenta("O trecho_atual não foi encontrado no arquivo. Confira espaços, acentos e quebras de "
-                             "linha (leia o arquivo de novo se ele pode ter mudado).")
+        raise ErroFerramenta(t("O trecho_atual não foi encontrado no arquivo. Confira espaços, acentos e quebras de linha (leia o arquivo de novo se ele pode ter mudado)."))
     if n > 1 and not e.get("trocar_todos"):
-        raise ErroFerramenta(f"O trecho_atual aparece {n} vezes. Inclua mais linhas em volta para ele ficar único, "
-                             "ou use trocar_todos.")
+        raise ErroFerramenta(t("O trecho_atual aparece {n} vezes. Inclua mais linhas em volta para ele ficar único, ou use trocar_todos.", n=n))
     depois = base.replace(atual, novo) if e.get("trocar_todos") else base.replace(atual, novo, 1)
     _checkpoint(ctx, p)
     final = depois.replace("\n", "\r\n") if crlf else depois
@@ -592,7 +590,7 @@ def _f_editar_arquivo(e, ctx: Contexto):
         f.write(final)
     rel = ctx.relativo(p)
     ctx.emitir({"tipo": "arquivo_mudou", "caminho": rel, "acao": "editou", "diff": _diff(base, depois, rel)})
-    return f"Editado: {p} ({n if e.get('trocar_todos') else 1} troca(s))."
+    return t("Editado: {caminho} ({n} troca(s)).", caminho=p, n=n if e.get("trocar_todos") else 1)
 
 
 def _shell() -> list[str]:
@@ -636,7 +634,7 @@ def _f_rodar_comando(e, ctx: Contexto):
         proc = subprocess.Popen(args, cwd=str(ctx.raiz), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, env=env, creationflags=flags)
     except OSError as erro:
-        raise ErroFerramenta(f"Não deu para iniciar o terminal: {erro}")
+        raise ErroFerramenta(t("Não deu para iniciar o terminal: {erro}", erro=erro))
     ctx.processo = proc
     partes: list[bytes] = []
 
@@ -650,11 +648,11 @@ def _f_rodar_comando(e, ctx: Contexto):
     motivo = ""
     while proc.poll() is None:
         if ctx.parar.is_set():
-            motivo = "parado pelo usuário"
+            motivo = t("parado pelo usuário")
             _matar(proc)
             break
         if time.time() - inicio > limite:
-            motivo = f"passou do tempo limite de {limite} s"
+            motivo = t("passou do tempo limite de {n} s", n=limite)
             _matar(proc)
             break
         time.sleep(0.1)
@@ -667,13 +665,13 @@ def _f_rodar_comando(e, ctx: Contexto):
         proc.stdout.close()
     elif not motivo:
         # um processo que o comando deixou em segundo plano segura a saída: devolve o que veio até aqui
-        motivo = "o comando deixou um processo rodando em segundo plano"
+        motivo = t("o comando deixou um processo rodando em segundo plano")
     ctx.processo = None
     saida = b"".join(partes).decode("utf-8", errors="replace").replace("\r\n", "\n")
-    cab = f"Código de saída: {proc.returncode}"
+    cab = t("Código de saída: {codigo}", codigo=proc.returncode)
     if motivo:
-        cab += f" (interrompido: {motivo})"
-    corpo = _limitar(saida.strip()) if saida.strip() else "(sem saída)"
+        cab += t(" (interrompido: {motivo})", motivo=motivo)
+    corpo = _limitar(saida.strip()) if saida.strip() else t("(sem saída)")
     return f"{cab}\n{corpo}"
 
 
@@ -707,7 +705,7 @@ def _f_excel_no_app(e, ctx: Contexto):
     saida = ctx.resolver(e["saida"]) if e.get("saida") else None
     if saida is not None:
         if ctx.protegido(saida):
-            raise ErroFerramenta("O arquivo de saída está na lista de protegidos.")
+            raise ErroFerramenta(t("O arquivo de saída está na lista de protegidos."))
         _checkpoint(ctx, saida)
     if e.get("acao") == "recalcular":
         _checkpoint(ctx, p)
@@ -728,35 +726,34 @@ def _f_excel_abrir(e, ctx: Contexto):
 
 def _f_atualizar_tarefas(e, ctx: Contexto):
     tarefas = []
-    for t in e.get("tarefas") or []:
-        if isinstance(t, dict) and t.get("texto"):
-            estado = t.get("estado") if t.get("estado") in ("pendente", "fazendo", "feito") else "pendente"
-            tarefas.append({"texto": str(t["texto"])[:200], "estado": estado})
+    for tf in e.get("tarefas") or []:
+        if isinstance(tf, dict) and tf.get("texto"):
+            estado = tf.get("estado") if tf.get("estado") in ("pendente", "fazendo", "feito") else "pendente"
+            tarefas.append({"texto": str(tf["texto"])[:200], "estado": estado})
     ctx.tarefas = tarefas
     ctx.emitir({"tipo": "tarefas", "tarefas": tarefas})
-    return "Lista de tarefas atualizada."
+    return t("Lista de tarefas atualizada.")
 
 
 def _f_usar_skill(e, ctx: Contexto):
     s = contexto_pasta.conteudo_skill(ctx.skills, str(e.get("nome", "")).strip().lstrip("/"))
     if not s:
-        nomes = ", ".join(x["nome"] for x in ctx.skills) or "nenhuma"
-        raise ErroFerramenta(f"Skill não encontrada. Disponíveis: {nomes}")
-    return (f"Skill \"{s['nome']}\" (arquivos da skill em {s['pasta']}; caminhos relativos citados nela partem de lá "
-            f"ou da raiz da pasta onde ela mora).\n\n{s['texto']}")
+        nomes = ", ".join(x["nome"] for x in ctx.skills) or t("nenhuma")
+        raise ErroFerramenta(t("Skill não encontrada. Disponíveis: {nomes}", nomes=nomes))
+    return t("Skill \"{nome}\" (arquivos da skill em {pasta}; caminhos relativos citados nela partem de lá ou da raiz da pasta onde ela mora).\n\n{conteudo}", nome=s["nome"], pasta=s["pasta"], conteudo=s["texto"])
 
 
 def validar(nome: str, entrada) -> str | None:
     """Confere a entrada contra o esquema da ferramenta. Devolve o erro, ou None se estiver certa."""
     f = FERRAMENTAS.get(nome)
     if not f:
-        return "ferramenta desconhecida"
+        return t("ferramenta desconhecida")
     if not isinstance(entrada, dict):
-        return "a entrada não é um objeto"
+        return t("a entrada não é um objeto")
     esquema = f["def"]["input_schema"]
     for campo in esquema.get("required", []):
         if campo not in entrada:
-            return f"faltou o campo obrigatório '{campo}'"
+            return t("faltou o campo obrigatório '{campo}'", campo=campo)
     tipos = {"string": str, "integer": int, "boolean": bool, "array": list, "object": dict}
     for campo, valor in entrada.items():
         spec = esquema["properties"].get(campo)
@@ -764,10 +761,10 @@ def validar(nome: str, entrada) -> str | None:
             continue
         esperado = tipos.get(spec.get("type"))
         if esperado is int and isinstance(valor, bool):
-            return f"o campo '{campo}' devia ser número"
+            return t("o campo '{campo}' devia ser número", campo=campo)
         if esperado and not isinstance(valor, esperado):
             if esperado is int and isinstance(valor, str) and valor.isdigit():
                 entrada[campo] = int(valor)
                 continue
-            return f"o campo '{campo}' veio com o tipo errado"
+            return t("o campo '{campo}' veio com o tipo errado", campo=campo)
     return None

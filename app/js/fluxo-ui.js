@@ -6,20 +6,21 @@ import { ic } from './icones.js';
 import { el, aviso, usd, menu } from './ui.js';
 import { renderizar } from './markdown.js';
 import { blocoFerramenta, descreverFerramenta, htmlDiff, nota } from './blocos.js';
+import { t } from './i18n.js';
 
-const NOMES_PODE = { ler: 'ler', editar: 'mudar arquivos', comandos: 'comandos', web: 'web' };
-const STATUS_ETAPA = {
-  esperando: ['circulo', 'Esperando'], rodando: ['progresso', 'Rodando'], concluida: ['feito', 'Pronta'],
-  erro: ['alerta', 'Deu erro'], parada: ['parar', 'Parada'], pulada: ['circulo', 'Pulada'],
-};
-const STATUS_FLUXO = {
-  proposto: 'esperando o seu OK', rodando: 'rodando', concluido: 'concluído', erro: 'parou com erro',
-  parado: 'parado por você', teto: 'parou no teto de gasto', recusado: 'recusado',
-};
+const NOMES_PODE = () => ({ ler: t('ler'), editar: t('mudar arquivos'), comandos: t('comandos'), web: t('web') });
+const STATUS_ETAPA = () => ({
+  esperando: ['circulo', t('Esperando')], rodando: ['progresso', t('Rodando')], concluida: ['feito', t('Pronta')],
+  erro: ['alerta', t('Deu erro')], parada: ['parar', t('Parada')], pulada: ['circulo', t('Pulada')],
+});
+const STATUS_FLUXO = () => ({
+  proposto: t('esperando o seu OK'), rodando: t('rodando'), concluido: t('concluído'), erro: t('parou com erro'),
+  parado: t('parado por você'), teto: t('parou no teto de gasto'), recusado: t('recusado'),
+});
 
 function faixa(e) {
   if (!e) return '';
-  return e.min === e.max ? usd(e.max, 3) : `${usd(e.min, 3)} a ${usd(e.max, 3)}`;
+  return e.min === e.max ? usd(e.max, 3) : t('{min} a {max}', { min: usd(e.min, 3), max: usd(e.max, 3) });
 }
 
 // ---------- notificação do Windows ----------
@@ -42,17 +43,17 @@ export function notificar(titulo, corpo) {
 // ---------- aprovação de uma ação ----------
 export function cartaoAprovacao(ev, { execucaoId, temPasta = true, etapa = '' } = {}) {
   const [, verbo, alvo] = descreverFerramenta(ev.nome, ev.entrada || {});
-  const comentario = el('input', { class: 'entrada', placeholder: 'Se recusar, diga o que prefere (opcional)' });
-  const regra = el('input', { class: 'entrada mono', 'aria-label': 'Regra de permissão', spellcheck: 'false' });
+  const comentario = el('input', { class: 'entrada', placeholder: t('Se recusar, diga o que prefere (opcional)') });
+  const regra = el('input', { class: 'entrada mono', 'aria-label': t('Regra de permissão'), spellcheck: 'false' });
   regra.value = ev.sugestao || '';
   const explicacao = el('small', { class: 'ajuda' });
   let escopo = null;
   const caixaRegra = el('div', { class: 'aprovacao-regra', hidden: true },
-    el('label', {}, el('span', { texto: 'Regra que vai ser salva (dá para editar):' }), regra),
+    el('label', {}, el('span', { texto: t('Regra que vai ser salva (dá para editar):') }), regra),
     explicacao,
     el('div', { class: 'aprovacao-botoes-mini' },
-      el('button', { class: 'botao pequeno primario', type: 'button', texto: 'Salvar a regra e permitir', onclick: () => decidir(escopo, { regra: regra.value.trim() }) }),
-      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Cancelar', onclick: () => { caixaRegra.hidden = true; } })));
+      el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Salvar a regra e permitir'), onclick: () => decidir(escopo, { regra: regra.value.trim() }) }),
+      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Cancelar'), onclick: () => { caixaRegra.hidden = true; } })));
 
   async function decidir(decisao, dados) {
     try {
@@ -64,8 +65,8 @@ export function cartaoAprovacao(ev, { execucaoId, temPasta = true, etapa = '' } 
   function pedirRegra(qual) {
     escopo = qual;
     explicacao.textContent = qual === 'permitir_pasta'
-      ? 'Fica no arquivo .claude/settings.local.json desta pasta (o mesmo do Claude Code): vale para as próximas conversas nesta pasta.'
-      : 'Fica nas regras do Clave e vale em todas as pastas. Dá para ver e apagar em Permissões.';
+      ? t('Fica no arquivo .claude/settings.local.json desta pasta (o mesmo do Claude Code): vale para as próximas conversas nesta pasta.')
+      : t('Fica nas regras do Clave e vale em todas as pastas. Dá para ver e apagar em Permissões.');
     caixaRegra.hidden = false;
     regra.focus();
   }
@@ -73,36 +74,36 @@ export function cartaoAprovacao(ev, { execucaoId, temPasta = true, etapa = '' } 
   const podeTarefa = ev.pode_tarefa ?? ['mudar arquivo', 'rodar comando'].includes(ev.motivo);
   const podeSempre = ev.pode_sempre && ev.sugestao;
   const opcoes = [];
-  if (podeTarefa) opcoes.push({ texto: ev.nome === 'rodar_comando' ? 'Permitir comandos nesta tarefa' : 'Permitir nesta tarefa', sub: 'Até esta resposta terminar, sem perguntar de novo.', acao: () => decidir('permitir_tarefa', { regra: ev.sugestao || '' }) });
-  if (podeSempre && temPasta) opcoes.push({ texto: 'Sempre nesta pasta…', sub: 'Salva uma regra para esta pasta.', acao: () => pedirRegra('permitir_pasta') });
-  if (podeSempre) opcoes.push({ texto: 'Sempre, em todo o Clave…', sub: 'Salva uma regra que vale em todas as pastas.', acao: () => pedirRegra('permitir_app') });
+  if (podeTarefa) opcoes.push({ texto: ev.nome === 'rodar_comando' ? t('Permitir comandos nesta tarefa') : t('Permitir nesta tarefa'), sub: t('Até esta resposta terminar, sem perguntar de novo.'), acao: () => decidir('permitir_tarefa', { regra: ev.sugestao || '' }) });
+  if (podeSempre && temPasta) opcoes.push({ texto: t('Sempre nesta pasta…'), sub: t('Salva uma regra para esta pasta.'), acao: () => pedirRegra('permitir_pasta') });
+  if (podeSempre) opcoes.push({ texto: t('Sempre, em todo o Clave…'), sub: t('Salva uma regra que vale em todas as pastas.'), acao: () => pedirRegra('permitir_app') });
 
   let previa = null;
   if (ev.previa) previa = el('pre', { class: 'diff', html: htmlDiff(ev.previa) });
   else if (ev.nome === 'rodar_comando') previa = el('pre', { texto: ev.entrada?.comando || '' });
   else if (ev.entrada) previa = el('pre', { texto: JSON.stringify(ev.entrada, null, 2) });
 
-  const maisBotao = opcoes.length ? el('button', { class: 'botao pequeno', type: 'button', html: `Mais opções${ic('baixo', 'class="seta"')}`,
+  const maisBotao = opcoes.length ? el('button', { class: 'botao pequeno', type: 'button', html: `${t('Mais opções')}${ic('baixo', 'class="seta"')}`,
     onclick: (e) => menu(e.currentTarget, opcoes, { acima: true }) }) : null;
-  const card = el('div', { class: 'aprovacao', dados: { id: ev.id }, role: 'group', 'aria-label': 'Pedido de permissão' },
+  const card = el('div', { class: 'aprovacao', dados: { id: ev.id }, role: 'group', 'aria-label': t('Pedido de permissão') },
     el('div', { class: 'aprovacao-topo' }, el('span', { html: ic('escudo') }),
       el('div', {},
-        etapa ? el('span', { class: 'etiqueta-etapa', texto: `Etapa: ${etapa}` }) : null,
-        el('b', { texto: `Permitir: ${verbo}${alvo ? ' ' + String(alvo).slice(0, 120) : ''}?` }),
-        el('small', { texto: `Motivo da pergunta: ${ev.motivo || 'ação que muda algo'}.` }))),
+        etapa ? el('span', { class: 'etiqueta-etapa', texto: t('Etapa: {etapa}', { etapa }) }) : null,
+        el('b', { texto: t('Permitir: {acao}?', { acao: `${verbo}${alvo ? ' ' + String(alvo).slice(0, 120) : ''}` }) }),
+        el('small', { texto: t('Motivo da pergunta: {motivo}.', { motivo: ev.motivo || t('ação que muda algo') }) }))),
     previa,
     caixaRegra,
     el('div', { class: 'aprovacao-botoes' },
-      el('button', { class: 'botao pequeno primario', type: 'button', texto: 'Permitir', onclick: () => decidir('permitir') }),
+      el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Permitir'), onclick: () => decidir('permitir') }),
       maisBotao, comentario,
-      el('button', { class: 'botao pequeno perigo', type: 'button', texto: 'Recusar', onclick: () => decidir('recusar') })));
-  notificar('O Clave precisa do seu OK', `${verbo} ${alvo || ''}`);
+      el('button', { class: 'botao pequeno perigo', type: 'button', texto: t('Recusar'), onclick: () => decidir('recusar') })));
+  notificar(t('O Clave precisa do seu OK'), `${verbo} ${alvo || ''}`);
   return card;
 }
 
 // ---------- proposta de fluxo ----------
 function seletorModelo(atual, aoMudar) {
-  const s = el('select', { class: 'entrada mini', 'aria-label': 'Modelo da etapa' });
+  const s = el('select', { class: 'entrada mini', 'aria-label': t('Modelo da etapa') });
   const lista = [...(estado.info?.modelos || [])];
   if (!lista.some((m) => m.id === atual)) lista.unshift({ id: atual, nome: modeloInfo(atual).nome || atual });
   for (const m of lista) s.append(el('option', { value: m.id, texto: m.nome, selected: m.id === atual }));
@@ -111,7 +112,7 @@ function seletorModelo(atual, aoMudar) {
 }
 
 function seletorEsforco(atual, aoMudar) {
-  const s = el('select', { class: 'entrada mini', 'aria-label': 'Raciocínio da etapa' });
+  const s = el('select', { class: 'entrada mini', 'aria-label': t('Raciocínio da etapa') });
   for (const e of estado.info?.esforcos || []) s.append(el('option', { value: e.id, texto: e.nome, selected: e.id === atual }));
   s.addEventListener('change', () => aoMudar(s.value));
   return s;
@@ -121,9 +122,9 @@ export function cartaoPropostaFluxo(ev, { execucaoId }) {
   const p = ev.proposta;
   const escolhas = new Map(p.etapas.map((e) => [e.i, { modelo: e.modelo, esforco: e.esforco, tirar: false }]));
   const totalEl = el('b', { texto: faixa(p.estimativa) });
-  const teto = el('input', { class: 'entrada mini', type: 'number', min: '0.1', step: '0.5', 'aria-label': 'Teto de gasto do fluxo em dólares' });
+  const teto = el('input', { class: 'entrada mini', type: 'number', min: '0.1', step: '0.5', 'aria-label': t('Teto de gasto do fluxo em dólares') });
   teto.value = String(p.teto_usd);
-  const comentario = el('input', { class: 'entrada', placeholder: 'Se recusar, diga o que prefere (opcional)' });
+  const comentario = el('input', { class: 'entrada', placeholder: t('Se recusar, diga o que prefere (opcional)') });
   const estimativas = new Map();
   let agendado = null;
 
@@ -154,14 +155,14 @@ export function cartaoPropostaFluxo(ev, { execucaoId }) {
         el('small', { texto: e.tarefa }),
         el('div', { class: 'etiquetas' },
           e.agente ? el('span', { class: 'etiqueta', html: `${ic('agente')}${e.agente}` }) : null,
-          el('span', { class: 'etiqueta', texto: e.pode.length ? 'pode: ' + e.pode.map((x) => NOMES_PODE[x] || x).join(', ') : 'só pensa e escreve' }),
-          e.grupo === grupoAnterior ? el('span', { class: 'etiqueta acao', texto: 'ao mesmo tempo que a anterior' }) : null,
+          el('span', { class: 'etiqueta', texto: e.pode.length ? t('pode: {lista}', { lista: e.pode.map((x) => NOMES_PODE()[x] || x).join(', ') }) : t('só pensa e escreve') }),
+          e.grupo === grupoAnterior ? el('span', { class: 'etiqueta acao', texto: t('ao mesmo tempo que a anterior') }) : null,
           e.aviso ? el('span', { class: 'etiqueta perigo', texto: e.aviso }) : null)),
       el('div', { class: 'controles' },
         seletorModelo(e.modelo, (v) => { escolhas.get(e.i).modelo = v; reestimar(); }),
         seletorEsforco(e.esforco, (v) => { escolhas.get(e.i).esforco = v; reestimar(); }),
         est,
-        p.etapas.length > 1 ? el('button', { class: 'icone-botao', type: 'button', title: 'Tirar esta etapa', 'aria-label': `Tirar a etapa ${e.nome}`, html: ic('x'),
+        p.etapas.length > 1 ? el('button', { class: 'icone-botao', type: 'button', title: t('Tirar esta etapa'), 'aria-label': t('Tirar a etapa {nome}', { nome: e.nome }), html: ic('x'),
           onclick: (ev2) => {
             const c = escolhas.get(e.i); c.tirar = !c.tirar;
             linha.classList.toggle('tirada', c.tirar);
@@ -183,19 +184,19 @@ export function cartaoPropostaFluxo(ev, { execucaoId }) {
     } catch (e) { aviso(e.message, 'erro'); }
   }
 
-  const card = el('div', { class: 'fluxo proposta', dados: { id: ev.id }, role: 'group', 'aria-label': 'Proposta de fluxo' },
+  const card = el('div', { class: 'fluxo proposta', dados: { id: ev.id }, role: 'group', 'aria-label': t('Proposta de fluxo') },
     el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('fluxo') }),
-      el('div', {}, el('small', { class: 'sobre', texto: 'O Claude propõe um fluxo' }), el('b', { texto: p.titulo }))),
+      el('div', {}, el('small', { class: 'sobre', texto: t('O Claude propõe um fluxo') }), el('b', { texto: p.titulo }))),
     p.objetivo ? el('p', { class: 'fluxo-objetivo', texto: p.objetivo }) : null,
     el('div', { class: 'fluxo-etapas' }, ...linhas),
     el('div', { class: 'fluxo-rodape' },
-      el('span', {}, 'Estimativa: ', totalEl, el('small', { class: 'ajuda', texto: ' (aproximada: depende de quanto cada etapa precisa ler e fazer)' })),
-      el('label', { class: 'teto-fluxo' }, el('span', { texto: 'Parar se passar de US$' }), teto)),
+      el('span', {}, t('Estimativa:'), ' ', totalEl, el('small', { class: 'ajuda', texto: ' ' + t('(aproximada: depende de quanto cada etapa precisa ler e fazer)') })),
+      el('label', { class: 'teto-fluxo' }, el('span', { texto: t('Parar se passar de US$') }), teto)),
     el('div', { class: 'aprovacao-botoes' },
-      el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('fluxo')}Rodar o fluxo`, onclick: () => decidir('permitir') }),
+      el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('fluxo')}${t('Rodar o fluxo')}`, onclick: () => decidir('permitir') }),
       comentario,
-      el('button', { class: 'botao pequeno perigo', type: 'button', texto: 'Recusar', onclick: () => decidir('recusar') })));
-  notificar('O Clave propôs um fluxo', `${p.titulo}: ${faixa(p.estimativa)}`);
+      el('button', { class: 'botao pequeno perigo', type: 'button', texto: t('Recusar'), onclick: () => decidir('recusar') })));
+  notificar(t('O Clave propôs um fluxo'), `${p.titulo}: ${faixa(p.estimativa)}`);
   return card;
 }
 
@@ -263,7 +264,7 @@ export class FluxoVivo {
     this.p = proposta;
     this.etapas = new Map();
     this.custoEl = el('span', { class: 'meta', texto: usd(0, 4) });
-    this.statusEl = el('span', { class: 'meta', texto: STATUS_FLUXO.rodando });
+    this.statusEl = el('span', { class: 'meta', texto: STATUS_FLUXO().rodando });
     this.custos = new Map();
     const linhas = [];
     let grupoAnterior = null;
@@ -283,17 +284,18 @@ export class FluxoVivo {
     }
     this.el = el('div', { class: 'fluxo', dados: { fluxo: proposta.id } },
       el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('fluxo') }),
-        el('div', {}, el('small', { class: 'sobre', texto: 'Fluxo' }), el('b', { texto: proposta.titulo })),
+        el('div', {}, el('small', { class: 'sobre', texto: t('Fluxo') }), el('b', { texto: proposta.titulo })),
         el('span', { class: 'espaco' }), this.statusEl, this.custoEl,
-        aoParar ? el('button', { class: 'botao pequeno fantasma', type: 'button', html: `${ic('parar')}Parar`, onclick: aoParar }) : null),
+        aoParar ? el('button', { class: 'botao pequeno fantasma', type: 'button', html: `${ic('parar')}${t('Parar')}`, onclick: aoParar }) : null),
       el('div', { class: 'fluxo-etapas' }, ...linhas),
-      el('small', { class: 'ajuda', texto: `Teto do fluxo: ${usd(proposta.teto_usd, 2)}. Clique numa etapa para ver o que ela está fazendo.` }));
+      el('small', { class: 'ajuda', texto: t('Teto do fluxo: {valor}. Clique numa etapa para ver o que ela está fazendo.', { valor: usd(proposta.teto_usd, 2) }) }));
   }
 
   marcar(i, status, custo) {
     const x = this.etapas.get(i);
     if (!x) return;
-    const [icone, nome] = STATUS_ETAPA[status] || STATUS_ETAPA.esperando;
+    const st = STATUS_ETAPA();
+    const [icone, nome] = st[status] || st.esperando;
     x.det.dataset.status = status;
     x.icone.innerHTML = ic(icone);
     x.icone.title = nome;
@@ -324,10 +326,10 @@ export class FluxoVivo {
     } else if (ev.tipo === 'etapa_fim') {
       this.marcar(ev.etapa, ev.status, ev.custo_usd);
     } else if (ev.tipo === 'fluxo_fim') {
-      this.statusEl.textContent = STATUS_FLUXO[ev.status] || ev.status;
+      this.statusEl.textContent = STATUS_FLUXO()[ev.status] || ev.status;
       this.custoEl.textContent = usd(ev.custo_usd, 4);
       this.el.dataset.status = ev.status;
-      notificar('Fluxo terminou', `${this.p.titulo}: ${STATUS_FLUXO[ev.status] || ev.status}`);
+      notificar(t('Fluxo terminou'), `${this.p.titulo}: ${STATUS_FLUXO()[ev.status] || ev.status}`);
     }
   }
 
@@ -346,13 +348,14 @@ export class FluxoVivo {
 
 // ---------- fluxo no histórico ----------
 export function cartaoFluxoSalvo(fid) {
-  const caixa = el('div', { class: 'fluxo salvo', dados: { fluxo: fid } }, el('small', { class: 'ajuda', texto: 'Carregando o fluxo…' }));
+  const caixa = el('div', { class: 'fluxo salvo', dados: { fluxo: fid } }, el('small', { class: 'ajuda', texto: t('Carregando o fluxo…') }));
   api(`/fluxos/${encodeURIComponent(fid)}`).then(({ fluxo: f }) => {
+    const st = STATUS_ETAPA();
     const linhas = f.etapas.map((e) => {
-      const [icone, nome] = STATUS_ETAPA[e.status] || STATUS_ETAPA.esperando;
+      const [icone, nome] = st[e.status] || st.esperando;
       const corpo = el('div', { class: 'etapa-area' });
       if (e.resultado) renderizar(corpo, e.resultado, { final: true });
-      else corpo.append(el('p', { class: 'ajuda', texto: e.erro || 'Sem relatório.' }));
+      else corpo.append(el('p', { class: 'ajuda', texto: e.erro || t('Sem relatório.') }));
       return el('details', { class: 'fluxo-etapa viva', dados: { status: e.status } },
         el('summary', {}, el('span', { class: 'status', title: nome, html: ic(icone) }),
           el('span', { class: 'textos' }, el('b', { texto: `${e.i + 1}. ${e.nome}` }),
@@ -363,8 +366,8 @@ export function cartaoFluxoSalvo(fid) {
     caixa.dataset.status = f.status;
     caixa.replaceChildren(
       el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('fluxo') }),
-        el('div', {}, el('small', { class: 'sobre', texto: 'Fluxo' }), el('b', { texto: f.titulo })),
-        el('span', { class: 'espaco' }), el('span', { class: 'meta', texto: STATUS_FLUXO[f.status] || f.status }),
+        el('div', {}, el('small', { class: 'sobre', texto: t('Fluxo') }), el('b', { texto: f.titulo })),
+        el('span', { class: 'espaco' }), el('span', { class: 'meta', texto: STATUS_FLUXO()[f.status] || f.status }),
         el('span', { class: 'meta', texto: usd(f.custo_usd || 0, 4) })),
       f.status === 'recusado' ? null : el('div', { class: 'fluxo-etapas' }, ...linhas));
   }).catch(() => caixa.remove());
@@ -375,34 +378,34 @@ export function cartaoFluxoSalvo(fid) {
 export function cartaoPlano(ev, { execucaoId }) {
   const corpo = el('div', { class: 'resposta plano-corpo' });
   renderizar(corpo, ev.plano || ev.entrada?.plano || '', { final: true });
-  const comentario = el('input', { class: 'entrada', placeholder: 'O que mudar no plano? (opcional)' });
+  const comentario = el('input', { class: 'entrada', placeholder: t('O que mudar no plano? (opcional)') });
   async function decidir(decisao) {
     try {
       await api(`/execucoes/${execucaoId}/aprovar`, { metodo: 'POST', corpo: { id: ev.id, decisao, texto: comentario.value } });
       card.remove();
     } catch (e) { aviso(e.message, 'erro'); }
   }
-  const card = el('div', { class: 'fluxo plano', dados: { id: ev.id }, role: 'group', 'aria-label': 'Plano para aprovar' },
+  const card = el('div', { class: 'fluxo plano', dados: { id: ev.id }, role: 'group', 'aria-label': t('Plano para aprovar') },
     el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('lista') }),
-      el('div', {}, el('small', { class: 'sobre', texto: 'Modo Plano' }), el('b', { texto: 'O plano está pronto. Executar?' }))),
+      el('div', {}, el('small', { class: 'sobre', texto: t('Modo Plano') }), el('b', { texto: t('O plano está pronto. Executar?') }))),
     corpo,
     el('div', { class: 'aprovacao-botoes' },
-      el('button', { class: 'botao pequeno primario', type: 'button', texto: 'Executar, pedindo OK a cada mudança', onclick: () => decidir('executar_perguntar') }),
-      el('button', { class: 'botao pequeno', type: 'button', texto: 'Executar e aceitar as edições', onclick: () => decidir('executar_aceitar') }),
-      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Modo Livre', title: 'Faz tudo sozinho, menos apagar ou publicar', onclick: () => decidir('executar_livre') })),
+      el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Executar, pedindo OK a cada mudança'), onclick: () => decidir('executar_perguntar') }),
+      el('button', { class: 'botao pequeno', type: 'button', texto: t('Executar e aceitar as edições'), onclick: () => decidir('executar_aceitar') }),
+      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Modo Livre'), title: t('Faz tudo sozinho, menos apagar ou publicar'), onclick: () => decidir('executar_livre') })),
     el('div', { class: 'aprovacao-botoes' }, comentario,
-      el('button', { class: 'botao pequeno', type: 'button', texto: 'Continuar planejando', onclick: () => decidir('recusar') })));
-  notificar('O plano está pronto', 'O Claude terminou o plano e espera a sua decisão.');
+      el('button', { class: 'botao pequeno', type: 'button', texto: t('Continuar planejando'), onclick: () => decidir('recusar') })));
+  notificar(t('O plano está pronto'), t('O Claude terminou o plano e espera a sua decisão.'));
   return card;
 }
 
 export function cartaoPlanoSalvo(entrada, resultado) {
   const corpo = el('div', { class: 'resposta plano-corpo' });
   renderizar(corpo, entrada?.plano || '', { final: true });
-  const aprovado = /^Plano aprovado/.test(resultado || '');
+  const aprovado = /^(Plano aprovado|Plan approved)/.test(resultado || '');
   return el('details', { class: 'fluxo plano salvo', open: false },
     el('summary', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('lista') }),
-      el('div', {}, el('small', { class: 'sobre', texto: 'Modo Plano' }), el('b', { texto: aprovado ? 'Plano aprovado' : 'Plano apresentado' }))),
+      el('div', {}, el('small', { class: 'sobre', texto: t('Modo Plano') }), el('b', { texto: aprovado ? t('Plano aprovado') : t('Plano apresentado') }))),
     corpo);
 }
 
@@ -414,23 +417,23 @@ export function cartaoSugestao(s, { conversaId } = {}) {
   const acoes = el('div', { class: 'aprovacao-botoes' });
   const pedido = el('div', { class: 'resposta sugestao-pedido' });
   renderizar(pedido, s.pedido || '', { final: true });
-  const card = el('div', { class: 'fluxo sugestao-conversa', dados: { id: s.id }, role: 'group', 'aria-label': 'Sugestão de outra conversa' },
+  const card = el('div', { class: 'fluxo sugestao-conversa', dados: { id: s.id }, role: 'group', 'aria-label': t('Sugestão de outra conversa') },
     el('div', { class: 'fluxo-cab' }, el('span', { class: 'ic', html: ic('mais_tarefa') }),
-      el('div', {}, el('small', { class: 'sobre', texto: 'Sugestão de outra conversa' }), el('b', { texto: s.titulo || 'Nova tarefa' }))),
+      el('div', {}, el('small', { class: 'sobre', texto: t('Sugestão de outra conversa') }), el('b', { texto: s.titulo || t('Nova tarefa') }))),
     s.por_que ? el('p', { class: 'sugestao-motivo', texto: s.por_que }) : null,
-    el('details', { class: 'sugestao-detalhes' }, el('summary', { texto: 'Ver o pedido' }), pedido),
+    el('details', { class: 'sugestao-detalhes' }, el('summary', { texto: t('Ver o pedido') }), pedido),
     acoes);
-  const linkAberta = (c) => el('a', { class: 'botao pequeno', href: `#/c/${c.id}`, html: `${ic('chat')}Ir para "${(c.titulo || 'a conversa').replace(/[<>&"]/g, '')}"` });
+  const linkAberta = (c) => el('a', { class: 'botao pequeno', href: `#/c/${c.id}`, html: `${ic('chat')}${t('Ir para "{titulo}"', { titulo: (c.titulo || t('a conversa')).replace(/[<>&"]/g, '') })}` });
   const desenhar = (estadoAtual, conversa) => {
     if (estadoAtual === 'aberta' && conversa) {
-      acoes.replaceChildren(el('span', { class: 'meta', texto: 'Aberta em outra conversa, rodando por lá.' }), linkAberta(conversa));
+      acoes.replaceChildren(el('span', { class: 'meta', texto: t('Aberta em outra conversa, rodando por lá.') }), linkAberta(conversa));
     } else if (estadoAtual === 'dispensada') {
-      acoes.replaceChildren(el('span', { class: 'meta', texto: 'Dispensada.' }),
-        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Abrir mesmo assim', onclick: abrir }));
+      acoes.replaceChildren(el('span', { class: 'meta', texto: t('Dispensada.') }),
+        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Abrir mesmo assim'), onclick: abrir }));
     } else {
       acoes.replaceChildren(
-        el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('mais_tarefa')}Abrir em outra conversa`, onclick: abrir }),
-        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Dispensar', onclick: dispensar }));
+        el('button', { class: 'botao pequeno primario', type: 'button', html: `${ic('mais_tarefa')}${t('Abrir em outra conversa')}`, onclick: abrir }),
+        el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Dispensar'), onclick: dispensar }));
     }
   };
   async function abrir() {
@@ -440,7 +443,7 @@ export function cartaoSugestao(s, { conversaId } = {}) {
       desenhar('aberta', r.conversa);
       const { avisar } = await import('./estado.js');
       avisar('conversas-mudaram');
-      aviso(r.ja_aberta ? 'Essa conversa já tinha sido aberta.' : 'Conversa aberta. O Claude já está trabalhando nela.');
+      aviso(r.ja_aberta ? t('Essa conversa já tinha sido aberta.') : t('Conversa aberta. O Claude já está trabalhando nela.'));
     } catch (e) { aviso(e.message, 'erro'); desenhar('nova'); }
   }
   async function dispensar() {

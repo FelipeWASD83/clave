@@ -1,0 +1,29 @@
+{
+  "displayName": "Escritório",
+  "description": "Excel, relatórios em PDF e dados: ler, limpar, comparar e apresentar planilhas sem estragar a original.",
+  "skills": {
+    "comparar-planilhas": {
+      "description": "Use para descobrir o que mudou entre duas planilhas (versão antiga e nova, dois meses, dois sistemas): linhas que entraram, saíram ou mudaram, usando uma coluna como chave."
+    },
+    "excel-avancado": {
+      "description": "Use ao criar, mudar ou analisar planilhas do Excel (.xlsx) com fórmulas, formatação, tabelas, gráficos, filtros ou listas de opção. Garante que a original não se perde e que os números conferem."
+    },
+    "limpar-dados": {
+      "description": "Use para arrumar uma planilha ou CSV bagunçado: espaços sobrando, linhas repetidas, datas e números em formatos misturados, acentos quebrados. Salva o resultado num arquivo novo e conta o que mudou."
+    },
+    "relatorio-em-pdf": {
+      "description": "Use quando a pessoa pedir um relatório, documento ou resumo para imprimir ou mandar em PDF. Monta uma página bonita em HTML e converte em PDF pelo Microsoft Edge, que vem no Windows."
+    }
+  },
+  "commands": {
+    "resumir-planilha": {
+      "description": "Lê uma planilha e faz um resumo do que tem nela",
+      "argument-hint": "[arquivo.xlsx]"
+    }
+  },
+  "agents": {
+    "analista-de-planilhas": {
+      "description": "Analisa e arruma planilhas do Excel, sempre numa cópia, conferindo os totais no fim."
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+ "Isso é um arquivo, não uma pasta. Use github_ler_arquivo.": "This is a file, not a folder. Use github_ler_arquivo.",
+ "[pasta] ": "[folder] ",
+ "Isso é uma pasta. Use github_ver_pasta.": "This is a folder. Use github_ver_pasta.",
+ "{caminho} é um arquivo binário ({n} bytes).": "{caminho} is a binary file ({n} bytes).",
+ "[... arquivo cortado ...]": "[... file cut ...]",
+ "[... diff cortado ...]": "[... diff cut ...]",
+ "Ferramenta desconhecida: {nome}": "Unknown tool: {nome}"
+}

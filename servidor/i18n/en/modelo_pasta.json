@@ -1,0 +1,16 @@
+{
+ "- **Nome:** {valor}": "- **Name:** {valor}",
+ "- **O que eu faço:** {valor}": "- **What I do:** {valor}",
+ "- **Experiência com programação:** {valor}": "- **Programming experience:** {valor}",
+ "- **Linguagens e programas que uso:** {valor}": "- **Languages and programs I use:** {valor}",
+ "- **Meu computador:** {valor}": "- **My computer:** {valor}",
+ "- **Como prefiro as respostas:** {valor}": "- **How I prefer answers:** {valor}",
+ "- (preencha aqui quem você é e como prefere as respostas)": "- (fill in here who you are and how you prefer answers)",
+ "Não sei programar. Explique o que você fez e como usar, não como o código funciona por dentro.": "I don't know how to code. Explain what you did and how to use it, not how the code works inside.",
+ "Sei o básico de computador e um pouco de programação. Explique termos técnicos quando aparecerem.": "I know computer basics and a little programming. Explain technical terms when they come up.",
+ "Sei programar. Pode usar termos técnicos normalmente.": "I know how to code. Technical terms are fine.",
+ "O modelo de pasta não veio junto com esta cópia do Clave.": "The folder template didn't come with this copy of Clave.",
+ "A pasta escolhida para criar o modelo não existe.": "The folder chosen for the template doesn't exist.",
+ "Nome de pasta inválido.": "Invalid folder name.",
+ "Já existe uma pasta com esse nome aí.": "A folder with that name already exists there."
+}

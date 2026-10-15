@@ -1,0 +1,24 @@
+{
+  "displayName": "Automação no Windows",
+  "description": "Scripts de PowerShell que dá para rodar de novo, Agendador de Tarefas e arrumação de arquivos com prévia e desfazer.",
+  "skills": {
+    "agendar-tarefa": {
+      "description": "Use quando a pessoa quiser que um script ou programa rode sozinho num horário (todo dia, toda semana, ao ligar o PC), pelo Agendador de Tarefas do Windows."
+    },
+    "organizar-arquivos": {
+      "description": "Use para arrumar uma pasta bagunçada (Downloads, Documentos, fotos): separa por tipo ou data, mostra a prévia antes de mover, nunca apaga e deixa um jeito de desfazer."
+    },
+    "renomear-em-lote": {
+      "description": "Use para renomear muitos arquivos de uma vez seguindo um padrão (data no nome, numeração, tirar texto repetido, padronizar maiúsculas), com prévia e jeito de desfazer."
+    },
+    "script-powershell-seguro": {
+      "description": "Use ao criar um script de PowerShell que a pessoa vai rodar de novo (organizar, renomear, copiar, gerar relatório). O script mostra antes o que faria, guarda um registro e nunca apaga direto."
+    }
+  },
+  "commands": {
+    "organizar": {
+      "description": "Organiza uma pasta por tipo de arquivo, com prévia antes de mover e jeito de desfazer",
+      "argument-hint": "[pasta]"
+    }
+  }
+}

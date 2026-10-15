@@ -1,4 +1,4 @@
-# AGENTS.md: video do Clave
+# AGENTS.md: Clave video
 
-**A documentação deste subprojeto está em [`CLAUDE.md`](CLAUDE.md). Ler antes de mexer em qualquer coisa
-aqui.**
+**The documentation for this subproject is in [`CLAUDE.md`](CLAUDE.md). Read it before touching anything
+here.**

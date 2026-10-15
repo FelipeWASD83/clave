@@ -1,29 +1,29 @@
 ---
 name: agendar-tarefa
-description: Use quando a pessoa quiser que um script ou programa rode sozinho num horário (todo dia, toda semana, ao ligar o PC), pelo Agendador de Tarefas do Windows.
+description: Use when the person wants a script or program to run on its own at a set time (every day, every week, at startup), through the Windows Task Scheduler.
 ---
 
-# Agendar uma tarefa no Windows
+# Schedule a task in Windows
 
-Primeiro pergunte: é um **script** (ou programa) ou um **pedido para o Claude**? Pedido para o Claude (ex.: "todo dia às 8h resuma meus e-mails da pasta X") cabe melhor numa **Rotina do Clave** (barra da esquerda > Rotinas), que já tem teto de gasto e regras de permissão.
+First ask: is it a **script** (or program) or a **request for Claude**? A request for Claude (e.g. "every day at 8am summarize the emails in folder X") fits better as a **Clave routine** (left sidebar > Routines), which already has a spending cap and permission rules.
 
-## Para um script
-1. Confirme que o script funciona rodando na mão primeiro.
-2. Mostre o comando antes de rodar e explique cada parte. Use uma pasta própria no Agendador, para a pessoa achar depois:
+## For a script
+1. Confirm the script works by running it by hand first.
+2. Show the command before running it and explain each part. Use a folder of your own in the Task Scheduler, so the person can find it later:
 
 ```powershell
-$acao = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"C:\caminho\meu-script.ps1`" -Valendo"
-$quando = New-ScheduledTaskTrigger -Daily -At 18:00
-Register-ScheduledTask -TaskPath "\Minhas automações\" -TaskName "Organizar Downloads" -Action $acao -Trigger $quando -Description "Criada com o Clave"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"C:\path\to\meu-script.ps1`" -Valendo"
+$trigger = New-ScheduledTaskTrigger -Daily -At 18:00
+Register-ScheduledTask -TaskPath "\My automations\" -TaskName "Organize Downloads" -Action $action -Trigger $trigger -Description "Created with Clave"
 ```
 
-   Outros gatilhos: `-Weekly -DaysOfWeek Monday,Friday -At 9:00`, `-AtLogOn`.
-3. Teste na hora: `Start-ScheduledTask -TaskPath "\Minhas automações\" -TaskName "Organizar Downloads"` e confira o resultado (o registro do script).
-4. Ensine a desligar e a apagar:
-   - pelo app **Agendador de Tarefas** (menu Iniciar), pasta "Minhas automações";
-   - ou `Disable-ScheduledTask` / `Unregister-ScheduledTask` com os mesmos nomes (apagar pede o OK da pessoa no Clave).
+   Other triggers: `-Weekly -DaysOfWeek Monday,Friday -At 9:00`, `-AtLogOn`.
+3. Test it right away: `Start-ScheduledTask -TaskPath "\My automations\" -TaskName "Organize Downloads"` and check the result (the script's log).
+4. Teach how to turn it off and delete it:
+   - in the **Task Scheduler** app (Start menu), folder "My automations";
+   - or `Disable-ScheduledTask` / `Unregister-ScheduledTask` with the same names (deleting asks for the person's OK in Clave).
 
-## Cuidados
-- A tarefa roda com o usuário de quem criou e só com o PC ligado.
-- Nada que precise de administrador sem a pessoa entender o porquê.
-- Script agendado tem que ter registro (log): é o único jeito de saber o que ele fez sozinho.
+## Care
+- The task runs as the user who created it and only while the PC is on.
+- Nothing that needs administrator rights unless the person understands why.
+- A scheduled script must keep a log: it is the only way to know what it did on its own.

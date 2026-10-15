@@ -1,46 +1,46 @@
 ---
 name: criar-plugin
-description: Use quando a pessoa quiser juntar skills, agentes e comandos num pacote (plugin) para reaproveitar em outro computador ou compartilhar com outras pessoas, no formato do Claude Code.
+description: Use when the person wants to bundle skills, agents and commands into a package (plugin) to reuse on another computer or share with other people, in the Claude Code format.
 ---
 
-# Criar um plugin
+# Create a plugin
 
-Um plugin é uma pasta que junta skills, agentes e comandos. O formato é o mesmo dos plugins do Claude Code.
+A plugin is a folder that bundles skills, agents and commands. The format is the same as Claude Code plugins.
 
-## Estrutura
+## Structure
 
 ```
 meu-plugin/
 ├── .claude-plugin/plugin.json
-├── skills/<nome>/SKILL.md
-├── agents/<nome>.md
-├── commands/<nome>.md
+├── skills/<name>/SKILL.md
+├── agents/<name>.md
+├── commands/<name>.md
 └── README.md
 ```
 
-`plugin.json` (só `name` é obrigatório):
+`plugin.json` (only `name` is required):
 
 ```json
 {
   "name": "meu-plugin",
   "version": "1.0.0",
-  "description": "O que o plugin traz, em uma frase",
-  "author": {"name": "Seu nome"}
+  "description": "What the plugin brings, in one sentence",
+  "author": {"name": "Your name"}
 }
 ```
 
-No Clave dá para pôr também `fluxos/*.json` (modelos de fluxo); o Claude Code ignora essa pasta.
+In Clave you can also add `fluxos/*.json` (workflow templates); Claude Code ignores that folder.
 
-## Testar no Clave
-Barra da esquerda > **Plugins** > **Instalar de uma pasta** > escolha a pasta do plugin. As skills aparecem como `/meu-plugin:nome`.
+## Test it in Clave
+Left sidebar > **Plugins** > **Install from a folder** > choose the plugin's folder. The skills show up as `/meu-plugin:name`.
 
-## Compartilhar
-- Suba a pasta num repositório **público** do GitHub. Quem usa o Clave instala em Plugins > **Instalar do GitHub** com `seu-usuario/repositorio`; no Claude Code, com `/plugin marketplace add`.
-- Para vários plugins num repositório só, crie `.claude-plugin/marketplace.json` na raiz:
+## Share
+- Push the folder to a **public** GitHub repository. People who use Clave install it in Plugins > **Install from GitHub** with `your-username/repository`; in Claude Code, with `/plugin marketplace add`.
+- For several plugins in one repository, create `.claude-plugin/marketplace.json` at the root:
 
 ```json
-{"name": "minha-loja", "owner": {"name": "Seu nome"},
+{"name": "minha-loja", "owner": {"name": "Your name"},
  "plugins": [{"name": "meu-plugin", "source": "./meu-plugin"}]}
 ```
 
-- Nunca ponha senha, chave ou dado pessoal num plugin: ele fica público.
+- Never put a password, key or personal data in a plugin: it becomes public.

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="#1f1d1a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Fable: uma cabeça de perfil com uma rede dentro (pensamento longo) -->
+  <path d="M44 100c-1-9-9-14-11-25-3-16 5-33 19-40 15-7 33-4 43 8 6 8 8 17 6 26l8 11c1 2 0 4-2 4h-6l1 8c0 5-4 8-9 8h-9v9"/>
+  <g stroke-width="2">
+    <path d="M64 58 47 45M64 58l18-14M64 58l22 7M64 58l3 20M64 58 47 70M64 58H42"/>
+  </g>
+  <circle cx="64" cy="58" r="7" fill="#1f1d1a"/>
+  <g fill="#fbf8f1" stroke-width="2.2">
+    <circle cx="47" cy="45" r="4"/><circle cx="82" cy="44" r="4"/><circle cx="86" cy="65" r="4"/>
+    <circle cx="67" cy="78" r="4"/><circle cx="47" cy="70" r="4"/><circle cx="42" cy="58" r="3.4"/>
+  </g>
+</svg>

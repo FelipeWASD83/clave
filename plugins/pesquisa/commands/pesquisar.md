@@ -1,8 +1,8 @@
 ---
-description: Pesquisa um assunto na web e responde com as fontes
-argument-hint: [assunto ou pergunta]
+description: Researches a subject on the web and answers with the sources
+argument-hint: [subject or question]
 ---
 
-Pesquise: $ARGUMENTS
+Research: $ARGUMENTS
 
-Siga a skill pesquisa:pesquisa-com-fontes (carregue com usar_skill). Se o assunto for grande e valer gastar mais, me ofereça o fluxo "Pesquisa profunda" em vez de fazer tudo sozinho.
+Follow the skill pesquisa:pesquisa-com-fontes (load it with usar_skill). If the subject is big and worth spending more on, offer me the "Deep research" workflow instead of doing everything on your own.

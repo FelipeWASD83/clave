@@ -1,16 +1,16 @@
 ---
 name: renomear-em-lote
-description: Use para renomear muitos arquivos de uma vez seguindo um padrão (data no nome, numeração, tirar texto repetido, padronizar maiúsculas), com prévia e jeito de desfazer.
+description: Use to rename many files at once following a pattern (date in the name, numbering, removing repeated text, standardizing capitalization), with a preview and a way to undo.
 ---
 
-# Renomear em lote
+# Rename in batch
 
-1. Entenda o padrão que a pessoa quer e mostre **antes e depois** de 5 a 10 arquivos reais, numa tabela.
-2. Regras:
-   - nunca mude a extensão (`.jpg` continua `.jpg`);
-   - nunca deixe dois arquivos com o mesmo nome: se colidir, numere (`foto-001.jpg`, `foto-002.jpg`);
-   - evite caracteres que o Windows não aceita: `\ / : * ? " < > |`;
-   - data no nome no formato `AAAA-MM-DD` (fica na ordem certa quando o Windows ordena por nome);
-   - para usar a data da foto, prefira a data de criação do arquivo e diga que foi essa.
-3. Depois do OK, renomeie e grave `renomeacao-AAAA-MM-DD.csv` (nome antigo, nome novo) e um `desfazer-renomeacao.ps1`.
-4. Conte quantos foram renomeados e quantos ficaram de fora, e por quê.
+1. Understand the pattern the person wants and show **before and after** for 5 to 10 real files, in a table.
+2. Rules:
+   - never change the extension (`.jpg` stays `.jpg`);
+   - never leave two files with the same name: if they collide, number them (`foto-001.jpg`, `foto-002.jpg`);
+   - avoid characters Windows doesn't accept: `\ / : * ? " < > |`;
+   - date in the name in `YYYY-MM-DD` format (it sorts in the right order when Windows sorts by name);
+   - to use the date of the photo, prefer the file's creation date and say that is the one you used.
+3. After the OK, rename and save `renomeacao-AAAA-MM-DD.csv` (old name, new name) and a `desfazer-renomeacao.ps1`.
+4. Say how many were renamed and how many were left out, and why.

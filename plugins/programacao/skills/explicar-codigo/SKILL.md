@@ -1,13 +1,13 @@
 ---
 name: explicar-codigo
-description: Use quando a pessoa quer entender o que um código, script ou projeto faz, principalmente se ela não programa.
+description: Use when the person wants to understand what a piece of code, a script or a project does, especially if they don't program.
 ---
 
-# Explicar código para quem não programa
+# Explain code to someone who doesn't program
 
-1. Comece pelo **para quê**: o que o programa faz, em uma ou duas frases, como você explicaria a um amigo.
-2. Depois o **caminho**: o que acontece quando ele roda, passo a passo, em linguagem do dia a dia ("primeiro ele abre a planilha, depois soma a coluna de valores...").
-3. Mostre as **partes** principais (arquivos ou funções) numa lista curta, cada uma com o papel dela.
-4. Termo técnico só quando precisar, explicado na mesma frase. Use comparações concretas.
-5. Mostre trechos de código só quando ajudarem, curtos e com o que cada linha faz.
-6. Termine com o que a pessoa provavelmente quer saber: como usar, o que dá para mudar com segurança (ex.: "a cor está na linha 12") e o que é arriscado mexer.
+1. Start with the **what for**: what the program does, in one or two sentences, the way you would explain it to a friend.
+2. Then the **path**: what happens when it runs, step by step, in everyday language ("first it opens the spreadsheet, then it adds up the amounts column...").
+3. Show the main **parts** (files or functions) in a short list, each with its role.
+4. Technical terms only when needed, explained in the same sentence. Use concrete comparisons.
+5. Show code snippets only when they help, short and with what each line does.
+6. End with what the person probably wants to know: how to use it, what can be changed safely (e.g. "the color is on line 12") and what is risky to touch.

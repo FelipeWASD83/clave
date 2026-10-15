@@ -1,13 +1,13 @@
 ---
 name: comparar-opcoes
-description: Use quando a pessoa precisa escolher entre opções (produtos, serviços, planos, programas, caminhos) e quer uma comparação honesta com recomendação.
+description: Use when the person needs to choose between options (products, services, plans, programs, paths) and wants an honest comparison with a recommendation.
 ---
 
-# Comparar opções
+# Compare options
 
-1. Descubra o que importa para a pessoa: orçamento, para que vai usar, o que ela já tem, o que não pode faltar. Se faltar algo essencial, pergunte antes; se não, suponha e diga a suposição.
-2. Escolha 4 a 6 critérios que **diferenciam** as opções (não liste o que todas têm igual).
-3. Monte uma tabela: opções nas linhas, critérios nas colunas, com números e fatos, não adjetivos.
-4. Preço: diga de onde e de quando é, e se é preço no Brasil. Com a busca na web ligada, confira; sem ela, avise que pode estar velho.
-5. **Recomende uma.** Diga por que, em uma ou duas frases, e em que situação a outra seria melhor.
-6. Se nenhuma servir, diga isso em vez de forçar uma escolha.
+1. Find out what matters to the person: budget, what they will use it for, what they already have, what can't be missing. If something essential is missing, ask first; if not, assume and state the assumption.
+2. Pick 4 to 6 criteria that **tell the options apart** (don't list what they all have in common).
+3. Build a table: options in the rows, criteria in the columns, with numbers and facts, not adjectives.
+4. Price: say where and when it is from, and whether it is the price where the person lives. With web search on, check it; without it, warn that it may be out of date.
+5. **Recommend one.** Say why, in one or two sentences, and in which situation another would be better.
+6. If none of them fits, say so instead of forcing a choice.

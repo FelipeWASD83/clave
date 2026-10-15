@@ -1,9 +1,9 @@
 {
   "name": "escrita",
-  "displayName": "Escrita",
+  "displayName": "Writing",
   "version": "1.0.0",
-  "description": "E-mails, revisão de texto, resumos e atas de reunião, no tom certo para cada ocasião.",
+  "description": "Emails, proofreading, summaries and meeting minutes, in the right tone for each occasion.",
   "author": {"name": "Clave"},
   "license": "MIT",
-  "keywords": ["email", "texto", "revisão", "resumo", "ata"]
+  "keywords": ["email", "text", "proofreading", "summary", "minutes"]
 }

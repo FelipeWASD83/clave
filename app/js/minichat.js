@@ -5,14 +5,15 @@ import { ic } from './icones.js';
 import { el, aviso, usd } from './ui.js';
 import { renderizar } from './markdown.js';
 import { renderizarTurno, blocoFerramenta, nota } from './blocos.js';
+import { t } from './i18n.js';
 
-export function criarMiniChat({ tipo, licao = null, titulo, descricao, placeholder, sugestoes = [], aoTerminar, rotuloBotao = 'Perguntar' }) {
+export function criarMiniChat({ tipo, licao = null, titulo, descricao, placeholder, sugestoes = [], aoTerminar, rotuloBotao = t('Perguntar') }) {
   let cid = null, conexao = null, rodando = false;
   const lista = el('div', { class: 'mini-mensagens' });
   const area = el('textarea', { class: 'area', rows: 2, placeholder, style: 'min-height:64px' });
   const enviarBt = el('button', { class: 'botao primario pequeno', type: 'button', html: `${ic('enviar')}${rotuloBotao}` });
   const meta = el('span', { class: 'meta' });
-  const recomecar = el('button', { class: 'botao pequeno fantasma', type: 'button', texto: 'Começar de novo' });
+  const recomecar = el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Começar de novo') });
   const sugs = el('div', { class: 'sugestoes', style: 'justify-content:flex-start;margin:0' }, ...sugestoes.map((s) =>
     el('button', { class: 'sugestao', type: 'button', texto: s, onclick: () => { area.value = s; area.focus(); } })));
   const caixa = el('section', { class: 'mini-chat' },
@@ -35,16 +36,16 @@ export function criarMiniChat({ tipo, licao = null, titulo, descricao, placehold
       if (m.papel === 'user' && m.tipo === 'normal') turnos.push({ u: m, r: [] });
       else if (turnos.length) turnos[turnos.length - 1].r.push(m);
     }
-    lista.replaceChildren(...turnos.flatMap((t) => {
-      const texto = (t.u.conteudo || []).filter?.((b) => b.type === 'text').map((b) => b.text).join('\n') || '';
+    lista.replaceChildren(...turnos.flatMap((turno) => {
+      const texto = (turno.u.conteudo || []).filter?.((b) => b.type === 'text').map((b) => b.text).join('\n') || '';
       const resp = el('div', { class: 'blocos', style: 'display:grid;gap:10px' });
-      renderizarTurno(resp, t.r);
-      const erro = t.u.meta?.erro && !t.r.length ? nota(t.u.meta.erro, 'erro') : null;
-      return [el('div', { class: 'msg-usuario' }, el('div', { class: 'balao', texto: texto })), t.r.length ? el('div', { class: 'msg-claude' }, resp) : null, erro].filter(Boolean);
+      renderizarTurno(resp, turno.r);
+      const erro = turno.u.meta?.erro && !turno.r.length ? nota(turno.u.meta.erro, 'erro') : null;
+      return [el('div', { class: 'msg-usuario' }, el('div', { class: 'balao', texto: texto })), turno.r.length ? el('div', { class: 'msg-claude' }, resp) : null, erro].filter(Boolean);
     }));
     sugs.hidden = turnos.length > 0;
     recomecar.hidden = turnos.length === 0;
-    meta.textContent = v.gasto ? `gasto aqui: ${usd(v.gasto)}` : '';
+    meta.textContent = v.gasto ? t('gasto aqui: {valor}', { valor: usd(v.gasto) }) : '';
     lista.scrollTop = lista.scrollHeight;
   }
 
@@ -52,7 +53,7 @@ export function criarMiniChat({ tipo, licao = null, titulo, descricao, placehold
     rodando = true;
     enviarBt.disabled = true;
     const vivo = el('div', { class: 'msg-claude' });
-    const indicador = el('div', { class: 'nota-progresso', texto: 'Pensando…' });
+    const indicador = el('div', { class: 'nota-progresso', texto: t('Pensando…') });
     vivo.append(indicador);
     lista.append(vivo);
     let texto = '', alvo = null, agendado = false;
@@ -77,10 +78,10 @@ export function criarMiniChat({ tipo, licao = null, titulo, descricao, placehold
   }
 
   async function enviar() {
-    const t = area.value.trim();
-    if (!t || rodando || !cid) return;
+    const pergunta = area.value.trim();
+    if (!pergunta || rodando || !cid) return;
     try {
-      const r = await api(`/conversas/${cid}/enviar`, { metodo: 'POST', corpo: { texto: t } });
+      const r = await api(`/conversas/${cid}/enviar`, { metodo: 'POST', corpo: { texto: pergunta } });
       area.value = '';
       desenhar(await api(`/conversas/${cid}`));
       seguir(r.execucao);

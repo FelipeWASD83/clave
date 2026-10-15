@@ -9,6 +9,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import i18n
+from i18n import t
+
 LIMITE_INSTRUCOES = 120_000  # caracteres somando todos os arquivos
 SKILLS_DO_APP = Path(__file__).resolve().parent.parent / "skills"
 
@@ -41,7 +44,7 @@ def instrucoes(pasta: str | Path) -> list[dict]:
             texto = ""
         if total + len(texto) > LIMITE_INSTRUCOES:
             sobra = max(0, LIMITE_INSTRUCOES - total)
-            texto = texto[:sobra] + "\n\n[... arquivo cortado: as instruções passaram do limite de tamanho ...]"
+            texto = texto[:sobra] + "\n\n" + t("[... arquivo cortado: as instruções passaram do limite de tamanho ...]")
         total += len(texto)
         a["texto"] = texto
     return achados
@@ -120,6 +123,8 @@ def skills(pasta: str | Path | None) -> list[dict]:
             descricao = str(fm.get("description") or "").strip()
             if fm.get("when_to_use"):
                 descricao = (descricao + " " + str(fm["when_to_use"]).strip()).strip()
+            if origem.startswith("plugin:"):  # plugin do app: a descrição em português, se quem usa está em português
+                descricao = (i18n.guardado_pt(base.parent).get("skills", {}).get(nome_base) or {}).get("description") or descricao
             vistas[nome] = {
                 "nome": nome,
                 "descricao": descricao,

@@ -1,9 +1,9 @@
 {
   "name": "sites-e-apps",
-  "displayName": "Sites e apps",
+  "displayName": "Sites & apps",
   "version": "1.0.0",
-  "description": "Páginas e pequenos apps num arquivo só, a conferência antes de dizer que acabou e como publicar de graça.",
+  "description": "Pages and small apps in a single file, the check before you say it's done, and how to publish for free.",
   "author": {"name": "Clave"},
   "license": "MIT",
-  "keywords": ["site", "html", "página", "app", "publicar"]
+  "keywords": ["site", "html", "page", "app", "publish"]
 }

@@ -8,5 +8,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 if "CLAVE_DADOS" not in os.environ or "clave-testes-" not in os.environ["CLAVE_DADOS"]:
     os.environ["CLAVE_DADOS"] = tempfile.mkdtemp(prefix="clave-testes-")
 os.environ.pop("CLAVE_API_FALSA", None)
+os.environ.setdefault("CLAVE_IDIOMA", "pt-BR")  # os testes conferem textos em português
 sys.path.insert(0, str(RAIZ / "servidor"))
 DADOS = Path(os.environ["CLAVE_DADOS"])

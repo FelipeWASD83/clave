@@ -1,20 +1,20 @@
 ---
 name: revisar-codigo
-description: Use para revisar código (o seu, o de outra pessoa ou o que o Claude acabou de escrever) e achar erros, riscos e confusões antes que virem problema.
+description: Use to review code (your own, someone else's or what Claude just wrote) and find errors, risks and confusion before they turn into problems.
 ---
 
-# Revisar código
+# Review code
 
-Leia o código que mudou e o que está em volta dele. Procure, nesta ordem:
+Read the code that changed and what surrounds it. Look for, in this order:
 
-1. **Faz o que devia?** Compare com o pedido. Falta algum caso?
-2. **Erros:** algo que quebra com entrada inesperada (vazio, nulo, acento, número grande), conta errada, condição invertida, arquivo que não fecha.
-3. **Dados:** algo que pode apagar ou sobrescrever dado sem querer.
-4. **Segurança:** senha, chave ou token no código; comando montado com texto de quem usa; caminho que pode sair da pasta.
-5. **Clareza:** nome que engana, função gigante, comentário que mente.
+1. **Does it do what it should?** Compare it with the request. Is any case missing?
+2. **Errors:** anything that breaks with unexpected input (empty, null, accents, large numbers), a wrong calculation, an inverted condition, a file that never gets closed.
+3. **Data:** anything that could delete or overwrite data by accident.
+4. **Security:** a password, key or token in the code; a command built from the user's text; a path that can escape the folder.
+5. **Clarity:** a misleading name, a giant function, a comment that lies.
 
-Regras:
-- Cada achado com arquivo, linha, o problema e uma sugestão concreta.
-- Do mais grave para o menos grave. Não encha a lista com gosto pessoal.
-- Se estiver bom, diga que está bom.
-- Não mude nada sem a pessoa pedir.
+Rules:
+- Each finding with file, line, the problem and a concrete suggestion.
+- From most to least serious. Don't pad the list with personal taste.
+- If it is good, say it is good.
+- Don't change anything unless the person asks.

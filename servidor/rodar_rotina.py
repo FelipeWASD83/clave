@@ -24,6 +24,7 @@ def _pre():
 _pre()
 
 import config  # noqa: E402
+from i18n import t  # noqa: E402
 
 
 def _app_aberto() -> int | None:
@@ -69,14 +70,14 @@ def main() -> int:
     try:
         info = rotinas.rodar(rid, "agendador")
     except rotinas.ErroRotina as e:
-        rotinas.notificar_windows(f"Clave: {r['nome']}", f"A rotina não rodou: {e}")
+        rotinas.notificar_windows(f"Clave: {r['nome']}", t("A rotina não rodou: {erro}", erro=e))
         return 1
     import execucao
     ex = execucao.pegar(info["execucao"])
     ex.thread.join()
     final = banco.rotina(rid) or {}
-    rotinas.notificar_windows(f"Clave: {r['nome']}", f"Rotina {final.get('ultimo_status') or 'terminada'}. "
-                              "Abra o Clave para ver o resultado.")
+    rotinas.notificar_windows(f"Clave: {r['nome']}", t("Rotina {status}. Abra o Clave para ver o resultado.",
+                                                       status=final.get("ultimo_status") or t("terminada")))
     return 0
 
 

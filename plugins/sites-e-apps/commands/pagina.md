@@ -1,8 +1,8 @@
 ---
-description: Cria uma página ou pequeno app num arquivo HTML só
-argument-hint: [o que a página deve fazer]
+description: Creates a page or small app in a single HTML file
+argument-hint: [what the page should do]
 ---
 
-Crie uma página: $ARGUMENTS
+Create a page: $ARGUMENTS
 
-Siga a skill sites-e-apps:pagina-simples (carregue com usar_skill) e confira com a sites-e-apps:checklist-web antes de dizer que acabou.
+Follow the skill sites-e-apps:pagina-simples (load it with usar_skill) and check it with sites-e-apps:checklist-web before saying it's done.

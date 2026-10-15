@@ -55,8 +55,8 @@ npm run capa                                  # um quadro em saida/capa.png
    atrapalha.
 5. **Remotion fixado em 4.0.534** (versão exata no `package.json`). Grátis para pessoa física e empresa de
    até 3 pessoas.
-6. **O endereço do repositório vem do `versao.json`** do Clave (o mesmo que o botão Atualizar usa): um fork
-   que mude o repositório lá tem o vídeo certo sem mexer no código.
+6. **Sem o endereço do repositório na tela** (decisão do dono do repositório, 14/10/2026): o fecho mostra a
+   marca, os selos e o slogan; a fala diz "é só baixar no GitHub" e basta.
 
 ## Armadilhas
 

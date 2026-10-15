@@ -227,6 +227,22 @@ def atualizar_conversa(cid: str, **campos) -> None:
         con.commit()
 
 
+def tirar_ajuste(chave: str, modos=("chat", "code")) -> int:
+    """Tira uma opção gravada nas conversas (para elas voltarem a seguir o padrão). Devolve quantas mudaram."""
+    marcas = ",".join("?" * len(modos))
+    with _trava_escrita:
+        con = conexao()
+        n = 0
+        for r in con.execute(f"SELECT id, ajustes_json FROM conversas WHERE modo IN ({marcas})", modos).fetchall():
+            ajustes = _j(r["ajustes_json"]) or {}
+            if chave in ajustes:
+                ajustes.pop(chave)
+                con.execute("UPDATE conversas SET ajustes_json=? WHERE id=?", (json.dumps(ajustes, ensure_ascii=False), r["id"]))
+                n += 1
+        con.commit()
+    return n
+
+
 def apagar_conversa(cid: str) -> None:
     with _trava_escrita:
         con = conexao()

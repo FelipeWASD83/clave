@@ -183,7 +183,7 @@ const SECOES = {
   async recursos(alvo) {
     alvo.replaceChildren(
       secao(t('Recursos'), null,
-        liga('busca_web', t('Busca na web ligada por padrão'), t('O Claude pode pesquisar na internet e ler páginas. Cada busca custa US$ 0,01 além dos tokens.')),
+        liga('busca_web', t('Deixar o Claude pesquisar na web'), t('Ele decide sozinho quando a resposta precisa de algo atual e mostra as fontes. Cada busca custa US$ 0,01 além dos tokens. Numa conversa, o botão Web desliga só ali.')),
         liga('cache_automatico', t('Cache automático'), t('Reaproveita o começo da conversa entre uma mensagem e outra e cobra bem menos por ele. Deixe ligado.')),
         liga('compactacao', t('Resumir conversas muito longas'), t('Quando a conversa passa do tamanho abaixo, a Anthropic resume o começo dela para caber e ficar mais barata.')),
         campo(t('Resumir a partir de (tokens)'), texto('compactar_em', { tipo: 'number' }), t('Entre 50 mil e 900 mil. Padrão: 150 mil.')),

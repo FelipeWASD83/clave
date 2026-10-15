@@ -303,7 +303,10 @@ class Execucao:
                 if liberado:
                     mcp.append({"nome": m["nome"], "url": m["url"], "token": segredos.ler(f"mcp:{m['nome']}"),
                                 "desligadas": desligadas})
-        busca_web = bool(op.get("busca_web")) and not permissoes.web_negada(self.regras)
+        # sem a opção no pedido (conversa aberta por uma sugestão, por exemplo), o chat e o Code seguem o padrão das
+        # Configurações; etapa, rotina e ajudante sempre mandam a deles
+        web_padrao = modo in ("chat", "code") and not etapa and not op.get("rotina") and cfg.get("busca_web", True)
+        busca_web = bool(op.get("busca_web", web_padrao)) and not permissoes.web_negada(self.regras)
         bloqueados = permissoes.dominios_bloqueados(self.regras)
 
         pausas = 0

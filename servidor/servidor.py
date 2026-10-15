@@ -1608,6 +1608,16 @@ def _vigiar_janela(pid: int) -> None:
             os._exit(0)
 
 
+def migrar_web_por_padrao() -> None:
+    """3.1.0: a busca na web passou a vir ligada (o Claude decide quando pesquisar). Uma vez só, liga para quem já
+    usava e tira o "desligado" que as conversas antigas gravaram junto das outras opções: era o padrão de antes,
+    não uma escolha de quem usa."""
+    if config.carregar().get("web_por_padrao_migrada"):
+        return
+    banco.tirar_ajuste("busca_web")
+    config.salvar({"busca_web": True, "web_por_padrao_migrada": True})
+
+
 def main() -> int:
     global _servidor
     ap = argparse.ArgumentParser()
@@ -1621,6 +1631,7 @@ def main() -> int:
     a = ap.parse_args()
     config.DADOS.mkdir(parents=True, exist_ok=True)
     banco.conexao()
+    migrar_web_por_padrao()
     _servidor = ThreadingHTTPServer(("127.0.0.1", a.porta), Manipulador)
     _servidor.daemon_threads = True
     print(f"Clave {config.VERSAO} em http://127.0.0.1:{a.porta}" + (" (modo demonstração)" if DEMO else ""),

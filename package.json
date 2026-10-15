@@ -1,7 +1,7 @@
 {
   "name": "clave",
   "productName": "Clave",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "App para usar o Claude pela API da Anthropic, com chat, modo Code, teto de gasto e GitHub.",
   "main": "electron/main.js",
   "license": "MIT",

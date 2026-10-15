@@ -2,6 +2,15 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 3.1.0 (15/10/2026)
+
+**Mudou**
+
+- **A busca na web vem ligada**: o Claude pesquisa na internet sozinho quando a resposta precisa de algo atual
+  (notícia, preço, versão) e mostra as fontes. Não precisa ligar nada. O botão **Web** da caixa de texto agora
+  desliga só naquela conversa, e Configurações > Recursos desliga em todas. Cada busca custa US$ 0,01 além dos
+  tokens. Para quem já usava o Clave, ela é ligada uma vez, inclusive nas conversas antigas.
+
 ## 3.0.0 (15/10/2026)
 
 O Clave agora fala inglês, mostra onde fica cada coisa na primeira vez e apresenta cada modelo novo do Claude.

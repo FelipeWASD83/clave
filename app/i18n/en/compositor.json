@@ -22,7 +22,7 @@
   "Enviar": "Send",
   "Modelo": "Model",
   "Raciocínio": "Reasoning",
-  "Deixar o Claude pesquisar na web": "Let Claude search the web",
+  "Busca na web: o Claude pesquisa quando a resposta precisar. Clique para desligar nesta conversa.": "Web search: Claude searches when the answer needs it. Click to turn it off in this chat.",
   "Ferramentas do GitHub": "GitHub tools",
   "Permissões do modo Code": "Code mode permissions",
   "Anexar arquivo": "Attach file",

@@ -28,7 +28,7 @@ export function opcoesPadrao(modo, ajustes = {}) {
     esforco: modo === 'code' ? c.esforco_code : c.esforco_chat,
     pensar: true,
     mostrar_raciocinio: c.mostrar_raciocinio !== false,
-    busca_web: !!c.busca_web,
+    busca_web: c.busca_web !== false,
     github: !!c.github_ferramentas && !!c.github_origem,
     rapido: false,
     permissao: c.permissao_code || 'perguntar',
@@ -54,7 +54,7 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
   const botaoEnviar = el('button', { class: 'enviar', type: 'button', 'aria-label': t('Enviar'), title: t('Enviar'), html: ic('enviar') });
   const chipModelo = el('button', { class: 'chip', type: 'button', title: t('Modelo'), dados: { tour: 'modelo' } });
   const chipEsforco = el('button', { class: 'chip', type: 'button', title: t('Raciocínio'), dados: { tour: 'esforco' } });
-  const chipWeb = el('button', { class: 'chip', type: 'button', dados: { tour: 'web' }, title: t('Deixar o Claude pesquisar na web'), html: `${ic('globo')}<span>Web</span>` });
+  const chipWeb = el('button', { class: 'chip', type: 'button', dados: { tour: 'web' }, title: t('Busca na web: o Claude pesquisa quando a resposta precisar. Clique para desligar nesta conversa.'), html: `${ic('globo')}<span>Web</span>` });
   const chipGit = el('button', { class: 'chip', type: 'button', title: t('Ferramentas do GitHub'), html: `${ic('ramo')}<span>GitHub</span>` });
   const chipPerm = el('button', { class: 'chip', type: 'button', title: t('Permissões do modo Code'), dados: { tour: 'permissao' } });
   const chipAnexo = el('button', { class: 'chip', type: 'button', dados: { tour: 'anexo' }, title: t('Anexar arquivo'), 'aria-label': t('Anexar arquivo'), html: ic('clipe') });

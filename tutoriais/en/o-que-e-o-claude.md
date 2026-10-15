@@ -24,7 +24,7 @@ Explain what you can do for me, with 5 practical examples for someone who works 
 ## What it isn't
 
 - **It isn't a person**, and it doesn't "know" things the way we do: it learned patterns by reading a huge amount of text. Sometimes it **makes up** a piece of information with total confidence (this has a name: [hallucination](#/aprender/glossario/alucinacao)). For anything important, ask for the source and double-check.
-- **It doesn't know what happened yesterday**, unless you turn on web search (the **Web** button in the text box).
+- **It doesn't know what happened yesterday** off the top of its head: for that it searches the web, which comes on (the **Web** button in the text box turns it off in a chat).
 - **It doesn't remember other conversations**, unless you turn on [memory](#/aprender/memoria).
 - **It doesn't replace** a doctor, lawyer or accountant for a serious decision. It helps you understand and prepare your questions.
 

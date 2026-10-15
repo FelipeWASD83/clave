@@ -2,6 +2,16 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 3.1.0 (2026-10-15)
+
+**Changed**
+
+- **Web search comes on**: Claude searches the internet on its own when the answer needs something current
+  (news, prices, versions), and shows the sources. You don't need to turn anything on. The **Web** button in the
+  text box now turns it off just for that chat, and Settings > Features turns it off everywhere. Each search costs
+  $0.01 on top of the tokens. If you already used Clave, it's switched on for you once, including in your old
+  chats.
+
 ## 3.0.0 (2026-10-15)
 
 Clave now speaks English, shows you around the first time, and presents every new Claude model.

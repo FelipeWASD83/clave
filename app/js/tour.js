@@ -15,7 +15,7 @@ const TOURS = {
     { alvo: '[data-tour="anexo"]', titulo: t('Anexos'), texto: t('Imagens, PDFs, planilhas e arquivos de texto. Dá também para arrastar ou colar.') },
     { alvo: '[data-tour="modelo"]', titulo: t('Modelo'), texto: t('Haiku para o simples (rápido e baratíssimo), Sonnet para o dia a dia, Opus para o difícil.') },
     { alvo: '[data-tour="esforco"]', titulo: t('Raciocínio'), texto: t('Quanto o Claude pensa antes de responder. Mais raciocínio resolve coisas difíceis, mas custa mais.') },
-    { alvo: '[data-tour="web"]', titulo: t('Busca na web'), texto: t('Deixa o Claude pesquisar na internet quando a resposta pedir algo atual.') },
+    { alvo: '[data-tour="web"]', titulo: t('Busca na web'), texto: t('Vem ligada: o Claude pesquisa na internet quando a resposta pedir algo atual. Clique para desligar nesta conversa.') },
     { alvo: '.painel-uso', titulo: t('Seu uso'), texto: t('Tokens, dias seguidos, o mapa de calor e a projeção: em que dia o teto do mês acaba no seu ritmo.') },
     { alvo: '.lateral [data-secao="fluxos"]', titulo: t('Fluxos e agentes'), texto: t('Tarefas grandes divididas em etapas, cada uma num modelo. Sempre pedem o seu OK antes, com o custo estimado.') },
     { alvo: '.lateral [data-secao="rotinas"]', titulo: t('Rotinas'), texto: t('Pedidos que o Claude faz sozinho no horário que você escolher.') },

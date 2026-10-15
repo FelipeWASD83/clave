@@ -8,7 +8,7 @@ resumo: Deixar o Claude pesquisar na internet e ligar serviços externos pelo pa
 
 ## Busca na web
 
-Sem a busca, o Claude só sabe o que aprendeu até a data de corte dele (meados de 2026) e não sabe o que aconteceu ontem. Ligue o botão **Web** na caixa de texto para ele **pesquisar e ler páginas** quando precisar. As fontes aparecem na resposta (números pequenos ao lado das frases e a lista de sites).
+Sem a busca, o Claude só sabe o que aprendeu até a data de corte dele (meados de 2026) e não sabe o que aconteceu ontem. Por isso a busca na web vem ligada: ele **pesquisa e lê páginas** sozinho quando a resposta precisa de algo atual. Para uma conversa sem busca, clique no botão **Web** da caixa de texto (ele apaga só ali); para desligar de vez, vá em Configurações > Recursos. As fontes aparecem na resposta (números pequenos ao lado das frases e a lista de sites).
 
 Cada pesquisa custa US$ 0,01, além dos tokens das páginas lidas. Para deixar ligada sempre: Configurações > Recursos.
 

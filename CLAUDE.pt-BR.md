@@ -101,6 +101,11 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   nova), e uma release. Não preencher ficha antes do anúncio oficial. As renders são do Clave, geradas por
   código: nunca imagem da Anthropic.
 
+- **A busca na web vem ligada** (3.1.0): `cfg["busca_web"]` nasce True e o modelo decide quando pesquisar.
+  `migrar_web_por_padrao()` (ao subir o servidor) liga uma vez para quem já usava e tira o `busca_web` que as
+  conversas antigas de chat e Code gravaram (era o padrão de antes, não uma escolha). Sem a opção no pedido, chat
+  e Code seguem a configuração; etapa de fluxo, rotina e ajudante sempre mandam a deles. Regra que nega
+  `WebSearch` continua valendo.
 - **SDK oficial `anthropic` em versão fixa** (`requirements.txt`). O Smart App
   Control do Windows pode barrar versão nova de pacote com parte nativa
   (`pydantic_core`, `jiter`). Atualizar só testando o import no Windows.

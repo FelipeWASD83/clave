@@ -83,7 +83,8 @@ PADRAO = {
     "mostrar_raciocinio": True,
     "modelos_antigos": False,
     # recursos
-    "busca_web": False,
+    "busca_web": True,  # desde a 3.1.0: o Claude decide quando pesquisar; o botão Web desliga numa conversa
+    "web_por_padrao_migrada": False,
     "cache_automatico": True,
     "compactacao": True,
     "compactar_em": 150000,

@@ -24,7 +24,7 @@ Me explique o que você consegue fazer por mim, com 5 exemplos práticos para qu
 ## O que ele não é
 
 - **Não é uma pessoa** e não "sabe" das coisas como a gente: ele aprendeu padrões lendo muito texto. Às vezes ele **inventa** uma informação com toda a confiança (isso tem nome: [alucinação](#/aprender/glossario/alucinacao)). Para coisas importantes, peça a fonte e confira.
-- **Não sabe o que aconteceu ontem**, a não ser que você ligue a busca na web (botão **Web** na caixa de texto).
+- **Não sabe o que aconteceu ontem** de cabeça: para isso ele pesquisa na web, que vem ligada (o botão **Web** da caixa de texto desliga numa conversa).
 - **Não lembra de outras conversas**, a não ser que você ligue a [memória](#/aprender/memoria).
 - **Não substitui** médico, advogado ou contador numa decisão séria. Ele ajuda a entender e a preparar as perguntas.
 

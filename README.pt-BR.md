@@ -115,7 +115,8 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   conversa, e a régua que mostra quanto da memória da conversa já foi usada.
 - **GitHub**: anexar arquivos dos seus repositórios e deixar o Claude consultar
   código, issues e pull requests.
-- **Busca na web** e **conectores MCP**.
+- **Busca na web**, ligada por padrão (o Claude decide quando pesquisar e mostra
+  as fontes), e **conectores MCP**.
 - **Aprender**: lições para quem nunca usou IA, com glossário de termos (API,
   JSON, Git...) e um ajudante que tira dúvidas de cada lição.
 - **Tours com setinhas**: na primeira vez, setas apontam cada parte da tela e

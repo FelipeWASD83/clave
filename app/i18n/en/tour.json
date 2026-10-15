@@ -14,7 +14,7 @@
   "Raciocínio": "Reasoning",
   "Quanto o Claude pensa antes de responder. Mais raciocínio resolve coisas difíceis, mas custa mais.": "How much Claude thinks before answering. More reasoning solves harder problems, but costs more.",
   "Busca na web": "Web search",
-  "Deixa o Claude pesquisar na internet quando a resposta pedir algo atual.": "Lets Claude search the internet when the answer needs something current.",
+  "Vem ligada: o Claude pesquisa na internet quando a resposta pedir algo atual. Clique para desligar nesta conversa.": "It comes on: Claude searches the internet when the answer needs something current. Click to turn it off in this chat.",
   "Seu uso": "Your usage",
   "Tokens, dias seguidos, o mapa de calor e a projeção: em que dia o teto do mês acaba no seu ritmo.": "Tokens, your day streak, the heatmap and the forecast: on which day your monthly cap runs out at your pace.",
   "Fluxos e agentes": "Workflows & agents",

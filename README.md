@@ -123,7 +123,8 @@ you.
   has been used.
 - **GitHub**: attach files from your repositories and let Claude look up code,
   issues and pull requests.
-- **Web search** and **MCP connectors**.
+- **Web search**, on by default (Claude decides when to search and shows the
+  sources), and **MCP connectors**.
 - **Learn**: lessons for people who have never used AI, with a glossary of terms
   (API, JSON, Git...) and a helper that answers questions about each lesson.
 - **Guided tours**: the first time, arrows point to each part of the screen and

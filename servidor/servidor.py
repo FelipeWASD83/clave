@@ -41,16 +41,22 @@ def _pre_argumentos() -> None:
 
 _pre_argumentos()
 
+import agentes  # noqa: E402
 import anexos  # noqa: E402
 import atualizador  # noqa: E402
 import banco  # noqa: E402
+import comandos  # noqa: E402
 import config  # noqa: E402
 import contexto_pasta  # noqa: E402
 import execucao  # noqa: E402
+import fluxos  # noqa: E402
 import github_api  # noqa: E402
 import modelo_pasta  # noqa: E402
 import modelos  # noqa: E402
 import orcamento  # noqa: E402
+import permissoes  # noqa: E402
+import plugins  # noqa: E402
+import rotinas  # noqa: E402
 import segredos  # noqa: E402
 import sistema  # noqa: E402
 import tutoriais  # noqa: E402
@@ -448,9 +454,10 @@ def _montar_visao(cid: str) -> dict:
     projeto = banco.projeto(conv["projeto_id"]) if conv.get("projeto_id") else None
     pendentes = []
     if ex:
-        for ev in list(ex.eventos):
-            if ev["tipo"] == "aprovacao" and not ex.aprovacoes.get(ev["id"], {}).get("evento").is_set():
-                pendentes.append(ev)
+        for dono in [ex, *ex.filhos]:
+            for tid, a in list(dono.aprovacoes.items()):
+                if not a["evento"].is_set() and a.get("pedido"):
+                    pendentes.append({**a["pedido"], "execucao": dono.id, "de_etapa": dono is not ex})
     return {"conversa": conv, "mensagens": caminho, "execucao": ex.id if ex else None,
             "execucao_desde": ex.seq_salvo if ex else 0, "aprovacoes_pendentes": pendentes,
             "tarefas": (ex.ctx.tarefas if ex and ex.ctx else []),
@@ -513,29 +520,65 @@ def _preparar_sistema(conv: dict) -> None:
     banco.atualizar_conversa(conv["id"], sistema=texto, contexto=contexto)
 
 
-def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, dict]:
+def _conteudo_usuario(conv: dict, texto: str, ids_anexos: list) -> tuple[list, dict, dict]:
+    """Blocos da mensagem, meta para a tela e opções que o comando de barra traz (modelo, ferramentas liberadas)."""
     blocos = []
     for aid in ids_anexos or []:
         reg = banco.anexo(aid)
         if reg:
             blocos.append(anexos.referencia(reg))
-    meta = {}
+    meta, extras = {}, {}
     texto = texto or ""
-    m = re.match(r"^/([\w.-]+)\s*(.*)$", texto.strip(), re.S)
-    if conv["modo"] == "code" and m:
-        lista = contexto_pasta.skills(conv["pasta"])
-        s = contexto_pasta.conteudo_skill(lista, m.group(1))
-        if s:
+    pasta = conv.get("pasta") if conv["modo"] == "code" else None
+    sep = comandos.separar(texto)
+    if sep and sep[0] == "fluxo":
+        ident, _, pedido_fluxo = sep[1].partition(" ")
+        m = fluxos.modelo(ident) if ident else None
+        meta["exibir"] = texto
+        meta["comando"] = "fluxo"
+        if m:
+            texto = fluxos.texto_para_comando(m, pedido_fluxo.strip())
+        else:
+            texto = ("Quero que esta tarefa rode como um fluxo, com etapas em modelos diferentes (proponha as etapas, "
+                     "os agentes e os modelos que fizerem sentido e mostre com executar_fluxo):\n\n"
+                     + (sep[1] or "(ainda não disse a tarefa: pergunte qual é)"))
+    elif sep:
+        exp = comandos.expandir(texto, pasta)
+        if exp:
             meta["exibir"] = texto
-            meta["skill"] = s["nome"]
-            texto = (f"Quem usa chamou a skill /{s['nome']}. Siga as instruções dela.\n"
-                     f"<skill nome=\"{s['nome']}\" pasta=\"{s['pasta']}\">\n{s['texto']}\n</skill>\n\n"
-                     f"Pedido: {m.group(2).strip() or '(nenhum detalhe extra; siga a skill)'}")
+            meta["comando"] = exp["nome"]
+            meta["tipo_comando"] = exp["tipo"]
+            if exp["tipo"] == "skill":
+                meta["skill"] = exp["nome"]
+            texto = (f"Quem usa chamou /{exp['nome']}.\n\n" + exp["texto"]) if exp["tipo"] == "comando" else exp["texto"]
+            if exp.get("modelo"):
+                import agentes as _ag
+                extras["modelo"] = _ag.resolver_modelo(exp["modelo"], "")
+            if exp.get("ferramentas_permitidas"):
+                extras["regras_tarefa"] = exp["ferramentas_permitidas"]
     if texto.strip():
         blocos.append({"type": "text", "text": texto})
     if not blocos:
         raise Erro(400, "Mensagem vazia.")
-    return blocos, meta
+    return blocos, meta, {k: v for k, v in extras.items() if v}
+
+
+def _nota_de_modo(conv: dict, opcoes: dict) -> str:
+    """Aviso escondido sobre o modo Plano. O prompt de sistema é congelado por conversa, então o modelo só fica
+    sabendo do modo atual por aqui (como o lembrete do modo Plano do Claude Code). Vai gravado na mensagem, para o
+    começo da conversa não mudar entre um pedido e outro."""
+    if conv["modo"] != "code":
+        return ""
+    antes = (conv.get("ajustes") or {}).get("permissao") or "perguntar"
+    agora = opcoes.get("permissao") or antes
+    if agora == "plano":
+        return (f"{execucao.MARCA_MODO}Modo Plano ligado: investigue só lendo (não crie, não edite e não rode comandos) "
+                "e, quando o plano estiver pronto, apresente com a ferramenta apresentar_plano. Quem usa aprova e "
+                f"você segue executando na mesma resposta.{execucao.FIM_MARCA_MODO}")
+    if antes == "plano":
+        return (f"{execucao.MARCA_MODO}O modo Plano foi desligado; o modo agora é "
+                f"{execucao.NOMES_MODO.get(agora, agora)}. Pode executar normalmente.{execucao.FIM_MARCA_MODO}")
+    return ""
 
 
 def _opcoes(d: dict) -> dict:
@@ -559,7 +602,10 @@ def r_enviar(h: Manipulador, cid):
         raise Erro(400, "Falta a chave da API. Cole a sua em Configurações > Conta e chave.")
     _preparar_sistema(conv)
     conv = banco.conversa(cid)
-    conteudo, meta = _conteudo_usuario(conv, d.get("texto", ""), d.get("anexos") or [])
+    conteudo, meta, extras = _conteudo_usuario(conv, d.get("texto", ""), d.get("anexos") or [])
+    nota = _nota_de_modo(conv, _opcoes(d))
+    if nota:
+        conteudo.append({"type": "text", "text": nota})
     pai = conv.get("folha_id")
     if d.get("editar_de"):
         original = banco.mensagem(d["editar_de"])
@@ -567,7 +613,7 @@ def r_enviar(h: Manipulador, cid):
             raise Erro(404, "Mensagem não encontrada.")
         pai = original["pai_id"]
     msg = banco.adicionar_mensagem(cid, pai, "user", conteudo, meta=meta)
-    ex = execucao.iniciar(cid, _opcoes(d))
+    ex = execucao.iniciar(cid, {**_opcoes(d), **extras})
     banco.atualizar_conversa(cid, ajustes={**(conv.get("ajustes") or {}), **_opcoes(d)})
     h._json({"execucao": ex.id, "mensagem": msg["id"]})
 
@@ -617,7 +663,7 @@ def r_exportar(h: Manipulador, cid):
             partes.append(m["meta"]["exibir"])
         elif isinstance(m["conteudo"], list):
             for b in m["conteudo"]:
-                if b.get("type") == "text":
+                if b.get("type") == "text" and not b["text"].startswith(execucao.MARCA_MODO):
                     partes.append(b["text"])
                 elif b.get("type") == "clave_anexo":
                     partes.append(f"[anexo: {b.get('nome')}]")
@@ -668,10 +714,16 @@ def r_eventos(h: Manipulador, eid):
     desde = int(h.query().get("desde") or 0)
     h.send_response(200)
     h.send_header("Content-Type", "text/event-stream; charset=utf-8")
-    h.send_header("Cache-Control", "no-store")
+    h.send_header("Cache-Control", "no-store, no-transform")
+    h.send_header("X-Content-Type-Options", "nosniff")
+    h.send_header("X-Accel-Buffering", "no")
     h.send_header("Connection", "close")
     h.end_headers()
     h.close_connection = True
+    # preenchimento inicial: navegador (e antivírus que filtra a web) que segura o começo da resposta antes de
+    # entregar solta assim que passa de alguns KB. Sem isso, uma resposta parada esperando o seu OK não aparecia.
+    h.wfile.write(b": " + b" " * 4096 + b"\n\n")
+    h.wfile.flush()
     while True:
         evs = ex.eventos_desde(desde, espera=15)
         if evs:
@@ -703,9 +755,22 @@ def r_aprovar(h: Manipulador, eid):
     if not ex:
         raise Erro(404, "Execução não encontrada.")
     decisao = d.get("decisao")
-    if decisao not in ("permitir", "permitir_sempre", "recusar"):
+    validas = ("permitir", "permitir_sempre", "permitir_tarefa", "permitir_pasta", "permitir_app", "recusar",
+               "executar_perguntar", "executar_aceitar", "executar_livre")
+    if decisao not in validas:
         raise Erro(400, "Decisão inválida.")
-    if not ex.decidir(str(d.get("id")), decisao, str(d.get("texto") or "")[:2000]):
+    bruto = d.get("dados") if isinstance(d.get("dados"), dict) else {}
+    dados = {}
+    if isinstance(bruto.get("regra"), str):
+        dados["regra"] = bruto["regra"].strip()[:300]
+        if decisao in ("permitir_pasta", "permitir_app") and permissoes.validar(dados["regra"]):
+            raise Erro(400, permissoes.validar(dados["regra"]))
+    if isinstance(bruto.get("etapas"), list):
+        dados["etapas"] = [{k: e[k] for k in ("i", "modelo", "esforco", "tirar") if k in e}
+                           for e in bruto["etapas"][:fluxos.MAX_ETAPAS] if isinstance(e, dict)]
+    if isinstance(bruto.get("teto_usd"), (int, float)):
+        dados["teto_usd"] = float(bruto["teto_usd"])
+    if not ex.decidir(str(d.get("id")), decisao, str(d.get("texto") or "")[:2000], dados):
         raise Erro(409, "Essa ação não está mais esperando resposta.")
     h._json({"ok": True})
 
@@ -1107,6 +1172,298 @@ def r_backup_importar(h: Manipulador):
         raise Erro(400, str(e))
 
 
+# ---------- permissões ----------
+
+def _pasta_param(valor) -> Path | None:
+    if not valor:
+        return None
+    p = Path(str(valor)).expanduser()
+    if not p.is_dir():
+        raise Erro(400, "Pasta não encontrada.")
+    return p.resolve()
+
+
+@rota("GET", "/api/permissoes")
+def r_permissoes(h: Manipulador):
+    q = h.query()
+    pasta = _pasta_param(q.get("pasta"))
+    cfg = config.carregar()
+    app = {a: list((cfg.get("permissoes") or {}).get(a) or []) for a in permissoes.ACOES}
+    resp = {"app": app, "protegidos": cfg.get("protegidos") or [], "pasta": None}
+    if pasta:
+        regras, avisos = permissoes.ler_pasta(pasta)
+        resp["pasta"] = {"caminho": str(pasta), "avisos": avisos,
+                         "arquivos": [str(a) for a in permissoes.arquivos_da_pasta(pasta)],
+                         "regras": [{"acao": r.acao, "texto": r.texto, "origem": r.origem} for r in regras]}
+    h._json(resp)
+
+
+@rota("POST", "/api/permissoes")
+def r_permissao_nova(h: Manipulador):
+    d = h.corpo()
+    acao, texto = d.get("acao"), str(d.get("regra") or "").strip()
+    if acao not in permissoes.ACOES:
+        raise Erro(400, "Ação inválida.")
+    erro = permissoes.validar(texto)
+    if erro:
+        raise Erro(400, erro)
+    try:
+        if d.get("escopo") == "pasta":
+            pasta = _pasta_param(d.get("pasta"))
+            if not pasta:
+                raise Erro(400, "Escolha a pasta.")
+            permissoes.salvar_na_pasta(pasta, acao, texto)
+        else:
+            permissoes.salvar_no_app(acao, texto)
+    except ValueError as e:
+        raise Erro(400, str(e))
+    h._json({"ok": True})
+
+
+@rota("DELETE", "/api/permissoes")
+def r_permissao_apagar(h: Manipulador):
+    d = h.corpo()
+    acao, texto = d.get("acao"), str(d.get("regra") or "")
+    if d.get("escopo") == "pasta":
+        ok = permissoes.remover_da_pasta(_pasta_param(d.get("pasta")), acao, texto)
+    else:
+        ok = permissoes.remover_do_app(acao, texto)
+    if not ok:
+        raise Erro(404, "Regra não encontrada.")
+    h._json({"ok": True})
+
+
+@rota("POST", "/api/permissoes/testar")
+def r_permissao_testar(h: Manipulador):
+    """Responde "esse comando (ou arquivo) passaria?" sem rodar nada."""
+    from ferramentas import code as fcode
+    d = h.corpo()
+    pasta = _pasta_param(d.get("pasta")) or Path.home()
+    ferr = str(d.get("ferramenta") or "Bash")
+    valor = str(d.get("valor") or "").strip()
+    if not valor:
+        raise Erro(400, "Escreva o comando ou o caminho.")
+    modo = d.get("modo") if d.get("modo") in ("perguntar", "aceitar_edicoes", "plano", "livre") else "perguntar"
+    cfg = config.carregar()
+    ctx = fcode.Contexto(raiz=pasta, protegidos=list(cfg.get("protegidos") or []), execucao_id="teste",
+                         conversa_id="teste")
+    ctx.regras = permissoes.coletar(cfg, pasta)
+    nome, entrada = {"Bash": ("rodar_comando", {"comando": valor, "descricao": "teste"}),
+                     "Read": ("ler_arquivo", {"caminho": valor}),
+                     "Edit": ("escrever_arquivo", {"caminho": valor, "conteudo": ""})}.get(ferr, (None, None))
+    if nome is None:
+        if ferr in ("WebFetch", "WebSearch"):
+            r = permissoes.nega(ctx.regras, ferr, valor)
+            h._json({"decisao": "negar" if r else "auto", "motivo": r.descrever() if r else
+                     "a web segue o botão de busca da conversa", "origem": "regra" if r else "modo"})
+            return
+        raise Erro(400, "Ferramenta inválida.")
+    det = fcode.decidir(nome, entrada, ctx, modo, set())
+    det["sugestao"] = permissoes.sugerir(nome, entrada, ctx)
+    h._json(det)
+
+
+@rota("GET", "/api/permissoes/historico")
+def r_permissoes_historico(h: Manipulador):
+    q = h.query()
+    h._json({"registros": banco.log_permissoes(min(1000, int(q.get("limite") or 300)), q.get("decisao") or "")})
+
+
+@rota("DELETE", "/api/permissoes/historico")
+def r_permissoes_historico_limpar(h: Manipulador):
+    banco.limpar_log_permissoes()
+    h._json({"ok": True})
+
+
+# ---------- agentes, comandos e fluxos ----------
+
+@rota("GET", "/api/agentes")
+def r_agentes(h: Manipulador):
+    pasta = _pasta_param(h.query().get("pasta"))
+    h._json({"agentes": agentes.listar(pasta)})
+
+
+@rota("POST", "/api/agentes")
+def r_agente_salvar(h: Manipulador):
+    d = h.corpo()
+    try:
+        a = agentes.salvar(d, "pasta" if d.get("onde") == "pasta" else "pessoal", _pasta_param(d.get("pasta")))
+    except ValueError as e:
+        raise Erro(400, str(e))
+    h._json({"agente": a})
+
+
+@rota("DELETE", "/api/agentes")
+def r_agente_apagar(h: Manipulador):
+    d = h.corpo()
+    try:
+        agentes.apagar(str(d.get("caminho") or ""), _pasta_param(d.get("pasta")))
+    except (ValueError, OSError) as e:
+        raise Erro(400, str(e))
+    h._json({"ok": True})
+
+
+@rota("GET", "/api/comandos")
+def r_comandos(h: Manipulador):
+    q = h.query()
+    pasta = _pasta_param(q.get("pasta"))
+    lista = comandos.listar(pasta)
+    for m in fluxos.listar_modelos():
+        lista.append({"nome": f"fluxo {m['id']}", "descricao": m.get("descricao") or m.get("nome", ""),
+                      "tipo": "fluxo", "origem": m["origem"], "argumentos": m.get("pede", "")})
+    h._json({"comandos": lista})
+
+
+@rota("GET", "/api/fluxos")
+def r_fluxos(h: Manipulador):
+    h._json({"modelos": fluxos.listar_modelos(), "historico": banco.listar_fluxos(),
+             "ligados": bool(config.carregar().get("fluxos_ligados", True))})
+
+
+@rota("GET", "/api/fluxos/<fid>")
+def r_fluxo(h: Manipulador, fid):
+    f = banco.fluxo(fid)
+    if not f:
+        raise Erro(404, "Fluxo não encontrado.")
+    h._json({"fluxo": f})
+
+
+@rota("POST", "/api/fluxos/modelos")
+def r_fluxo_modelo_salvar(h: Manipulador):
+    try:
+        h._json({"modelo": fluxos.salvar_modelo(h.corpo())})
+    except fluxos.ErroFluxo as e:
+        raise Erro(400, str(e))
+
+
+@rota("DELETE", "/api/fluxos/modelos/<ident>")
+def r_fluxo_modelo_apagar(h: Manipulador, ident):
+    try:
+        fluxos.apagar_modelo(ident)
+    except fluxos.ErroFluxo as e:
+        raise Erro(400, str(e))
+    h._json({"ok": True})
+
+
+@rota("POST", "/api/fluxos/estimar")
+def r_fluxo_estimar(h: Manipulador):
+    """Estimativa de custo de um modelo de fluxo, para a página de fluxos."""
+    d = h.corpo()
+    cfg = config.carregar()
+    try:
+        p = fluxos.normalizar({"titulo": "x", "objetivo": "x", "etapas": d.get("etapas") or []}, fid="estimativa",
+                              pasta=str(_pasta_param(d.get("pasta")) or "") or None if d.get("pasta") else
+                              ("." if d.get("modo") == "code" else None),
+                              modelo_padrao=cfg.get("modelo_code") or "claude-opus-5-5")
+    except fluxos.ErroFluxo as e:
+        raise Erro(400, str(e))
+    h._json({"estimativa": p["estimativa"], "etapas": [{"i": e["i"], "estimativa": e["estimativa"],
+                                                        "modelo_nome": e["modelo_nome"]} for e in p["etapas"]]})
+
+
+# ---------- plugins ----------
+
+@rota("GET", "/api/plugins")
+def r_plugins(h: Manipulador):
+    plugins.limpar_baixados()
+    h._json({"plugins": plugins.listar()})
+
+
+@rota("POST", "/api/plugins/<nome>/ligar")
+def r_plugin_ligar(h: Manipulador, nome):
+    plugins.ligar(nome, bool(h.corpo().get("ligado")))
+    h._json({"ok": True})
+
+
+@rota("DELETE", "/api/plugins/<nome>")
+def r_plugin_remover(h: Manipulador, nome):
+    try:
+        plugins.remover(nome)
+    except plugins.ErroPlugin as e:
+        raise Erro(400, str(e))
+    h._json({"ok": True})
+
+
+@rota("POST", "/api/plugins/analisar-pasta")
+def r_plugin_analisar(h: Manipulador):
+    pasta = _pasta_param(h.corpo().get("pasta"))
+    try:
+        h._json({"plugin": plugins.analisar(pasta)})
+    except plugins.ErroPlugin as e:
+        raise Erro(400, str(e))
+
+
+@rota("POST", "/api/plugins/instalar-pasta")
+def r_plugin_instalar_pasta(h: Manipulador):
+    pasta = _pasta_param(h.corpo().get("pasta"))
+    try:
+        h._json({"plugin": plugins.instalar_de_pasta(pasta)})
+    except (plugins.ErroPlugin, OSError) as e:
+        raise Erro(400, str(e))
+
+
+@rota("POST", "/api/plugins/github")
+def r_plugin_github(h: Manipulador):
+    try:
+        h._json(plugins.preparar_github(str(h.corpo().get("repositorio") or "")))
+    except plugins.ErroPlugin as e:
+        raise Erro(400, str(e))
+
+
+@rota("POST", "/api/plugins/github/instalar")
+def r_plugin_github_instalar(h: Manipulador):
+    d = h.corpo()
+    nomes = [str(n) for n in (d.get("nomes") or []) if isinstance(n, str)]
+    if not nomes:
+        raise Erro(400, "Escolha pelo menos um plugin.")
+    try:
+        h._json({"instalados": plugins.instalar_preparado(str(d.get("id") or ""), nomes)})
+    except (plugins.ErroPlugin, OSError) as e:
+        raise Erro(400, str(e))
+
+
+# ---------- rotinas ----------
+
+def _rotina_publica(r: dict) -> dict:
+    return {**r, "quando_texto": rotinas.descrever(r.get("quando") or {}), "rodando": rotinas.rodando(r["id"])}
+
+
+@rota("GET", "/api/rotinas")
+def r_rotinas(h: Manipulador):
+    h._json({"rotinas": [_rotina_publica(r) for r in banco.listar_rotinas()],
+             "windows": sys.platform == "win32"})
+
+
+@rota("POST", "/api/rotinas")
+def r_rotina_salvar(h: Manipulador):
+    d = h.corpo()
+    try:
+        r = rotinas.salvar(d.get("id") or None, str(d.get("nome") or ""), d, bool(d.get("ligada", True)))
+    except rotinas.ErroRotina as e:
+        raise Erro(400, str(e))
+    h._json({"rotina": _rotina_publica(r)})
+
+
+@rota("DELETE", "/api/rotinas/<rid>")
+def r_rotina_apagar(h: Manipulador, rid):
+    rotinas.apagar(rid)
+    h._json({"ok": True})
+
+
+@rota("POST", "/api/rotinas/<rid>/rodar")
+def r_rotina_rodar(h: Manipulador, rid):
+    try:
+        h._json(rotinas.rodar(rid, "manual"))
+    except rotinas.ErroRotina as e:
+        raise Erro(400, str(e))
+
+
+@rota("GET", "/api/avisos")
+def r_avisos(h: Manipulador):
+    lista, total = rotinas.avisos_desde(int(h.query().get("desde") or 0))
+    h._json({"avisos": lista, "total": total})
+
+
 # ======================= principal =======================
 
 _servidor: ThreadingHTTPServer | None = None
@@ -1166,12 +1523,25 @@ def main() -> int:
         threading.Thread(target=_vigia_inatividade, args=(a.fechar_sem_janela,), daemon=True).start()
     if a.pai:
         threading.Thread(target=_vigiar_janela, args=(a.pai,), daemon=True).start()
+    relogio = rotinas.Relogio()
+    relogio.start()
+    marca = config.DADOS / "servidor.json"  # o rodar_rotina.py do Agendador acha o app aberto por aqui
+    try:
+        marca.write_text(json.dumps({"porta": a.porta, "pid": os.getpid()}), encoding="utf-8")
+    except OSError:
+        pass
     try:
         _servidor.serve_forever(poll_interval=0.3)
     except KeyboardInterrupt:
         pass
     finally:
+        relogio.parar.set()
         _servidor.server_close()
+        try:
+            if json.loads(marca.read_text(encoding="utf-8")).get("pid") == os.getpid():
+                marca.unlink()
+        except (OSError, ValueError):
+            pass
     return _codigo_saida["valor"]
 
 

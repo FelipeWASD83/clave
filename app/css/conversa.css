@@ -209,3 +209,64 @@ body[data-letra="sans"] .msg-claude .resposta { font-family: var(--sans); line-h
   :root { --t-saudacao: 34px; }
   .balao { max-width: 92%; }
 }
+
+/* ---------- fluxos e plano (cartões dentro da conversa) ---------- */
+.fluxo { border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel); overflow: hidden; }
+.fluxo.proposta, .fluxo.plano:not(.salvo) { border-color: var(--acao); box-shadow: 0 0 0 3px var(--acao-suave); }
+.fluxo-cab { display: flex; align-items: center; gap: 10px; padding: 12px 14px; list-style: none; }
+.fluxo-cab::-webkit-details-marker { display: none; }
+.fluxo-cab .ic svg { width: 20px; height: 20px; color: var(--acao); display: block; }
+.fluxo-cab b { display: block; font-weight: 600; }
+.fluxo-cab .sobre { display: block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--texto-3); }
+.fluxo-cab .espaco { flex: 1; }
+.fluxo-objetivo { margin: 0; padding: 0 14px 10px; color: var(--texto-2); font-size: 14px; }
+.fluxo-etapas { display: grid; border-top: 1px solid var(--linha); }
+.fluxo-etapa { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--linha); }
+.fluxo-etapa:last-child { border-bottom: 0; }
+.fluxo-etapa.paralela { box-shadow: inset 3px 0 0 var(--acao-suave); }
+.fluxo-etapa.tirada .textos, .fluxo-etapa.tirada .controles > :not(.icone-botao) { opacity: .4; text-decoration: line-through; }
+.fluxo-etapa .num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--papel-2); font-family: var(--mono); font-size: 12px; color: var(--texto-2); }
+.fluxo-etapa .textos { display: grid; gap: 3px; min-width: 0; }
+.fluxo-etapa .textos small { color: var(--texto-3); }
+.fluxo-etapa .etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.fluxo-etapa .etiqueta svg { width: 13px; height: 13px; vertical-align: -2px; margin-right: 3px; }
+.fluxo-etapa .controles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; max-width: 380px; }
+.fluxo-etapa.viva { display: block; padding: 0; }
+.fluxo-etapa.viva > summary { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.fluxo-etapa.viva > summary::-webkit-details-marker { display: none; }
+.fluxo-etapa.viva .textos { flex: 1; }
+.fluxo-etapa .status svg { width: 18px; height: 18px; display: block; color: var(--texto-4); }
+.fluxo-etapa[data-status="rodando"] .status svg { color: var(--acao); animation: girar 1.4s linear infinite; }
+.fluxo-etapa[data-status="concluida"] .status svg { color: var(--sucesso); }
+.fluxo-etapa[data-status="erro"] .status svg { color: var(--erro); }
+.etapa-area { display: grid; gap: 10px; padding: 4px 14px 14px 46px; font-size: 14.5px; }
+.etapa-area .resposta { font-size: 15px; }
+.fluxo-rodape { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(--linha); background: var(--papel-2); font-size: 14px; }
+.teto-fluxo { display: flex; align-items: center; gap: 8px; color: var(--texto-2); }
+.fluxo > .ajuda { display: block; padding: 8px 14px 12px; }
+.fluxo .aprovacao-botoes { border-top: 1px solid var(--linha); }
+.entrada.mini { width: auto; min-width: 0; padding: 4px 8px; font-size: 13px; }
+input.entrada.mini[type="number"] { width: 84px; }
+.plano-corpo { padding: 4px 16px 12px; border-top: 1px solid var(--linha); max-height: 420px; overflow: auto; }
+.cartao-carregando { min-height: 8px; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* aprovação: "sempre" com regra editável */
+.aprovacao-regra { display: grid; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--linha); background: var(--acao-suave); }
+.aprovacao-regra label { display: grid; gap: 4px; font-size: 13.5px; }
+.aprovacao-regra .entrada { font-size: 13px; }
+.aprovacao-botoes-mini { display: flex; gap: 8px; flex-wrap: wrap; }
+.etiqueta-etapa { display: inline-block; margin-bottom: 2px; font-family: var(--mono); font-size: 11.5px; color: var(--acao); }
+
+/* lista de comandos (/ajuda) */
+.lista-comandos { display: grid; gap: 12px; }
+.item-comando { display: grid; grid-template-columns: minmax(160px, 260px) 1fr; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--linha); font-size: 14px; }
+.item-comando code { font-family: var(--mono); font-size: 13px; color: var(--acao); overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+  .fluxo-etapa { grid-template-columns: 24px minmax(0, 1fr); }
+  .fluxo-etapa .controles { grid-column: 1 / -1; justify-content: flex-start; max-width: none; }
+  .etapa-area { padding-left: 14px; }
+  .item-comando { grid-template-columns: 1fr; gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .fluxo-etapa[data-status="rodando"] .status svg { animation: none; } }

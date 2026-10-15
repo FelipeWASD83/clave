@@ -122,6 +122,7 @@ export function menu(ancora, itens, { alinhar = 'esquerda', acima = false } = {}
   const w = m.offsetWidth, h = m.offsetHeight;
   let x = alinhar === 'direita' ? r.right - w : r.left;
   let y = acima ? r.top - h - 6 : r.bottom + 6;
+  if (acima && y < 8 && r.bottom + 6 + h <= innerHeight - 8) y = r.bottom + 6;  // não cabe em cima: abre embaixo
   if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
   if (y < 8) y = 8;
   x = Math.min(Math.max(8, x), innerWidth - w - 8);

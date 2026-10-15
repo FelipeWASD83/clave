@@ -76,15 +76,26 @@ def _frontmatter(texto: str) -> dict:
 
 
 def skills(pasta: str | Path | None) -> list[dict]:
-    """Skills disponíveis: da pasta de trabalho para cima, depois as pessoais. A mais próxima vence."""
-    bases: list[Path] = []
+    """Skills disponíveis: da pasta de trabalho para cima, as pessoais, as dos plugins ligados e as do app.
+
+    A mais próxima vence. As de plugin ganham o prefixo "plugin:" (como no Claude Code) e ficam de fora
+    quando a pasta ou a pessoa já tem uma skill com o mesmo nome.
+    """
+    bases: list[tuple[str, str, Path]] = []
     if pasta:
         for d in reversed(_ancestrais(Path(pasta))):
-            bases.append(d / ".claude" / "skills")
-    bases.append(Path.home() / ".claude" / "skills")
-    bases.append(SKILLS_DO_APP)  # as que vêm com o Clave (ver-video), as mais fracas: perdem para as da pasta
+            bases.append(("pasta", "", d / ".claude" / "skills"))
+    bases.append(("pessoal", "", Path.home() / ".claude" / "skills"))
+    try:
+        import plugins
+        for nome_plugin, d in plugins.partes("skills"):
+            bases.append((f"plugin:{nome_plugin}", nome_plugin, d))
+    except Exception:  # plugin quebrado não pode derrubar a conversa
+        pass
+    bases.append(("clave", "", SKILLS_DO_APP))  # as que vêm com o Clave, as mais fracas
     vistas: dict[str, dict] = {}
-    for base in bases:
+    nomes_base: set = set()
+    for origem, prefixo, base in bases:
         if not base.is_dir():
             continue
         try:
@@ -100,13 +111,23 @@ def skills(pasta: str | Path | None) -> list[dict]:
             except OSError:
                 continue
             fm = _frontmatter(texto)
-            nome = str(fm.get("name") or d.name).strip()
-            if nome in vistas:
+            nome_base = str(fm.get("name") or d.name).strip()
+            nome = f"{prefixo}:{nome_base}" if prefixo else nome_base
+            if nome in vistas or (prefixo and nome_base in nomes_base):
                 continue
+            if not prefixo:
+                nomes_base.add(nome_base)
+            descricao = str(fm.get("description") or "").strip()
+            if fm.get("when_to_use"):
+                descricao = (descricao + " " + str(fm["when_to_use"]).strip()).strip()
             vistas[nome] = {
                 "nome": nome,
-                "descricao": str(fm.get("description") or "").strip(),
+                "descricao": descricao,
                 "manual": bool(fm.get("disable-model-invocation")),
+                "invocavel": fm.get("user-invocable", True) is not False,
+                "argumentos": str(fm.get("argument-hint") or ""),
+                "modelo": str(fm.get("model") or ""),
+                "origem": origem,
                 "caminho": str(arq),
                 "pasta": str(d),
             }

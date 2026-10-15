@@ -19,7 +19,8 @@ from pathlib import Path
 
 import config
 
-GERENCIADOS = ["servidor", "app", "electron", "skills", "tutoriais", "modelo-de-pasta", "ferramentas", "versao.json",
+GERENCIADOS = ["servidor", "app", "electron", "skills", "plugins", "agentes", "fluxos", "tutoriais",
+               "modelo-de-pasta", "ferramentas", "versao.json",
                "package.json", "requirements.txt", "Clave.bat", "instalar.bat", "README.md", "CHANGELOG.md", "LICENSE"]
 PASTA = config.DADOS / "atualizacao"
 _CACHE = PASTA / "checagem.json"

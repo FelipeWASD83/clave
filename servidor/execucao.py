@@ -20,8 +20,10 @@ import config
 import contexto_pasta
 import custo
 import modelos
+import fluxos
 import orcamento
 import pedido
+import permissoes
 import segredos
 from ferramentas import code as fcode
 from ferramentas import github as fgithub
@@ -31,6 +33,29 @@ from ferramentas import planilhas as fplanilhas
 
 MAX_VOLTAS = 60          # chamadas à API por envio (ferramentas incluídas)
 MUDAM_ARQUIVOS = ("escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app")
+# o que cada etapa de fluxo pode usar, conforme o "pode" dela
+POR_CAPACIDADE = {
+    "ler": {"listar_pasta", "ler_arquivo", "buscar_texto", "achar_arquivos", "excel_ler", "excel_abrir"},
+    "editar": {"escrever_arquivo", "editar_arquivo", "excel_alterar", "excel_no_app"},
+    "comandos": {"rodar_comando"},
+}
+SEMPRE = {"atualizar_tarefas", "usar_skill"}
+MODOS_PERMISSAO = {"executar_perguntar": "perguntar", "executar_aceitar": "aceitar_edicoes",
+                   "executar_livre": "livre"}
+NOMES_MODO = {"perguntar": "Perguntar", "aceitar_edicoes": "Aceitar edições", "plano": "Plano", "livre": "Livre"}
+# Aviso de modo que vai junto da mensagem para o modelo e não aparece na tela (servidor._nota_de_modo).
+MARCA_MODO, FIM_MARCA_MODO = "<modo-do-clave>", "</modo-do-clave>"
+
+PLANO = {
+    "name": "apresentar_plano",
+    "description": ("Apresenta o plano a quem usa quando ele estiver pronto, no modo Plano. A pessoa vê um "
+                    "cartão com o plano e escolhe executar (e com qual permissão) ou continuar planejando. "
+                    "Se aprovar, o modo muda e você segue executando o plano na mesma resposta."),
+    "eager_input_streaming": True,
+    "input_schema": {"type": "object", "properties": {
+        "plano": {"type": "string", "description": "O plano em Markdown: o que vai mudar, em quais arquivos, em que ordem, e como vai conferir"}},
+        "required": ["plano"]},
+}
 
 
 def _custo(modelo: str, uso: dict) -> dict:
@@ -83,6 +108,12 @@ def alguma_rodando() -> bool:
     return any(e.status in ("rodando", "esperando") for e in list(_execucoes.values()))
 
 
+def registrar(ex: "Execucao") -> None:
+    """Põe na lista uma execução que roda dentro de outra (etapa de fluxo), para a interface achar e aprovar."""
+    with _trava:
+        _execucoes[ex.id] = ex
+
+
 def _limpar_antigas() -> None:
     agora = time.time()
     with _trava:
@@ -107,6 +138,17 @@ class Execucao:
         self.mudou_arquivos = False
         self.ctx: fcode.Contexto | None = None
         self.seq_salvo = 0  # eventos até aqui já viraram mensagens salvas no banco
+        self.custo_fluxos = 0.0
+        self.ultimo_erro = ""
+        self.filhos: list["Execucao"] = []      # etapas de fluxo rodando dentro desta resposta
+        self.mae: "Execucao | None" = None      # quando esta é uma etapa de fluxo
+        self.cofre = None                       # teto do fluxo (só nas etapas)
+        self.repassar = None                    # manda os eventos da etapa para a conversa principal
+        self.regras: list = []
+        self.regras_tarefa: list = [permissoes.Regra("allow", r, "comando")
+                                    for r in (opcoes.get("regras_tarefa") or []) if not permissoes.validar(r)]
+        self.skills_chat: list = []
+        self.pediu_ok: dict | None = None       # rotina que parou porque precisaria de OK
 
     # ---- eventos ----
     def emitir(self, ev: dict) -> None:
@@ -114,6 +156,11 @@ class Execucao:
             ev["seq"] = len(self.eventos)
             self.eventos.append(ev)
             self.cond.notify_all()
+        if self.repassar:
+            try:
+                self.repassar(dict(ev))
+            except Exception:
+                traceback.print_exc()
 
     def eventos_desde(self, desde: int, espera: float = 15.0) -> list[dict]:
         with self.cond:
@@ -121,17 +168,20 @@ class Execucao:
                 self.cond.wait(timeout=espera)
             return self.eventos[desde:]
 
-    def decidir(self, tool_id: str, decisao: str, texto: str = "") -> bool:
+    def decidir(self, tool_id: str, decisao: str, texto: str = "", dados: dict | None = None) -> bool:
         a = self.aprovacoes.get(tool_id)
         if not a or a["evento"].is_set():
             return False
         a["decisao"] = decisao
         a["texto"] = texto
+        a["dados"] = dados or {}
         a["evento"].set()
         return True
 
     def interromper(self) -> None:
         self.parar.set()
+        for f in list(self.filhos):
+            f.interromper()
         for a in self.aprovacoes.values():
             a["evento"].set()
         if self.ctx and self.ctx.processo:
@@ -161,12 +211,13 @@ class Execucao:
             if self.parar.is_set() and self.status in ("rodando", "esperando", "concluida"):
                 self.status = "parada"
             self.fim_em = time.time()
-            self.emitir({"tipo": "fim", "status": self.status, "custo": round(self.custo_total, 6),
-                         "mudou_arquivos": self.mudou_arquivos})
+            self.emitir({"tipo": "fim", "status": self.status, "custo": round(self.custo_total + self.custo_fluxos, 6),
+                         "mudou_arquivos": self.mudou_arquivos, "pediu_ok": self.pediu_ok})
             _limpar_antigas()
 
     def _erro(self, mensagem: str, codigo: str) -> None:
         self.status = "erro"
+        self.ultimo_erro = mensagem
         self.emitir({"tipo": "erro", "mensagem": mensagem, "codigo": codigo})
         conv = banco.conversa(self.conversa_id)
         if conv and conv.get("folha_id"):
@@ -180,6 +231,8 @@ class Execucao:
         cfg = config.carregar()
         conv = banco.conversa(self.conversa_id)
         modo = conv["modo"]
+        if modo == "etapa":  # etapa de fluxo: trabalha como o modo da conversa principal
+            modo = (conv.get("ajustes") or {}).get("modo_base") or "chat"
         op = {**self.op, **AJUDANTES.get(modo, {})}
         if os.environ.get("CLAVE_FORCAR_MODELO"):  # só para testes: tudo num modelo barato
             op["modelo"] = os.environ["CLAVE_FORCAR_MODELO"]
@@ -187,25 +240,50 @@ class Execucao:
         modelo = op.get("modelo") or cfg.get("modelo_code" if modo == "code" else "modelo_chat")
         cli = cliente()
 
+        etapa = bool(op.get("etapa_de_fluxo"))
+        pode = set(op.get("pode") or []) if etapa else None
         ferramentas_cliente: list[dict] = []
+        pasta = Path(conv["pasta"]) if modo == "code" and conv.get("pasta") else None
+        self.regras = permissoes.coletar(cfg, pasta, self.regras_tarefa)
         if modo == "code":
-            pasta = Path(conv["pasta"])
-            if not pasta.is_dir():
+            if not pasta or not pasta.is_dir():
                 raise RuntimeError(f"A pasta de trabalho não existe mais: {pasta}")
             skills = contexto_pasta.skills(pasta)
+            mae = self.mae
             self.ctx = fcode.Contexto(raiz=pasta.resolve(), protegidos=list(cfg.get("protegidos") or []),
-                                      execucao_id=self.id, conversa_id=self.conversa_id, emitir=self.emitir,
-                                      parar=self.parar, skills=skills)
-            self.ctx.lidos |= _lidos_antes(self.conversa_id)
-            ferramentas_cliente += fcode.definicoes(com_skills=bool(skills))
-        if modo in ("chat", "code"):
+                                      execucao_id=mae.id if mae else self.id,  # o Desfazer da conversa cobre as etapas
+                                      conversa_id=mae.conversa_id if mae else self.conversa_id,
+                                      emitir=self.emitir, parar=self.parar, skills=skills)
+            self.ctx.regras = self.regras
+            if not etapa:
+                self.ctx.lidos |= _lidos_antes(self.conversa_id)
+            defs = fcode.definicoes(com_skills=bool(skills))
+            if pode is not None:
+                liberadas = set(SEMPRE).union(*(POR_CAPACIDADE[c] for c in pode if c in POR_CAPACIDADE))
+                defs = [d for d in defs if d["name"] in liberadas]
+            ferramentas_cliente += defs
+            if op.get("permissao") == "plano" and not etapa and not op.get("rotina"):
+                ferramentas_cliente.append(dict(PLANO))
+        elif modo == "chat":
+            self.skills_chat = [s for s in contexto_pasta.skills(None)]
+            if self.skills_chat:
+                ferramentas_cliente.append(fcode.FERRAMENTAS["usar_skill"]["def"])
+        if modo in ("chat", "code") and not etapa:
             ferramentas_cliente += fplanilhas.definicoes()
-        if modo in ("chat", "code") and op.get("github") and cfg.get("github_origem"):
+        if modo in ("chat", "code") and op.get("github") and cfg.get("github_origem") and not etapa:
             ferramentas_cliente += fgithub.definicoes(escrita=bool(cfg.get("github_escrita")))
+        if (modo in ("chat", "code") and not etapa and not op.get("rotina") and cfg.get("fluxos_ligados", True)
+                and not permissoes.nega(self.regras, "Fluxo")):
+            ferramentas_cliente.append(fluxos.definicao(str(pasta) if pasta else None))
         mcp = []
-        for m in (cfg.get("conectores_mcp") or []) if modo in ("chat", "code") else []:
+        for m in (cfg.get("conectores_mcp") or []) if modo in ("chat", "code") and not etapa else []:
             if m.get("ligado") and m.get("url") and m.get("nome"):
-                mcp.append({"nome": m["nome"], "url": m["url"], "token": segredos.ler(f"mcp:{m['nome']}")})
+                liberado, desligadas = permissoes.mcp_filtrado(self.regras, m["nome"])
+                if liberado:
+                    mcp.append({"nome": m["nome"], "url": m["url"], "token": segredos.ler(f"mcp:{m['nome']}"),
+                                "desligadas": desligadas})
+        busca_web = bool(op.get("busca_web")) and not permissoes.web_negada(self.regras)
+        bloqueados = permissoes.dominios_bloqueados(self.regras)
 
         pausas = 0
         extra_desligados: set = set()
@@ -217,8 +295,11 @@ class Execucao:
             if not ok:
                 self._erro(motivo, "teto")
                 return
+            if self.cofre is not None and self.cofre.estourou():
+                self.emitir({"tipo": "aviso", "mensagem": f"{self.cofre.rotulo} chegou ao teto de gasto aprovado e parou."})
+                return
             teto_tarefa = float(cfg.get("teto_tarefa_code_usd") or 0)
-            if modo == "code" and teto_tarefa and self.custo_total >= teto_tarefa:
+            if modo == "code" and not etapa and teto_tarefa and self.custo_total >= teto_tarefa:
                 self.emitir({"tipo": "aviso", "mensagem": (
                     f"Esta tarefa chegou ao teto por tarefa (US$ {teto_tarefa:.2f}) e foi pausada. Mande "
                     "\"continue\" para seguir, ou aumente o teto em Configurações > Limite de gasto.")})
@@ -232,7 +313,8 @@ class Execucao:
                 modelo=modelo, esforco=op.get("esforco") or "", pensar=bool(op.get("pensar", True)),
                 mostrar_raciocinio=bool(op.get("mostrar_raciocinio", cfg.get("mostrar_raciocinio", True))),
                 modo=modo, sistema=conv.get("sistema") or "", mensagens=mensagens,
-                ferramentas_cliente=ferramentas_cliente, cfg=cfg, busca_web=bool(op.get("busca_web")),
+                ferramentas_cliente=ferramentas_cliente, cfg=cfg, busca_web=busca_web,
+                dominios_bloqueados=bloqueados,
                 memoria_ligada=(modo == "memoria") or (modo in ("chat", "code") and bool(cfg.get("memoria_ligada"))),
                 mcp=mcp, rapido=bool(op.get("rapido")),
                 extra_desligados=extra_desligados)
@@ -260,6 +342,8 @@ class Execucao:
             modelo_resp = final.model or modelo
             c = _custo(modelo_resp, uso)
             self.custo_total += c["usd"]
+            if self.cofre is not None:
+                self.cofre.somar(c["usd"])
             pai = caminho[-1]["id"] if caminho else None
             meta = {"stop": final.stop_reason}
             if final.stop_reason == "refusal":
@@ -275,7 +359,11 @@ class Execucao:
             elif caminho:
                 m0 = caminho[-1]
                 banco.atualizar_meta(m0["id"], {**(m0.get("meta") or {}), **meta})
-            banco.registrar_uso(self.conversa_id, msg["id"] if msg else None, modelo_resp, modo, c)
+            if self.mae is not None:  # o gasto da etapa conta na conversa principal, como "fluxo"
+                banco.registrar_uso(self.mae.conversa_id, None, modelo_resp, "fluxo", c)
+            else:
+                banco.registrar_uso(self.conversa_id, msg["id"] if msg else None, modelo_resp,
+                                    "rotina" if op.get("rotina") else modo, c)
             sit = orcamento.situacao()
             self.emitir({"tipo": "uso", "custo": c, "custo_execucao": round(self.custo_total, 6),
                          "contexto": custo.contexto_usado(uso) + int(uso.get("output_tokens") or 0),
@@ -423,18 +511,49 @@ class Execucao:
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": saida[:4000]})
             return _res(tid, saida)
 
+        if nome == "executar_fluxo":
+            return self._fluxo(tid, entrada or {}, cfg, modo)
+
+        if nome == "apresentar_plano":
+            return self._plano(tid, entrada or {})
+
+        if nome == "usar_skill" and self.ctx is None:
+            s = contexto_pasta.conteudo_skill(self.skills_chat, str((entrada or {}).get("nome", "")).strip().lstrip("/"))
+            if not s:
+                nomes = ", ".join(x["nome"] for x in self.skills_chat) or "nenhuma"
+                self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": "skill não encontrada"})
+                return _res(tid, f"Skill não encontrada. Disponíveis: {nomes}", True)
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": s["nome"]})
+            return _res(tid, f"Skill \"{s['nome']}\" (aqui no chat não há pasta nem terminal: siga as partes que "
+                             f"não dependem deles).\n\n{s['texto']}")
+
         if nome in fgithub.FERRAMENTAS:
             risco = fgithub.FERRAMENTAS[nome]["risco"]
             if risco == "github_escrita":
-                decisao = self._pedir_aprovacao(tid, nome, entrada, "publica algo no GitHub", None)
-                if decisao != "permitir":
-                    return self._recusado(tid, nome)
+                acao, regra = permissoes.avaliar(self.regras, [("GitHub", nome)], None)
+                if acao == "deny":
+                    self._log(nome, nome, "negar", "regra", regra)
+                    return _res(tid, f"Bloqueado pelo Clave: {regra.descrever()}.", True)
+                if acao != "allow" or permissoes.generica(regra):
+                    if self.op.get("rotina"):
+                        return self._rotina_parou(tid, nome, nome, "publica algo no GitHub", f"GitHub({nome})")
+                    decisao = self._pedir_aprovacao(tid, nome, entrada, "publica algo no GitHub", None,
+                                                    extra={"sugestao": f"GitHub({nome})", "pode_sempre": True})
+                    if not self._aplicar_escopo(decisao, tid, nome, "publica algo no GitHub"):
+                        self._log(nome, nome, "recusar", "voce")
+                        return self._recusado(tid, nome)
+                    self._log(nome, nome, "permitir", "voce")
+                else:
+                    self._log(nome, nome, "auto", "regra", regra)
             saida = fgithub.executar(nome, entrada or {})
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": saida[:300]})
             return _res(tid, saida)
 
         if modo != "code" or self.ctx is None or nome not in fcode.FERRAMENTAS:
             return _res(tid, f"Ferramenta não disponível aqui: {nome}", True)
+        pode = self.op.get("pode") if self.op.get("etapa_de_fluxo") else None
+        if pode is not None and nome not in SEMPRE and not any(nome in POR_CAPACIDADE.get(c, ()) for c in pode):
+            return _res(tid, "Esta etapa do fluxo não pode usar esta ferramenta.", True)
 
         erro = fcode.validar(nome, entrada)
         if erro:
@@ -444,21 +563,29 @@ class Execucao:
                                          ensure_ascii=False), True)
 
         permissao = self.op.get("permissao") or cfg.get("permissao_code") or "perguntar"
-        decisao, motivo = fcode.classificar(nome, entrada, self.ctx, permissao, self.liberados)
+        det = fcode.decidir(nome, entrada, self.ctx, permissao, self.liberados)
+        decisao, motivo = det["decisao"], det["motivo"]
+        alvo = _resumo_alvo(nome, entrada, self.ctx)
         if decisao == "negar":
+            self._log(nome, alvo, "negar", det["origem"], det.get("regra"))
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": f"Bloqueado: {motivo}"})
             return _res(tid, f"Bloqueado pelo Clave: {motivo}.", True)
         if decisao == "perguntar":
+            sugestao = permissoes.sugerir(nome, entrada, self.ctx)
+            if self.op.get("rotina"):
+                return self._rotina_parou(tid, nome, alvo, motivo, sugestao)
             previa = _previa(nome, entrada, self.ctx)
-            d = self._pedir_aprovacao(tid, nome, entrada, motivo, previa)
-            if d == "permitir_sempre":
-                # "nesta tarefa" vale só para editar dentro da pasta e para comandos comuns: fora da pasta,
-                # comando perigoso e comando que cita protegido continuam perguntando um por um
-                risco = fcode.FERRAMENTAS[nome]["risco"]
-                if motivo in ("mudar arquivo", "rodar comando"):
-                    self.liberados.add(risco)
-            elif d != "permitir":
+            # perigoso e arquivo protegido não ganham "sempre": cada um pede OK de novo
+            pode_sempre = det["origem"] not in ("perigoso", "protegido") and sugestao is not None
+            d = self._pedir_aprovacao(tid, nome, entrada, motivo, previa,
+                                      extra={"sugestao": sugestao, "pode_sempre": pode_sempre,
+                                             "pode_tarefa": det["origem"] not in ("perigoso", "protegido")})
+            if not self._aplicar_escopo(d, tid, nome, motivo):
+                self._log(nome, alvo, "recusar", "voce")
                 return self._recusado(tid, nome)
+            self._log(nome, alvo, "permitir", "voce", (self.aprovacoes[tid].get("dados") or {}).get("regra"))
+        else:
+            self._log(nome, alvo, "auto", det["origem"], det.get("regra"))
 
         self.emitir({"tipo": "ferramenta_rodando", "id": tid, "nome": nome})
         try:
@@ -474,12 +601,14 @@ class Execucao:
                      "resumo": resumo[:4000]})
         return _res(tid, saida, erro_flag)
 
-    def _pedir_aprovacao(self, tid, nome, entrada, motivo, previa) -> str:
+    def _pedir_aprovacao(self, tid, nome, entrada, motivo, previa, extra: dict | None = None,
+                         tipo: str = "aprovacao") -> str:
         ev = threading.Event()
-        self.aprovacoes[tid] = {"evento": ev, "decisao": None, "texto": ""}
+        self.aprovacoes[tid] = {"evento": ev, "decisao": None, "texto": "", "dados": {}, "tipo": tipo,
+                                "pedido": {"tipo": tipo, "id": tid, "nome": nome, "entrada": entrada, "motivo": motivo,
+                                           "previa": previa, **(extra or {})}}
         self.status = "esperando"
-        self.emitir({"tipo": "aprovacao", "id": tid, "nome": nome, "entrada": entrada, "motivo": motivo,
-                     "previa": previa})
+        self.emitir(dict(self.aprovacoes[tid]["pedido"]))
         ev.wait()
         self.status = "rodando"
         a = self.aprovacoes[tid]
@@ -488,6 +617,121 @@ class Execucao:
             a["texto"] = "A tarefa foi interrompida."
         self.emitir({"tipo": "aprovacao_decidida", "id": tid, "decisao": a["decisao"]})
         return a["decisao"] or "recusar"
+
+    def _aplicar_escopo(self, decisao: str, tid: str, nome: str, motivo: str) -> bool:
+        """Aplica o "nesta tarefa / sempre nesta pasta / sempre" do cartão. Devolve se a ação foi permitida."""
+        if decisao == "permitir":
+            return True
+        if decisao not in ("permitir_sempre", "permitir_tarefa", "permitir_pasta", "permitir_app"):
+            return False
+        dados = (self.aprovacoes.get(tid) or {}).get("dados") or {}
+        texto_regra = str(dados.get("regra") or "").strip()
+        if decisao in ("permitir_sempre", "permitir_tarefa"):
+            risco = (fcode.FERRAMENTAS.get(nome) or {}).get("risco")
+            if motivo in ("mudar arquivo", "rodar comando") and risco:
+                self.liberados.add(risco)
+            elif texto_regra and not permissoes.validar(texto_regra):
+                self._nova_regra(permissoes.Regra("allow", texto_regra, "tarefa"))
+            return True
+        if not texto_regra or permissoes.validar(texto_regra):
+            self.emitir({"tipo": "aviso", "mensagem": "A regra não foi salva (" + (permissoes.validar(texto_regra) or
+                         "vazia") + "); a ação foi permitida só desta vez."})
+            return True
+        try:
+            if decisao == "permitir_pasta":
+                if not self.ctx:
+                    raise ValueError("não há pasta de trabalho")
+                arq = permissoes.salvar_na_pasta(self.ctx.raiz, "allow", texto_regra)
+                self._nova_regra(permissoes.Regra("allow", texto_regra, "pasta", str(arq)))
+            else:
+                permissoes.salvar_no_app("allow", texto_regra)
+                self._nova_regra(permissoes.Regra("allow", texto_regra, "app"))
+            self.emitir({"tipo": "regra_salva", "regra": texto_regra,
+                         "escopo": "pasta" if decisao == "permitir_pasta" else "app"})
+        except (ValueError, OSError) as e:
+            self.emitir({"tipo": "aviso", "mensagem": f"A regra não foi salva ({e}); a ação foi permitida só desta vez."})
+        return True
+
+    def _nova_regra(self, regra) -> None:
+        alvo = self.mae if self.mae is not None else self
+        for ex in [alvo, *alvo.filhos]:
+            if regra not in ex.regras:
+                ex.regras.append(regra)
+        if regra.escopo == "tarefa" and regra not in alvo.regras_tarefa:
+            alvo.regras_tarefa.append(regra)
+
+    def _log(self, nome, alvo, decisao, origem, regra=None) -> None:
+        try:
+            banco.registrar_permissao(self.mae.conversa_id if self.mae else self.conversa_id, self.id, nome,
+                                      str(alvo or ""), decisao, origem or "", regra if isinstance(regra, str) or regra
+                                      is None else getattr(regra, "texto", None))
+        except Exception:
+            traceback.print_exc()
+
+    def _rotina_parou(self, tid, nome, alvo, motivo, sugestao) -> dict:
+        """Numa rotina ninguém responde: em vez de perguntar, ela para e conta o que precisaria de OK."""
+        self.pediu_ok = {"ferramenta": nome, "alvo": str(alvo or "")[:300], "motivo": motivo, "sugestao": sugestao}
+        self._log(nome, alvo, "negar", "rotina")
+        self.emitir({"tipo": "rotina_parou", **self.pediu_ok})
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True,
+                     "resumo": f"A rotina parou: precisaria do seu OK ({motivo})"})
+        self.parar.set()
+        return _res(tid, "A rotina parou: esta ação precisaria do OK de quem usa, e numa rotina ninguém responde. "
+                         "Crie uma regra de permissão para ela, se quiser que a rotina faça isso sozinha.", True)
+
+    def _fluxo(self, tid: str, entrada: dict, cfg: dict, modo: str) -> dict:
+        nome = "executar_fluxo"
+        if self.op.get("rotina") or self.op.get("etapa_de_fluxo"):
+            return _res(tid, "Fluxo não roda aqui (rotina ou dentro de outro fluxo).", True)
+        regra = permissoes.nega(self.regras, "Fluxo")
+        if regra:
+            self._log(nome, "fluxo", "negar", "regra", regra)
+            return _res(tid, f"Bloqueado pelo Clave: {regra.descrever()}.", True)
+        conv = banco.conversa(self.conversa_id)
+        pasta = conv.get("pasta") if modo == "code" else None
+        modelo = self.op.get("modelo") or cfg.get("modelo_code" if modo == "code" else "modelo_chat")
+        try:
+            proposta = fluxos.normalizar(entrada, fid=tid, pasta=pasta, modelo_padrao=modelo, regras=self.regras)
+        except fluxos.ErroFluxo as e:
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": str(e)})
+            return _res(tid, f"Fluxo inválido: {e}. Corrija e proponha de novo.", True)
+        banco.salvar_fluxo({**proposta, "conversa_id": self.conversa_id, "execucao_id": self.id})
+        d = self._pedir_aprovacao(tid, nome, entrada, "fluxo", None, extra={"proposta": proposta},
+                                  tipo="fluxo_proposta")
+        if d != "permitir":
+            proposta["status"] = "recusado"
+            banco.salvar_fluxo({**proposta, "conversa_id": self.conversa_id, "execucao_id": self.id})
+            self._log(nome, proposta["titulo"], "recusar", "voce")
+            return self._recusado(tid, nome)
+        try:
+            proposta = fluxos.aplicar_ajustes(proposta, (self.aprovacoes[tid].get("dados") or {}))
+        except fluxos.ErroFluxo as e:
+            return _res(tid, f"O fluxo não rodou: {e}.", True)
+        self._log(nome, proposta["titulo"], "permitir", "voce")
+        rodada = fluxos.Rodada(self, proposta, cfg)
+        relatorio = rodada.rodar()
+        self.custo_fluxos += float(proposta.get("custo_usd") or 0)
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": proposta["status"] == "erro",
+                     "resumo": f"Fluxo {proposta['status']}: US$ {proposta['custo_usd']:.4f}"})
+        return _res(tid, relatorio, proposta["status"] == "erro")
+
+    def _plano(self, tid: str, entrada: dict) -> dict:
+        nome = "apresentar_plano"
+        d = self._pedir_aprovacao(tid, nome, entrada, "plano", None, extra={"plano": str(entrada.get("plano") or "")},
+                                  tipo="plano_proposto")
+        novo = MODOS_PERMISSAO.get(d or "")
+        if not novo:
+            texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""
+            self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": "continuar planejando"})
+            return _res(tid, "Quem usa quer continuar planejando antes de executar." +
+                        (f" Comentário: {texto}" if texto else " Pergunte o que mudar no plano."))
+        self.op["permissao"] = novo
+        if self.ctx is not None:
+            self._log(nome, "plano", "permitir", "voce")
+        self.emitir({"tipo": "modo_mudou", "permissao": novo})
+        self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": False, "resumo": f"plano aprovado ({NOMES_MODO[novo]})"})
+        return _res(tid, f"Plano aprovado por quem usa. O modo de permissão agora é {NOMES_MODO[novo]}: execute o "
+                         "plano, passo a passo, conferindo o resultado no fim.")
 
     def _recusado(self, tid, nome) -> dict:
         texto = (self.aprovacoes.get(tid) or {}).get("texto") or ""
@@ -501,6 +745,18 @@ def _res(tid: str, conteudo, erro=False) -> dict:
     if erro:
         r["is_error"] = True
     return r
+
+
+def _resumo_alvo(nome: str, e: dict, ctx: fcode.Contexto) -> str:
+    e = e or {}
+    if nome == "rodar_comando":
+        return str(e.get("comando", ""))[:500]
+    partes = []
+    for campo in ("caminho", "saida"):
+        if isinstance(e.get(campo), str) and e.get(campo):
+            p = ctx.resolver(e[campo])
+            partes.append(ctx.relativo(p) if ctx.dentro(p) else str(p))
+    return " → ".join(partes) or nome
 
 
 def _previa(nome: str, e: dict, ctx: fcode.Contexto) -> str | None:
@@ -603,6 +859,15 @@ def iniciar(conversa_id: str, opcoes: dict) -> Execucao:
     return ex
 
 
+def iniciar_sem_thread(conversa_id: str, opcoes: dict) -> Execucao:
+    """Registra a execução mas deixa quem chamou decidir onde rodar (as rotinas acompanham o fim)."""
+    with _trava:
+        ex = Execucao(conversa_id, opcoes)
+        _execucoes[ex.id] = ex
+        _por_conversa[conversa_id] = ex.id
+    return ex
+
+
 # ---------- títulos ----------
 
 def gerar_titulo(conversa_id: str) -> None:
@@ -642,7 +907,8 @@ def _texto_puro(m: dict) -> str:
     c = m["conteudo"]
     if isinstance(c, str):
         return c
-    return "\n".join(b.get("text", "") for b in c if isinstance(b, dict) and b.get("type") == "text")
+    return "\n".join(b.get("text", "") for b in c if isinstance(b, dict) and b.get("type") == "text"
+                     and not b.get("text", "").startswith(MARCA_MODO))
 
 
 # ---------- desfazer (modo Code) ----------

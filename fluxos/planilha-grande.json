@@ -1,0 +1,13 @@
+{
+  "nome": "Planilha grande",
+  "descricao": "Haiku 5.5 lê e resume a planilha, Sonnet 5.5 planeja e faz as mudanças numa cópia, Haiku confere os números.",
+  "pede": "a planilha e o que você quer fazer nela",
+  "etapas": [
+    {"nome": "Entender a planilha", "modelo": "haiku", "esforco": "medium",
+     "tarefa": "Leia a planilha e descreva as abas, as colunas, os tipos de dado e o que parece estranho.", "pode": ["ler"]},
+    {"nome": "Fazer as mudanças", "agente": "executor", "modelo": "sonnet", "esforco": "high",
+     "tarefa": "Faça o que foi pedido salvando numa cópia da planilha (nunca por cima da original sem pedir).", "pode": ["ler", "editar"]},
+    {"nome": "Conferir os números", "agente": "testador", "modelo": "haiku", "esforco": "medium",
+     "tarefa": "Abra a cópia e confira totais, fórmulas e linhas: bate com a original? Liste o que não bate.", "pode": ["ler"]}
+  ]
+}

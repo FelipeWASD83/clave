@@ -21,6 +21,7 @@ from pathlib import Path
 
 import banco
 import contexto_pasta
+import permissoes
 from ferramentas import excel
 
 IGNORAR_PASTAS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".mypy_cache", ".pytest_cache",
@@ -85,6 +86,7 @@ class Contexto:
     criados: set = field(default_factory=set)
     tarefas: list = field(default_factory=list)
     skills: list = field(default_factory=list)
+    regras: list = field(default_factory=list)
     processo: subprocess.Popen | None = None
 
     def resolver(self, caminho: str) -> Path:
@@ -252,50 +254,79 @@ def definicoes(com_skills: bool) -> list[dict]:
 
 def classificar(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) -> tuple[str, str]:
     """Devolve ("auto" | "perguntar" | "negar", motivo)."""
+    d = decidir(nome, entrada, ctx, modo, liberados)
+    return d["decisao"], d["motivo"]
+
+
+def decidir(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) -> dict:
+    """Decide se a ferramenta roda sozinha, pergunta ou é recusada, e por quê.
+
+    Ordem: arquivo protegido (sempre recusado), regra de negar, modo Plano, regra de perguntar, comando
+    perigoso ou que cita protegido (pergunta, a não ser que uma regra escrita para ele permita), regra de
+    permitir, "nesta tarefa", e por fim o modo de permissão. Devolve {decisao, motivo, origem, regra}.
+    """
+    def r(decisao, motivo="", origem="modo", regra=None):
+        return {"decisao": decisao, "motivo": motivo, "origem": origem, "regra": regra.texto if regra else None,
+                "escopo": regra.escopo if regra else None}
+
     f = FERRAMENTAS.get(nome)
     if not f:
-        return "negar", "ferramenta desconhecida"
+        return r("negar", "ferramenta desconhecida", "clave")
     risco = f["risco"]
     if nome in ("atualizar_tarefas", "usar_skill"):
-        return "auto", ""
+        return r("auto")
 
     alvos = []
     for campo in ("caminho", "saida"):
         if isinstance(entrada.get(campo), str) and entrada.get(campo):
             alvo = ctx.resolver(entrada[campo])
-            regra = ctx.protegido(alvo)
-            if regra:
-                return "negar", f"o caminho está na lista de arquivos protegidos ({regra})"
+            prot = ctx.protegido(alvo)
+            if prot:
+                return r("negar", f"o caminho está na lista de arquivos protegidos ({prot})", "protegido")
             alvos.append(alvo)
 
     if nome == "excel_abrir" and alvos and alvos[0].suffix.lower() not in ABRIVEIS:
-        return "negar", "só dá para abrir planilha (.xlsx, .csv), PDF, imagem ou texto; outros tipos podem executar programas"
+        return r("negar", "só dá para abrir planilha (.xlsx, .csv), PDF, imagem ou texto; outros tipos podem "
+                 "executar programas", "clave")
+
+    acao, regra = permissoes.avaliar(ctx.regras, permissoes.alvos(nome, entrada, ctx.resolver), ctx.raiz)
+    if acao == "deny":
+        return r("negar", f"bloqueado pela {regra.descrever()}", "regra", regra)
 
     if risco == "comando":
         cmd = str(entrada.get("comando", ""))
         if modo == "plano":
-            return "negar", "o modo Plano só lê; troque o modo para rodar comandos"
-        if perigoso(cmd):
-            return "perguntar", "comando que pode apagar ou publicar algo"
+            return r("negar", "o modo Plano só lê; termine de investigar e apresente o plano com apresentar_plano "
+                              "(aprovado, o modo muda)")
+        if acao == "ask":
+            return r("perguntar", f"pedido pela {regra.descrever()}", "regra", regra)
+        especifica = acao == "allow" and not permissoes.generica(regra)
+        if perigoso(cmd) and not especifica:
+            return r("perguntar", "comando que pode apagar ou publicar algo", "perigoso")
         citado = _cita_protegido(cmd, ctx.protegidos)
-        if citado:
-            return "perguntar", f"o comando cita um arquivo protegido ({citado})"
+        if citado and not especifica:
+            return r("perguntar", f"o comando cita um arquivo protegido ({citado})", "protegido")
+        if acao == "allow":
+            return r("auto", "", "regra", regra)
         if modo == "livre" or "comando" in liberados:
-            return "auto", ""
-        return "perguntar", "rodar comando"
+            return r("auto", "", "tarefa" if "comando" in liberados else "modo")
+        return r("perguntar", "rodar comando")
 
-    if any(not ctx.dentro(a) for a in alvos):
-        if risco == "escrita" and modo == "plano":
-            return "negar", "o modo Plano só lê"
-        return "perguntar", "caminho fora da pasta de trabalho"
-
+    fora = any(not ctx.dentro(a) for a in alvos)
+    if risco == "escrita" and modo == "plano":
+        return r("negar", "o modo Plano só lê" + ("" if fora else "; termine de investigar e apresente o plano com "
+                                                                  "apresentar_plano (aprovado, o modo muda)"))
+    if acao == "ask":
+        return r("perguntar", f"pedido pela {regra.descrever()}", "regra", regra)
+    if acao == "allow":
+        return r("auto", "", "regra", regra)
+    if fora:
+        return r("perguntar", "caminho fora da pasta de trabalho")
     if risco == "leitura":
-        return "auto", ""
-    if modo == "plano":
-        return "negar", "o modo Plano só lê; troque o modo para editar arquivos"
+        return r("auto")
     if modo in ("aceitar_edicoes", "livre") or "escrita" in liberados:
-        return "auto", ""
-    return "perguntar", "mudar arquivo"
+        return r("auto", "", "tarefa" if "escrita" in liberados and modo not in ("aceitar_edicoes", "livre") else "modo")
+    return r("perguntar", "mudar arquivo")
 
 
 # ---------------- execução ----------------

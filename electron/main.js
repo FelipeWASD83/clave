@@ -1,6 +1,6 @@
 // Janela do Clave (Electron). Sobe o servidor Python (servidor/iniciar.py), espera ele responder e
 // abre a interface numa janela própria. Fechar a janela fecha tudo.
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell, nativeTheme } = require('electron');
+const { app, BrowserWindow, Menu, Notification, dialog, ipcMain, shell, nativeTheme } = require('electron');
 const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const http = require('http');
@@ -181,6 +181,7 @@ async function abrirJanela() {
   });
   janela.once('ready-to-show', () => janela.show());
   janela.on('close', salvarEstadoJanela);
+  janela.on('focus', () => janela?.flashFrame(false));
   janela.on('closed', () => { janela = null; });
   await janela.loadURL(`${origem}/?t=${encodeURIComponent(lerSegredoSessao())}`);
 }
@@ -204,6 +205,15 @@ ipcMain.handle('clave:reiniciar', () => {
   reabrir(); app.exit(0);
 });
 ipcMain.handle('clave:sair', () => app.quit());
+// notificação do Windows (a interface só pede quando a janela está em segundo plano); clicar traz a janela
+ipcMain.handle('clave:notificar', (_e, titulo, corpo) => {
+  if (!Notification.isSupported() || (janela && janela.isFocused())) return false;
+  const n = new Notification({ title: titulo.slice(0, 80) || 'Clave', body: corpo.slice(0, 200), icon: fs.existsSync(ICONE) ? ICONE : undefined });
+  n.on('click', () => { if (janela) { if (janela.isMinimized()) janela.restore(); janela.show(); janela.focus(); } });
+  n.show();
+  if (janela && !janela.isFocused()) janela.flashFrame(true);
+  return true;
+});
 
 app.on('before-quit', () => { saindo = true; salvarEstadoJanela(); pararServidor(); });
 app.on('window-all-closed', () => app.quit());

@@ -81,7 +81,8 @@ def ferramentas_web(modelo: str, desl: set) -> list[dict]:
 
 def montar(*, modelo: str, esforco: str, pensar: bool, mostrar_raciocinio: bool, modo: str, sistema: str,
            mensagens: list, ferramentas_cliente: list, cfg: dict, busca_web=False, memoria_ligada=False,
-           mcp: list | None = None, rapido=False, extra_desligados: set | None = None) -> tuple[dict, set]:
+           mcp: list | None = None, rapido=False, extra_desligados: set | None = None,
+           dominios_bloqueados: list | None = None) -> tuple[dict, set]:
     """Devolve (kwargs para client.beta.messages.stream, recursos opcionais usados)."""
     info = modelos.info(modelo)
     desl = desligados(modelo) | (extra_desligados or set())
@@ -159,6 +160,8 @@ def montar(*, modelo: str, esforco: str, pensar: bool, mostrar_raciocinio: bool,
         web = ferramentas_web(modelo, desl)
         if web[0]["type"].endswith("20260209"):
             usados.add("web_novo")
+        if dominios_bloqueados:  # regras WebFetch(domain:...) de negar
+            web = [{**w, "blocked_domains": list(dominios_bloqueados)} for w in web]
         tools += web
     if mcp:
         servidores = []
@@ -167,7 +170,10 @@ def montar(*, modelo: str, esforco: str, pensar: bool, mostrar_raciocinio: bool,
             if m.get("token"):
                 srv["authorization_token"] = m["token"]
             servidores.append(srv)
-            tools.append({"type": "mcp_toolset", "mcp_server_name": m["nome"]})
+            toolset = {"type": "mcp_toolset", "mcp_server_name": m["nome"]}
+            if m.get("desligadas"):  # regras mcp__conector__ferramenta de negar
+                toolset["configs"] = {f: {"enabled": False} for f in m["desligadas"]}
+            tools.append(toolset)
         kw["mcp_servers"] = servidores
         betas.append("mcp-client-2025-11-20")
     if tools:

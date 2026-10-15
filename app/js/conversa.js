@@ -13,6 +13,7 @@ import { abrirPrevia } from './previa.js';
 import { escolherPasta, criarPastaComModelo } from './pastas.js';
 import { menuConversa } from './lateral.js';
 import { pegarRascunho } from './aprender.js';
+import { cartaoAprovacao, cartaoPropostaFluxo, cartaoPlano, FluxoVivo, notificar } from './fluxo-ui.js';
 
 function saudacao() {
   const h = new Date().getHours();
@@ -186,8 +187,10 @@ class TelaConversa {
       modo: this.modo,
       opcoes: opcoesPadrao(this.modo, ajustes),
       skills: this.skills,
+      pasta: this.pasta,
       aoEnviar: (texto, anexos, op) => this.enviar(texto, anexos, op),
       aoParar: () => this.parar(),
+      aoComandoApp: (nome, args) => this.comandoApp(nome, args),
     });
     this.comp = comp;
     return comp;
@@ -217,6 +220,33 @@ class TelaConversa {
     }
   }
 
+  // comandos de barra do próprio app (/custo, /ajuda...); os outros vão para o servidor
+  async comandoApp(nome) {
+    if (nome === 'custo') {
+      try {
+        const u = await api('/uso');
+        const conv = this.id ? `Esta conversa: ${usd(this.visao?.gasto || 0)}. ` : '';
+        aviso(`${conv}Este mês: ${usd(u.orcamento.gasto)} de ${usd(u.orcamento.teto)}.`);
+      } catch (e) { aviso(e.message, 'erro'); }
+      return true;
+    }
+    if (nome === 'ajuda') {
+      const { janela } = await import('./ui.js');
+      const q = this.pasta ? `?pasta=${encodeURIComponent(this.pasta)}` : '';
+      const { comandos } = await api(`/comandos${q}`);
+      const grupos = { app: 'Do Clave', comando: 'Comandos', skill: 'Skills', fluxo: 'Fluxos' };
+      janela({ titulo: 'Comandos de barra', larga: true, corpo: el('div', { class: 'lista-comandos' },
+        el('p', { class: 'ajuda', texto: 'Digite / na caixa de mensagem para ver e escolher. Comandos e skills seus ficam em .claude/commands e .claude/skills (formato do Claude Code).' }),
+        ...Object.entries(grupos).map(([tipo, titulo]) => {
+          const itens = comandos.filter((c) => c.tipo === tipo);
+          return itens.length ? el('div', {}, el('div', { class: 'secao-titulo', texto: titulo }),
+            ...itens.map((c) => el('div', { class: 'item-comando' }, el('code', { texto: '/' + c.nome + (c.argumentos ? ' ' + c.argumentos : '') }), el('span', { texto: c.descricao })))) : null;
+        })), botoes: [{ texto: 'Fechar', classe: 'primario' }] });
+      return true;
+    }
+    return false;
+  }
+
   async regenerar(mensagemId, op) {
     try {
       const r = await api(`/conversas/${this.id}/regenerar`, { metodo: 'POST', corpo: { mensagem_id: mensagemId, opcoes: op || this.comp.opcoes() } });
@@ -238,7 +268,8 @@ class TelaConversa {
     this.comp.definirRodando(true);
     const grupo = this.grupoParaContinuar();
     this.vivo = new Vivo(this, grupo, execucaoId, desde);
-    for (const ev of this.visao?.aprovacoes_pendentes || []) this.vivo.mostrarAprovacao(ev);
+    // as das etapas de fluxo voltam junto com os eventos do fluxo
+    for (const ev of this.visao?.aprovacoes_pendentes || []) if (!ev.de_etapa) this.vivo.pedido(ev);
     if (this.visao?.tarefas?.length) this.desenharTarefas(this.visao.tarefas);
   }
 
@@ -261,10 +292,8 @@ class TelaConversa {
     if (estavaNoFim) this.rolarParaBaixo(false);
     avisar('conversas-mudaram');
     setTimeout(() => avisar('conversas-mudaram'), 2500);
-    if (ev.status === 'parada') aviso('Resposta interrompida.');
-    if (document.hidden && ev.status === 'concluida' && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification('Clave', { body: 'O Claude terminou de responder.' });
-    }
+    if (ev.status === 'parada' && !ev.pediu_ok) aviso('Resposta interrompida.');
+    if (ev.status === 'concluida') notificar('Clave', 'O Claude terminou de responder.');
   }
 
   desenharTarefas(lista) {
@@ -305,9 +334,10 @@ class TelaConversa {
     const meta = m.meta || {};
     const blocos = Array.isArray(m.conteudo) ? m.conteudo : [{ type: 'text', text: String(m.conteudo || '') }];
     const anexos = blocos.filter((b) => b.type === 'clave_anexo');
-    const texto = meta.exibir || blocos.filter((b) => b.type === 'text').map((b) => b.text).join('\n\n');
+    const texto = meta.exibir || blocos.filter((b) => b.type === 'text' && !String(b.text).startsWith('<modo-do-clave>')).map((b) => b.text).join('\n\n');
     const balao = el('div', { class: 'balao' });
-    if (meta.skill) balao.append(el('span', { class: 'skill-chamada', texto: `/${meta.skill} ` }), texto.replace(new RegExp(`^/${meta.skill}\\s*`), ''));
+    const cmd = meta.comando || meta.skill;
+    if (cmd) balao.append(el('span', { class: 'skill-chamada', texto: `/${cmd} ` }), texto.replace(/^\/\S+\s*/, ''));
     else balao.textContent = texto;
     const irmaos = m.irmaos || [m.id];
     const acoes = el('div', { class: 'acoes-msg' },
@@ -435,6 +465,7 @@ class Vivo {
     this.ferramentas = new Map(); // tool_use_id -> elemento
     this.indicador = null;
     this.agendado = new Set();
+    this.fluxos = new Map();      // fluxo -> FluxoVivo
     this.conexao = acompanhar(execucaoId, (ev) => this.evento(ev));
   }
 
@@ -544,11 +575,42 @@ class Vivo {
         break;
       }
       case 'aprovacao':
+      case 'fluxo_proposta':
+      case 'plano_proposto':
         this.tirarIndicador();
-        this.mostrarAprovacao(ev);
+        this.pedido(ev);
         break;
       case 'aprovacao_decidida':
-        this.tela.mensagensEl.querySelector(`.aprovacao[data-id="${CSS.escape(ev.id)}"]`)?.remove();
+        this.tela.mensagensEl.querySelector(`[data-id="${CSS.escape(ev.id)}"]:is(.aprovacao, .fluxo)`)?.remove();
+        break;
+      case 'fluxo_inicio': {
+        this.tirarIndicador();
+        this.tirarSalvo(ev.fluxo);
+        const f = new FluxoVivo(ev.proposta, { aoParar: () => this.tela.parar() });
+        this.fluxos.set(ev.fluxo, f);
+        const det = this.achar(ev.fluxo);
+        if (det) det.after(f.el); else this.alvo.append(f.el);
+        this.rolar();
+        break;
+      }
+      case 'etapa_inicio':
+      case 'etapa_evento':
+      case 'etapa_fim':
+      case 'fluxo_fim':
+        this.fluxos.get(ev.fluxo)?.evento(ev);
+        if (ev.tipo === 'fluxo_fim') this.mostrarIndicador();
+        break;
+      case 'modo_mudou':
+        t.comp.definirPermissao?.(ev.permissao);
+        aviso(`Plano aprovado. Permissão agora: ${{ perguntar: 'Perguntar', aceitar_edicoes: 'Aceitar edições', livre: 'Livre' }[ev.permissao] || ev.permissao}.`);
+        break;
+      case 'regra_salva':
+        aviso(`Regra salva ${ev.escopo === 'pasta' ? 'nesta pasta' : 'no Clave'}: ${ev.regra}`);
+        break;
+      case 'rotina_parou':
+        this.tirarIndicador();
+        this.alvo.append(nota(`A rotina parou: precisaria do seu OK para ${ev.motivo || 'uma ação'}${ev.alvo ? ` (${ev.alvo})` : ''}. Para ela fazer isso sozinha, crie uma regra${ev.sugestao ? `, por exemplo ${ev.sugestao}` : ''}.`, '',
+          el('a', { class: 'botao pequeno', href: '#/permissoes', texto: 'Abrir permissões' })));
         break;
       case 'ferramenta_rodando': {
         const det = this.achar(ev.id);
@@ -602,39 +664,25 @@ class Vivo {
     return this.ferramentas.get(id) || this.tela.mensagensEl.querySelector(`.ferramenta[data-tool-id="${CSS.escape(id)}"]`);
   }
 
-  mostrarAprovacao(ev) {
-    if (this.tela.mensagensEl.querySelector(`.aprovacao[data-id="${CSS.escape(ev.id)}"]`)) return;
-    const [icone, verbo, alvo] = descreverFerramenta(ev.nome, ev.entrada || {});
-    const comentario = el('input', { class: 'entrada', placeholder: 'Se recusar, diga o que prefere (opcional)' });
-    const decidir = async (decisao) => {
-      try {
-        await api(`/execucoes/${this.tela.execucaoId}/aprovar`, { metodo: 'POST', corpo: { id: ev.id, decisao, texto: comentario.value } });
-        card.remove();
-      } catch (e) { aviso(e.message, 'erro'); }
-    };
-    let previa = null;
-    if (ev.previa) previa = el('pre', { class: 'diff', html: htmlDiff(ev.previa) });
-    else if (ev.nome === 'rodar_comando') previa = el('pre', { texto: ev.entrada?.comando || '' });
-    else if (ev.entrada) previa = el('pre', { texto: JSON.stringify(ev.entrada, null, 2) });
-    const textoSempre = ev.nome === 'rodar_comando' ? 'Permitir comandos nesta tarefa' : 'Permitir edições nesta tarefa';
-    const card = el('div', { class: 'aprovacao', dados: { id: ev.id }, role: 'group', 'aria-label': 'Pedido de permissão' },
-      el('div', { class: 'aprovacao-topo' }, el('span', { html: ic('escudo') }),
-        el('div', {}, el('b', { texto: `Permitir: ${verbo}${alvo ? ' ' + String(alvo).slice(0, 120) : ''}?` }),
-          el('small', { texto: `Motivo da pergunta: ${ev.motivo || 'ação que muda algo'}.` }))),
-      previa,
-      el('div', { class: 'aprovacao-botoes' },
-        el('button', { class: 'botao pequeno primario', type: 'button', texto: 'Permitir', onclick: () => decidir('permitir') }),
-        !['mudar arquivo', 'rodar comando'].includes(ev.motivo) ? null
-          : el('button', { class: 'botao pequeno', type: 'button', texto: textoSempre, onclick: () => decidir('permitir_sempre') }),
-        comentario,
-        el('button', { class: 'botao pequeno perigo', type: 'button', texto: 'Recusar', onclick: () => decidir('recusar') })));
+  tirarSalvo(fid) {
+    const m = this.tela.mensagensEl;
+    m.querySelector(`.fluxo.salvo[data-fluxo="${CSS.escape(fid)}"]`)?.remove();
+    m.querySelector(`.cartao-carregando[data-tool-id="${CSS.escape(fid)}"]`)?.remove();
+  }
+
+  // pedido de decisão: aprovação de ação, proposta de fluxo ou plano pronto
+  pedido(ev) {
+    const m = this.tela.mensagensEl;
+    if (m.querySelector(`[data-id="${CSS.escape(ev.id)}"]:is(.aprovacao, .fluxo)`)) return;
+    const execucaoId = ev.execucao || this.tela.execucaoId;
+    let card;
+    if (ev.tipo === 'fluxo_proposta') { this.tirarSalvo(ev.id); card = cartaoPropostaFluxo(ev, { execucaoId }); }
+    else if (ev.tipo === 'plano_proposto') card = cartaoPlano(ev, { execucaoId });
+    else card = cartaoAprovacao(ev, { execucaoId, temPasta: this.tela.modo === 'code' });
     const det = this.achar(ev.id);
     if (det) det.after(card); else this.alvo.append(card);
     card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     card.querySelector('button.primario')?.focus({ preventScroll: true });
-    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification('Clave precisa do seu OK', { body: `${verbo} ${alvo || ''}`.slice(0, 120) });
-    }
   }
 }
 

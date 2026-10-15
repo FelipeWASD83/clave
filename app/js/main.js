@@ -9,6 +9,11 @@ import { telaUso } from './uso.js';
 import { telaConfig } from './config.js';
 import { boasVindas } from './boas-vindas.js';
 import { checarAtualizacao } from './atualizar.js';
+import { telaFluxos } from './fluxos.js';
+import { telaPlugins } from './plugins.js';
+import { telaRotinas } from './rotinas.js';
+import { telaPermissoes } from './permissoes.js';
+import { notificar } from './fluxo-ui.js';
 import { aviso, el } from './ui.js';
 
 const principal = document.getElementById('principal');
@@ -34,6 +39,10 @@ async function trocarTela() {
     else if (a === 'aprender' && b) telaAtual = await telaLicao(principal, b, c);
     else if (a === 'aprender') telaAtual = await telaAprender(principal);
     else if (a === 'uso') telaAtual = await telaUso(principal);
+    else if (a === 'fluxos') telaAtual = await telaFluxos(principal, b);
+    else if (a === 'plugins') telaAtual = await telaPlugins(principal);
+    else if (a === 'rotinas') telaAtual = await telaRotinas(principal);
+    else if (a === 'permissoes') telaAtual = await telaPermissoes(principal);
     else if (a === 'config') telaAtual = await telaConfig(principal, b);
     else location.hash = '#/novo';
   } catch (e) {
@@ -77,10 +86,33 @@ async function iniciar() {
   ouvir('conversas-mudaram', () => carregarConversas().catch(() => {}));
   // sinal de vida: sem a janela aberta por muito tempo, o servidor fecha sozinho (no modo navegador)
   setInterval(() => api('/saude').catch(() => {}), 60_000);
+  acompanharAvisos();
   window.clave?.aoPedir?.((pedido) => {
     if (pedido === 'nova-conversa') location.hash = '#/novo';
     if (pedido === 'configuracoes') location.hash = '#/config';
   });
+}
+
+// rotinas que terminaram (ou pararam) enquanto a pessoa fazia outra coisa
+async function acompanharAvisos() {
+  let visto = null;
+  const buscar = async () => {
+    try {
+      const r = await api(`/avisos?desde=${visto ?? 0}`);
+      if (visto !== null) {
+        for (const a of r.avisos) {
+          if (a.tipo !== 'rotina') continue;
+          const texto = `Rotina "${a.nome}": ${a.status}.`;
+          aviso(texto, /parou|erro|bloquead/.test(a.status) ? 'erro' : '');
+          notificar('Clave', texto);
+        }
+        if (r.avisos.length) import('./estado.js').then((m) => m.avisar('conversas-mudaram'));
+      }
+      visto = r.total;
+    } catch { /* tenta de novo na próxima */ }
+  };
+  await buscar();
+  setInterval(buscar, 20_000);
 }
 
 window.addEventListener('unhandledrejection', (e) => {

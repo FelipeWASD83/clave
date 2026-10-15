@@ -41,7 +41,9 @@ description: Monta o relatório mensal de vendas. Usar quando eu pedir o relató
 
 O Claude vê a lista de skills (nome e descrição) e carrega a skill inteira quando a tarefa combina. Você também pode chamar direto, escrevendo `/relatorio-mensal` na caixa de texto do modo Code (ao digitar `/` aparece a lista).
 
-Skills que vêm prontas no [modelo de pasta](#/aprender/modelo-de-pasta): ver vídeos, revisar código, direção visual de sites, checklist de entrega e outras.
+Skills que vêm prontas no [modelo de pasta](#/aprender/modelo-de-pasta): ver vídeos, revisar código, direção visual de sites, checklist de entrega e outras. Os [plugins](#/aprender/plugins-e-comandos) trazem mais 25 (Excel, e-mail, pesquisa com fontes, scripts do Windows...), e as skills que não são manuais também funcionam no chat.
+
+Um primo da skill é o **comando**: um pedido pronto em `.claude/commands/nome.md`, chamado com `/nome`. A skill o Claude escolhe sozinho; o comando só roda quando você chama.
 
 ## Transforme o que você repete em skill
 
@@ -58,4 +60,7 @@ Transforme o que a gente acabou de fazer numa skill nesta pasta, para eu poder p
 | Configurações > Personalização | Todas as conversas, no chat e no Code |
 | CLAUDE.md de uma pasta | Só o modo Code, naquela pasta e nas de dentro |
 | Skills em `.claude/skills` | Só o modo Code, naquela pasta e nas de dentro |
+| Regras de permissão em `.claude/settings.local.json` | Só o modo Code, naquela pasta |
+| Agentes em `.claude/agents` e comandos em `.claude/commands` | Naquela pasta (os da sua pasta pessoal `~/.claude` valem em todas) |
+| Plugins ligados | Todas as conversas |
 | Memória | Todas as conversas (se ligada) |

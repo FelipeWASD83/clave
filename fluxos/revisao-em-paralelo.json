@@ -1,0 +1,13 @@
+{
+  "nome": "Revisão em paralelo",
+  "descricao": "Dois revisores olham ao mesmo tempo (erros e riscos; clareza e organização) e um Sonnet junta as conclusões.",
+  "pede": "o que revisar (arquivos, pasta ou texto)",
+  "etapas": [
+    {"nome": "Revisar erros e riscos", "agente": "revisor", "modelo": "opus", "esforco": "high",
+     "tarefa": "Procure erros, perda de dados e riscos (senha exposta, algo que apaga sem querer).", "pode": ["ler"]},
+    {"nome": "Revisar clareza", "agente": "revisor", "modelo": "sonnet", "esforco": "medium", "paralelo": true,
+     "tarefa": "Procure o que está confuso, mal organizado ou difícil de entender para quem vai usar.", "pode": ["ler"]},
+    {"nome": "Juntar", "agente": "redator", "modelo": "sonnet", "esforco": "low",
+     "tarefa": "Junte as duas revisões numa lista só, do mais grave para o menos grave, sem repetir.", "pode": []}
+  ]
+}

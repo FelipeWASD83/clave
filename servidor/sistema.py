@@ -65,6 +65,13 @@ def chat(cfg: dict, projeto: dict | None = None) -> str:
             bloco += ("\nOs arquivos de conhecimento do projeto vêm anexados na primeira mensagem desta conversa.")
         bloco += "\n</projeto>"
         partes.append(bloco)
+    lista = [s for s in contexto_pasta.skills(None) if not s["manual"]]
+    if lista:
+        linhas = [f"- {s['nome']}: {s['descricao']}" for s in lista]
+        partes.append(
+            "Skills disponíveis (procedimentos salvos por quem usa e pelos plugins ligados). Quando o pedido combinar "
+            "com uma delas, carregue a skill com usar_skill antes de responder e siga o que ela diz. Aqui no chat "
+            "não há pasta nem terminal: se a skill depender disso, sugira o modo Code.\n" + "\n".join(linhas))
     if cfg.get("memoria_ligada"):
         partes.append(memoria.instrucoes_completas())
     return "\n\n".join(partes)
@@ -81,7 +88,12 @@ def code(cfg: dict, pasta: str) -> str:
         "Permissões: quem usa escolhe um modo (Perguntar, Aceitar edições, Plano ou Livre) e pode mudar a qualquer "
         "momento. Algumas ações podem pedir aprovação, ser recusadas pela pessoa ou bloqueadas pelo Clave; o "
         "resultado da ferramenta diz o que aconteceu. Se uma ação for recusada, não tente o mesmo de outro jeito: "
-        "pergunte o que a pessoa prefere. No modo Plano, investigue e proponha um plano sem mudar nada.",
+        "pergunte o que a pessoa prefere. No modo Plano, investigue sem mudar nada e, quando o plano estiver pronto, "
+        "apresente com apresentar_plano: a pessoa aprova e você segue executando. As regras de permissão (\"sempre "
+        "permitir\") ficam no .claude/settings.local.json da pasta, no mesmo formato do Claude Code.",
+        "Tarefas grandes: dá para propor um fluxo (executar_fluxo), em que cada etapa roda num modelo diferente "
+        "(por exemplo, Opus planeja, Sonnet faz e testa). O fluxo custa mais e sempre pede o OK de quem usa; "
+        "use quando valer o custo ou quando a pessoa pedir.",
         "Como trabalhar:\n"
         "- Muita gente que usa o Clave não programa. Explique em linguagem simples o que vai fazer e o que fez.\n"
         "- Antes de começar uma tarefa com vários passos, diga em uma frase o que vai fazer e use "

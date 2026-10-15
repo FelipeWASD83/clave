@@ -95,6 +95,42 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     criado_em REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_ck_exec ON checkpoints(execucao_id);
+CREATE TABLE IF NOT EXISTS permissoes_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    criado_em REAL NOT NULL,
+    conversa_id TEXT,
+    execucao_id TEXT,
+    ferramenta TEXT NOT NULL,
+    alvo TEXT,
+    decisao TEXT NOT NULL,
+    origem TEXT,
+    regra TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_plog_data ON permissoes_log(criado_em);
+CREATE TABLE IF NOT EXISTS fluxos (
+    id TEXT PRIMARY KEY,
+    conversa_id TEXT,
+    execucao_id TEXT,
+    titulo TEXT NOT NULL DEFAULT '',
+    dados_json TEXT NOT NULL,
+    status TEXT NOT NULL,
+    custo_usd REAL NOT NULL DEFAULT 0,
+    criado_em REAL NOT NULL,
+    atualizado_em REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_fluxo_conv ON fluxos(conversa_id);
+CREATE TABLE IF NOT EXISTS rotinas (
+    id TEXT PRIMARY KEY,
+    nome TEXT NOT NULL,
+    dados_json TEXT NOT NULL,
+    ligada INTEGER NOT NULL DEFAULT 1,
+    proxima REAL,
+    ultima REAL,
+    ultimo_status TEXT,
+    ultima_conversa TEXT,
+    criado_em REAL NOT NULL,
+    atualizado_em REAL NOT NULL
+);
 """
 
 
@@ -437,6 +473,7 @@ def exportar_tudo() -> dict:
         "mensagens": [dict(r) for r in con.execute("SELECT * FROM mensagens")],
         "projetos": [dict(r) for r in con.execute("SELECT * FROM projetos")],
         "uso": [dict(r) for r in con.execute("SELECT * FROM uso")],
+        "rotinas": [dict(r) for r in con.execute("SELECT * FROM rotinas")],
     }
 
 
@@ -446,7 +483,7 @@ def importar_tudo(dados: dict) -> dict:
     cont = {}
     with _trava_escrita:
         con = conexao()
-        for tabela in ("conversas", "mensagens", "projetos", "uso"):
+        for tabela in ("conversas", "mensagens", "projetos", "uso", "rotinas"):
             linhas = dados.get(tabela) or []
             colunas = {r["name"] for r in con.execute(f"PRAGMA table_info({tabela})")}
             n = 0
@@ -469,3 +506,114 @@ def importar_tudo(dados: dict) -> dict:
             cont[tabela] = n
         con.commit()
     return cont
+
+
+# ---------- histórico de permissões ----------
+
+def registrar_permissao(conversa_id, execucao_id, ferramenta: str, alvo: str, decisao: str, origem: str = "",
+                        regra: str | None = None) -> None:
+    with _trava_escrita:
+        con = conexao()
+        con.execute("INSERT INTO permissoes_log (criado_em, conversa_id, execucao_id, ferramenta, alvo, decisao, "
+                    "origem, regra) VALUES (?,?,?,?,?,?,?,?)",
+                    (agora(), conversa_id, execucao_id, ferramenta, (alvo or "")[:500], decisao, origem, regra))
+        # guarda só os últimos 5 mil registros
+        con.execute("DELETE FROM permissoes_log WHERE id <= (SELECT MAX(id) - 5000 FROM permissoes_log)")
+        con.commit()
+
+
+def log_permissoes(limite: int = 300, decisao: str = "") -> list[dict]:
+    sql = "SELECT * FROM permissoes_log"
+    args: list = []
+    if decisao:
+        sql += " WHERE decisao=?"
+        args.append(decisao)
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(limite)
+    return [dict(r) for r in conexao().execute(sql, args).fetchall()]
+
+
+def limpar_log_permissoes() -> None:
+    with _trava_escrita:
+        con = conexao()
+        con.execute("DELETE FROM permissoes_log")
+        con.commit()
+
+
+# ---------- fluxos ----------
+
+def salvar_fluxo(f: dict) -> None:
+    t = agora()
+    with _trava_escrita:
+        con = conexao()
+        con.execute(
+            "INSERT INTO fluxos (id, conversa_id, execucao_id, titulo, dados_json, status, custo_usd, criado_em, "
+            "atualizado_em) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET dados_json=excluded.dados_json, "
+            "status=excluded.status, custo_usd=excluded.custo_usd, titulo=excluded.titulo, "
+            "atualizado_em=excluded.atualizado_em",
+            (f["id"], f.get("conversa_id"), f.get("execucao_id"), f.get("titulo") or "",
+             json.dumps(f, ensure_ascii=False, default=str), f.get("status") or "proposto",
+             float(f.get("custo_usd") or 0), f.get("criado_em") or t, t))
+        con.commit()
+
+
+def fluxo(fid: str) -> dict | None:
+    r = conexao().execute("SELECT dados_json FROM fluxos WHERE id=?", (fid,)).fetchone()
+    return _j(r["dados_json"]) if r else None
+
+
+def listar_fluxos(limite: int = 100) -> list[dict]:
+    rows = conexao().execute("SELECT id, conversa_id, titulo, status, custo_usd, criado_em FROM fluxos "
+                             "ORDER BY criado_em DESC LIMIT ?", (limite,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+# ---------- rotinas ----------
+
+def _rotina(r) -> dict:
+    d = dict(r)
+    d.update(_j(d.pop("dados_json")) or {})
+    d["ligada"] = bool(d["ligada"])
+    return d
+
+
+def salvar_rotina(rid: str | None, nome: str, dados: dict, ligada: bool = True, proxima: float | None = None) -> dict:
+    rid = rid or novo_id()
+    t = agora()
+    with _trava_escrita:
+        con = conexao()
+        con.execute(
+            "INSERT INTO rotinas (id, nome, dados_json, ligada, proxima, criado_em, atualizado_em) "
+            "VALUES (?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET nome=excluded.nome, dados_json=excluded.dados_json, "
+            "ligada=excluded.ligada, proxima=excluded.proxima, atualizado_em=excluded.atualizado_em",
+            (rid, nome, json.dumps(dados, ensure_ascii=False), 1 if ligada else 0, proxima, t, t))
+        con.commit()
+    return rotina(rid)
+
+
+def rotina(rid: str) -> dict | None:
+    r = conexao().execute("SELECT * FROM rotinas WHERE id=?", (rid,)).fetchone()
+    return _rotina(r) if r else None
+
+
+def listar_rotinas() -> list[dict]:
+    return [_rotina(r) for r in conexao().execute("SELECT * FROM rotinas ORDER BY nome").fetchall()]
+
+
+def marcar_rotina(rid: str, **campos) -> None:
+    ok = {k: v for k, v in campos.items() if k in ("proxima", "ultima", "ultimo_status", "ultima_conversa", "ligada")}
+    if not ok:
+        return
+    ok["atualizado_em"] = agora()
+    cols = ", ".join(f"{k}=?" for k in ok)
+    with _trava_escrita:
+        con = conexao()
+        con.execute(f"UPDATE rotinas SET {cols} WHERE id=?", (*ok.values(), rid))
+        con.commit()
+
+
+def apagar_rotina(rid: str) -> None:
+    with _trava_escrita:
+        con = conexao()
+        con.execute("DELETE FROM rotinas WHERE id=?", (rid,))
+        con.commit()

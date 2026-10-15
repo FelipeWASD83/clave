@@ -48,7 +48,7 @@ def _texto_usuario(msg) -> str:
         return c
     partes = []
     for b in c or []:
-        if b.get("type") == "text":
+        if b.get("type") == "text" and not b.get("text", "").startswith("<modo-do-clave>"):
             partes.append(b.get("text", ""))
     return "\n".join(partes)
 
@@ -66,6 +66,8 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
     thinking = corpo.get("thinking") or {}
     pensa = thinking.get("type") == "adaptive" and thinking.get("display") == "summarized"
     blocos: list[dict] = []
+    sistema = str(corpo.get("system", ""))
+    etapa = "de um fluxo (" in sistema
     if _tem_resultado(ultima):
         res = next(b for b in ultima["content"] if b.get("type") == "tool_result")
         conteudo = res.get("content")
@@ -73,6 +75,44 @@ def planejar(corpo: dict) -> tuple[list[dict], str]:
             conteudo = " ".join(b.get("text", "") for b in conteudo if b.get("type") == "text")
         if res.get("is_error"):
             return [{"type": "text", "text": "A ação não foi feita: " + str(conteudo)[:300]}], "end_turn"
+        if str(conteudo).startswith("Plano aprovado") and "escrever_arquivo" in nomes:
+            return [{"type": "text", "text": "Plano aprovado. Executando o passo 1."},
+                    {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "escrever_arquivo",
+                     "input": {"caminho": "exemplo-do-plano.txt", "conteudo": "Feito depois do plano aprovado.\n"}}], \
+                "tool_use"
+        if etapa:
+            return [{"type": "text", "text": "Relatório da etapa: fiz a minha parte. " + str(conteudo)[:200]}], "end_turn"
+    texto_etapa = _texto_usuario(ultima)
+    if etapa and not _tem_resultado(ultima):
+        m = texto_etapa.split("<sua_etapa nome=\"", 1)
+        nome_etapa = m[1].split("\"", 1)[0] if len(m) > 1 else "etapa"
+        if "escrever_arquivo" in nomes and "crie" in texto_etapa.lower():
+            return [{"type": "text", "text": f"Etapa {nome_etapa}: vou criar o arquivo."},
+                    {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "escrever_arquivo",
+                     "input": {"caminho": "exemplo-do-fluxo.txt", "conteudo": "Criado por uma etapa de fluxo.\n"}}], \
+                "tool_use"
+        return [{"type": "text", "text": f"Relatório da etapa \"{nome_etapa}\": analisei o pedido e deixei tudo "
+                 "pronto para a próxima etapa. (Demonstração: com a chave de verdade, o modelo faria de fato.)"}], "end_turn"
+    if not _tem_resultado(ultima) and "executar_fluxo" in nomes and "fluxo" in texto_etapa.lower():
+        com_pasta = "escrever_arquivo" in nomes
+        etapas = [{"nome": "Planejar", "agente": "planejador", "modelo": "opus", "esforco": "high",
+                   "tarefa": "Entenda o pedido e escreva um plano curto.", "pode": ["ler"] if com_pasta else []},
+                  {"nome": "Fazer", "agente": "executor", "modelo": "sonnet", "esforco": "high",
+                   "tarefa": "Siga o plano: crie o arquivo de exemplo." if com_pasta else "Escreva o texto pedido.",
+                   "pode": ["ler", "editar"] if com_pasta else []},
+                  {"nome": "Revisar", "agente": "revisor", "modelo": "haiku", "esforco": "medium",
+                   "tarefa": "Confira o que foi feito.", "pode": ["ler"] if com_pasta else []},
+                  {"nome": "Conferir custos", "modelo": "haiku", "esforco": "low", "paralelo": True,
+                   "tarefa": "Liste o que pode ter custado mais.", "pode": []}]
+        return [{"type": "text", "text": "Proponho um fluxo em quatro etapas, cada uma num modelo."},
+                {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "executar_fluxo",
+                 "input": {"titulo": "Fluxo de demonstração", "objetivo": "Mostrar como um fluxo funciona.",
+                           "etapas": etapas}}], "tool_use"
+    if not _tem_resultado(ultima) and "apresentar_plano" in nomes:
+        return [{"type": "text", "text": "Olhei a pasta. Este é o plano:"},
+                {"type": "tool_use", "id": "toolu_" + uuid.uuid4().hex[:20], "name": "apresentar_plano",
+                 "input": {"plano": "1. Criar o arquivo exemplo-do-plano.txt\n2. Conferir que ele existe"}}], "tool_use"
+    if _tem_resultado(ultima):
         resumo = str(conteudo)[:400]
         return [{"type": "text", "text": "Pronto. Olhei o resultado:\n\n```\n" + resumo + "\n```\n\n"
                  "(Isto é a demonstração; com a chave de verdade, o Claude analisaria de fato.)"}], "end_turn"

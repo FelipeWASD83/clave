@@ -24,10 +24,10 @@ O botão do escudo na caixa de texto escolhe quanta liberdade ele tem:
 |---|---|
 | **Perguntar** (padrão) | Lê sozinho; pede o seu OK para mudar arquivos e rodar comandos. |
 | **Aceitar edições** | Muda arquivos sozinho; pede OK para comandos. |
-| **Plano** | Só lê e propõe um plano. Não muda nada. Ótimo para começar. |
+| **Plano** | Só lê e apresenta um plano num cartão. Você aprova (e escolhe como ele executa) ou pede outro. Ótimo para começar. |
 | **Livre** | Faz tudo sozinho, menos apagar ou publicar coisas, que sempre pedem OK. |
 
-Quando ele pede permissão, aparece um cartão mostrando **exatamente** o que vai fazer: o comando, ou o antes e depois do arquivo (as linhas vermelhas saem, as verdes entram). Você pode **Permitir**, **Permitir pelo resto da tarefa** ou **Recusar** dizendo o que prefere.
+Quando ele pede permissão, aparece um cartão mostrando **exatamente** o que vai fazer: o comando, ou o antes e depois do arquivo (as linhas vermelhas saem, as verdes entram). Você pode **Permitir** ou **Recusar** dizendo o que prefere. Em **Mais opções** dá para liberar aquilo pelo resto da tarefa ou salvar uma regra ("sempre nesta pasta" ou "sempre em todo o Clave"), para ele não perguntar de novo. Veja a lição de [permissões](#/aprender/permissoes).
 
 **Leia antes de aprovar.** Se não entender o comando, recuse e pergunte "o que esse comando faz?".
 
@@ -42,6 +42,10 @@ Em Configurações > Modo Code fica a lista de arquivos protegidos, como senhas 
 ## Teto por tarefa
 
 Uma tarefa grande pode fazer muitas chamadas. O **teto por tarefa** (padrão US$ 2) pausa a tarefa quando ela gasta isso; você decide se continua mandando "continue".
+
+## Tarefa grande? Fluxo
+
+Para tarefa grande, peça "faça isso como um fluxo": o Claude divide em etapas, cada uma no modelo certo (por exemplo, Opus planeja e Sonnet faz), e mostra o custo estimado antes de começar. Veja a lição de [fluxos](#/aprender/fluxos-e-agentes).
 
 ## Pedidos que funcionam bem
 

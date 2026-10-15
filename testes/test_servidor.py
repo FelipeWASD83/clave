@@ -53,7 +53,13 @@ class Servidor:
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read() or b"{}")
 
+    def _responder(self, eid, ev, decidir):
+        d = decidir(ev) if callable(decidir) else decidir
+        decisao, dados = d if isinstance(d, tuple) else (d, None)
+        self.pedir("POST", f"/api/execucoes/{eid}/aprovar", {"id": ev["id"], "decisao": decisao, "dados": dados})
+
     def eventos(self, eid, decidir=None):
+        """Acompanha a execução até o fim, respondendo aprovações, propostas de fluxo e planos (e os das etapas)."""
         saida = []
         with urllib.request.urlopen(self.url(f"/api/execucoes/{eid}/eventos?desde=0"), timeout=120) as r:
             for linha in r:
@@ -61,8 +67,10 @@ class Servidor:
                 if linha.startswith("data: "):
                     ev = json.loads(linha[6:])
                     saida.append(ev)
-                    if ev["tipo"] == "aprovacao" and decidir:
-                        self.pedir("POST", f"/api/execucoes/{eid}/aprovar", {"id": ev["id"], "decisao": decidir})
+                    if ev["tipo"] in ("aprovacao", "fluxo_proposta", "plano_proposto") and decidir:
+                        self._responder(eid, ev, decidir)
+                    if ev["tipo"] == "etapa_evento" and ev["ev"]["tipo"] == "aprovacao" and decidir:
+                        self._responder(ev["execucao"], ev["ev"], decidir)
                     if ev["tipo"] == "fim":
                         break
         return saida
@@ -173,11 +181,148 @@ class TestFluxo(unittest.TestCase):
             self.assertEqual(len(d["arquivos"]), 1)
             self.assertFalse((Path(pasta) / "exemplo-do-clave.txt").exists())
             _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "crie um arquivo de exemplo", "opcoes": {"permissao": "plano"}})
-            evs = s.eventos(r["execucao"])
+            evs = s.eventos(r["execucao"], decidir="recusar")
+            self.assertTrue(any(e["tipo"] == "plano_proposto" for e in evs), "no modo Plano ele apresenta o plano")
             self.assertFalse(any(e["tipo"] == "aprovacao" for e in evs), "no modo Plano nem pergunta: recusa")
             self.assertFalse((Path(pasta) / "exemplo-do-clave.txt").exists())
         finally:
             shutil.rmtree(pasta, ignore_errors=True)
+
+    def test_plano_aprovado_muda_o_modo_e_executa(self):
+        s = self.s
+        pasta = tempfile.mkdtemp(prefix="clave-plano-")
+        try:
+            _, r = s.pedir("POST", "/api/conversas", {"modo": "code", "pasta": pasta})
+            cid = r["conversa"]["id"]
+            _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "planeje", "opcoes": {"permissao": "plano"}})
+            evs = s.eventos(r["execucao"], decidir=lambda ev: "executar_aceitar" if ev["tipo"] == "plano_proposto" else "recusar")
+            self.assertIn({"tipo": "modo_mudou", "permissao": "aceitar_edicoes"},
+                          [{k: e[k] for k in ("tipo", "permissao")} for e in evs if e["tipo"] == "modo_mudou"])
+            self.assertFalse(any(e["tipo"] == "aprovacao" for e in evs), "aceitar edições não pergunta")
+            self.assertTrue((Path(pasta) / "exemplo-do-plano.txt").exists())
+
+            def pedidos_de_quem_usa():
+                _, v = s.pedir("GET", f"/api/conversas/{cid}")
+                return [m for m in v["mensagens"] if m["papel"] == "user" and isinstance(m["conteudo"], list)
+                        and any(b.get("type") == "text" and b["text"] in ("planeje", "obrigado") for b in m["conteudo"])]
+            primeira = pedidos_de_quem_usa()[0]
+            self.assertTrue(primeira["conteudo"][-1]["text"].startswith("<modo-do-clave>Modo Plano ligado"),
+                            "o modelo fica sabendo do modo Plano pela própria mensagem")
+            _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "obrigado", "opcoes": {"permissao": "aceitar_edicoes"}})
+            s.eventos(r["execucao"], decidir="recusar")
+            self.assertIn("foi desligado", pedidos_de_quem_usa()[-1]["conteudo"][-1]["text"])
+            req = urllib.request.Request(s.url(f"/api/conversas/{cid}/exportar"))
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                self.assertNotIn("<modo-do-clave>", resp.read().decode("utf-8"), "o aviso não aparece para quem usa")
+        finally:
+            shutil.rmtree(pasta, ignore_errors=True)
+
+    def test_fluxo_pede_ok_roda_as_etapas_e_desfaz(self):
+        s = self.s
+        pasta = tempfile.mkdtemp(prefix="clave-fluxo-")
+        try:
+            _, r = s.pedir("POST", "/api/conversas", {"modo": "code", "pasta": pasta})
+            cid = r["conversa"]["id"]
+            _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "rode isso como um fluxo",
+                                                                    "opcoes": {"permissao": "perguntar"}})
+            eid = r["execucao"]
+            propostas = []
+
+            def decidir(ev):
+                if ev["tipo"] == "fluxo_proposta":
+                    propostas.append(ev["proposta"])
+                    return "permitir", {"etapas": [{"i": 0, "modelo": "haiku"}], "teto_usd": 5}
+                return "permitir"
+            evs = s.eventos(eid, decidir)
+            self.assertEqual(len(propostas), 1)
+            self.assertEqual([e["grupo"] for e in propostas[0]["etapas"]], [0, 1, 2, 2])
+            tipos = [e["tipo"] for e in evs]
+            for t in ("fluxo_inicio", "etapa_inicio", "etapa_fim", "fluxo_fim"):
+                self.assertIn(t, tipos)
+            self.assertTrue(any(e["tipo"] == "etapa_evento" and e["ev"]["tipo"] == "aprovacao" for e in evs),
+                            "a etapa que cria arquivo pede OK na conversa principal")
+            self.assertTrue((Path(pasta) / "exemplo-do-fluxo.txt").exists())
+            fid = next(e["fluxo"] for e in evs if e["tipo"] == "fluxo_inicio")
+            _, f = s.pedir("GET", f"/api/fluxos/{fid}")
+            f = f["fluxo"]
+            self.assertEqual(f["status"], "concluido")
+            self.assertEqual(f["etapas"][0]["modelo"], "claude-haiku-5-5", "a troca de modelo do cartão vale")
+            self.assertTrue(all(e["status"] == "concluida" for e in f["etapas"]))
+            _, lista = s.pedir("GET", "/api/conversas")
+            self.assertFalse(any(c["modo"] == "etapa" for c in lista["conversas"]), "etapas ficam escondidas")
+            _, d = s.pedir("POST", f"/api/execucoes/{eid}/desfazer")
+            self.assertTrue(any("exemplo-do-fluxo.txt" in a for a in d["arquivos"]), "o Desfazer cobre as etapas")
+            self.assertFalse((Path(pasta) / "exemplo-do-fluxo.txt").exists())
+            _, h = s.pedir("GET", "/api/permissoes/historico")
+            self.assertTrue(any(x["ferramenta"] == "executar_fluxo" and x["decisao"] == "permitir" for x in h["registros"]))
+        finally:
+            shutil.rmtree(pasta, ignore_errors=True)
+
+    def test_fluxo_recusado_nao_roda_nada(self):
+        s = self.s
+        _, r = s.pedir("POST", "/api/conversas", {"modo": "chat"})
+        cid = r["conversa"]["id"]
+        _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "faça um fluxo"})
+        evs = s.eventos(r["execucao"], decidir="recusar")
+        self.assertTrue(any(e["tipo"] == "fluxo_proposta" for e in evs))
+        self.assertFalse(any(e["tipo"] == "etapa_inicio" for e in evs))
+        fid = next(e["id"] for e in evs if e["tipo"] == "fluxo_proposta")
+        _, f = s.pedir("GET", f"/api/fluxos/{fid}")
+        self.assertEqual(f["fluxo"]["status"], "recusado")
+
+    def test_rotina_para_quando_precisa_de_ok_e_roda_com_regra(self):
+        s = self.s
+        pasta = tempfile.mkdtemp(prefix="clave-rotina-")
+        try:
+            st, r = s.pedir("POST", "/api/rotinas", {"nome": "Teste", "prompt": "crie um arquivo", "modo": "code",
+                                                    "pasta": pasta, "quando": {"tipo": "diaria", "hora": "08:00"}})
+            self.assertEqual(st, 200, r)
+            rid = r["rotina"]["id"]
+            _, run = s.pedir("POST", f"/api/rotinas/{rid}/rodar")
+            evs = s.eventos(run["execucao"])
+            self.assertTrue(any(e["tipo"] == "rotina_parou" for e in evs))
+            self.assertFalse(any(e["tipo"] == "aprovacao" for e in evs), "rotina nunca pergunta")
+            self.assertFalse((Path(pasta) / "exemplo-do-clave.txt").exists())
+            time.sleep(0.3)
+            _, lista = s.pedir("GET", "/api/rotinas")
+            rot = next(x for x in lista["rotinas"] if x["id"] == rid)
+            self.assertIn("precisaria de OK", rot["ultimo_status"])
+            st, _ = s.pedir("POST", "/api/permissoes", {"escopo": "pasta", "pasta": pasta, "acao": "allow",
+                                                        "regra": "Edit(exemplo-do-clave.txt)"})
+            self.assertEqual(st, 200)
+            _, run = s.pedir("POST", f"/api/rotinas/{rid}/rodar")
+            s.eventos(run["execucao"])
+            self.assertTrue((Path(pasta) / "exemplo-do-clave.txt").exists())
+            time.sleep(0.3)
+            _, av = s.pedir("GET", "/api/avisos?desde=0")
+            self.assertGreaterEqual(len([a for a in av["avisos"] if a.get("rotina") == rid]), 2)
+            s.pedir("DELETE", f"/api/rotinas/{rid}")
+        finally:
+            shutil.rmtree(pasta, ignore_errors=True)
+
+    def test_permissoes_pela_api(self):
+        s = self.s
+        st, r = s.pedir("POST", "/api/permissoes", {"escopo": "app", "acao": "deny", "regra": "Bash(git push *)"})
+        self.assertEqual(st, 200)
+        st, r = s.pedir("POST", "/api/permissoes", {"escopo": "app", "acao": "allow", "regra": "Bash(sem fechar"})
+        self.assertEqual(st, 400)
+        _, t = s.pedir("POST", "/api/permissoes/testar", {"ferramenta": "Bash", "valor": "git push origin main"})
+        self.assertEqual(t["decisao"], "negar")
+        _, t = s.pedir("POST", "/api/permissoes/testar", {"ferramenta": "Bash", "valor": "git status"})
+        self.assertEqual((t["decisao"], t["sugestao"]), ("perguntar", "Bash(git status *)"))
+        st, _ = s.pedir("DELETE", "/api/permissoes", {"escopo": "app", "acao": "deny", "regra": "Bash(git push *)"})
+        self.assertEqual(st, 200)
+
+    def test_comandos_e_plugins_pela_api(self):
+        s = self.s
+        _, c = s.pedir("GET", "/api/comandos")
+        nomes = [x["nome"] for x in c["comandos"]]
+        self.assertIn("fluxo", nomes)
+        self.assertIn("fluxo pesquisa-profunda", nomes)
+        _, p = s.pedir("GET", "/api/plugins")
+        self.assertGreaterEqual(len([x for x in p["plugins"] if x["origem"] == "embutido"]), 7)
+        _, a = s.pedir("GET", "/api/agentes")
+        self.assertIn("planejador", [x["nome"] for x in a["agentes"]])
 
     def test_ajudantes_ficam_fora_da_lista(self):
         s = self.s

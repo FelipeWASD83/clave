@@ -31,6 +31,8 @@ const NOMES_FERRAMENTA = {
   github_criar_issue: (e) => ['ramo', 'Criar issue', `${e.repo}: ${e.titulo}`],
   github_comentar: (e) => ['ramo', 'Comentar', `${e.repo}#${e.numero}`],
   github_criar_pr: (e) => ['ramo', 'Abrir pull request', `${e.repo}: ${e.titulo}`],
+  executar_fluxo: (e) => ['fluxo', 'Propôs um fluxo', e.titulo || ''],
+  apresentar_plano: () => ['lista', 'Apresentou o plano', ''],
 };
 
 export function descreverFerramenta(nome, entrada = {}) {
@@ -218,6 +220,16 @@ export function renderizarBloco(b, porId, resultados) {
       return (b.thinking || '').trim() ? blocoPensamento(b.thinking) : null;
     case 'tool_use': {
       if (b.name === 'atualizar_tarefas') return null;
+      if (b.name === 'executar_fluxo' || b.name === 'apresentar_plano') {
+        // o cartão do fluxo (ou do plano) no lugar do bloco de ferramenta; carregado sob demanda
+        const caixa = el('div', { class: 'cartao-carregando', dados: { toolId: b.id } });
+        const r = resultados?.get(b.id);
+        import('./fluxo-ui.js').then((m) => {
+          caixa.replaceWith(b.name === 'executar_fluxo' ? m.cartaoFluxoSalvo(b.id)
+            : m.cartaoPlanoSalvo(b.input, r ? textoResultado(r.content) : ''));
+        });
+        return caixa;
+      }
       const det = blocoFerramenta(b);
       const r = resultados?.get(b.id);
       if (r) det.definirResultado(textoResultado(r.content), r.is_error);

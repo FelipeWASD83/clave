@@ -3,7 +3,7 @@ titulo: Glossário: as palavras difíceis
 trilha: 1. Primeiros passos
 ordem: 7
 duracao: consulta
-resumo: API, token, JSON, Git, GitHub, Python, Electron e mais de 60 termos explicados em linguagem simples.
+resumo: API, token, JSON, Git, GitHub, Python, Electron e mais de 70 termos explicados em linguagem simples.
 ---
 
 Palavras que aparecem no Clave, nas lições e nas respostas do Claude, explicadas do jeito mais simples possível. Não precisa ler tudo: use como dicionário. Se ficar com dúvida, pergunte ao ajudante no fim da página.
@@ -87,6 +87,38 @@ Um arquivo de texto com as regras de uma pasta: quem você é, como gosta das re
 ## MCP (conector)
 
 Sigla de Model Context Protocol, um padrão para ligar a IA a outros serviços (documentação, sistemas, bancos de dados). Um "conector MCP" dá ao Claude ferramentas novas vindas desse serviço.
+
+## Subagente
+
+Um agente que o Claude chama para fazer uma parte da tarefa, com instruções, modelo e ferramentas próprios. No Clave, os agentes ficam em **Fluxos e agentes** e fazem as etapas dos fluxos (ex.: o "planejador" no Opus, o "executor" no Sonnet).
+
+## Fluxo (workflow)
+
+Uma tarefa dividida em etapas, cada uma feita por um modelo ou agente diferente: por exemplo, o Opus planeja, o Sonnet faz e testa, o Haiku confere. Como gasta mais que uma resposta comum, o Clave sempre mostra as etapas e a estimativa de custo e só roda depois do seu OK.
+
+## Plugin
+
+Um pacote que junta skills, agentes, comandos e fluxos para um tipo de trabalho (escritório, escrita, programação...). O Clave vem com alguns e instala outros do GitHub, no mesmo formato dos plugins do Claude Code. Dá para ligar e desligar cada um.
+
+## Marketplace
+
+Uma lista de plugins publicada num repositório do GitHub (arquivo `marketplace.json`). Instalando de um marketplace, você escolhe quais plugins da lista quer.
+
+## Comando de barra
+
+Um atalho que começa com `/` na caixa de mensagem, como `/novo`, `/modelo haiku` ou `/escrita:email`. Alguns são do próprio Clave, outros são pedidos prontos salvos em arquivo (`.claude/commands`) ou skills.
+
+## Regra de permissão
+
+Uma linha que diz o que o Claude pode fazer sozinho, o que sempre pergunta e o que nunca faz, como `Bash(npm test *)` ou `Edit(docs/**)`. Vale numa pasta ou no Clave inteiro, e tem prioridade sobre o modo de permissão.
+
+## Rotina
+
+Um pedido salvo que o Claude faz sozinho num horário (todo dia, em alguns dias da semana ou a cada poucas horas). Numa rotina ele não pergunta nada: só faz o que suas regras de permissão já liberam.
+
+## Agendador de Tarefas
+
+Um programa do próprio Windows que roda coisas num horário, mesmo sem nenhum app aberto. O Clave usa ele quando você pede que uma rotina rode com o Clave fechado.
 
 ## Markdown
 

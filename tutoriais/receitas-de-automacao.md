@@ -54,6 +54,8 @@ O Windows tem o **Agendador de Tarefas**, que roda um script em horários defini
 Crie um script que copie a pasta Documentos para o meu HD externo (letra E:) toda sexta às 20h, usando o Agendador de Tarefas. Me explique antes o que vai ser criado e como desligar.
 ```
 
+Script agendado serve para tarefa que é sempre igual. Quando a tarefa precisa **pensar** (ler arquivos novos e resumir, conferir uma planilha e apontar problemas), use uma [rotina](#/aprender/rotinas): é o próprio Claude que roda no horário.
+
 ## Dicas para automações que duram
 
 - Peça sempre um **script** (arquivo .ps1 ou .py) em vez de uma ação de uma vez só: dá para rodar de novo.

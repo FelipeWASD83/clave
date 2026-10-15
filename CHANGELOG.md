@@ -1,5 +1,62 @@
 # Novidades do Clave
 
+## 2.0.0 (14/10/2026)
+
+Fluxos com vários modelos, permissões por regras, plugins, comandos de barra,
+rotinas e um modo Plano de verdade.
+
+**Novo**
+
+- Fluxos: uma tarefa grande vira etapas, cada uma no modelo e no agente certo
+  (por exemplo, o Opus 5.5 planeja, o Sonnet 5.5 faz e testa, o Haiku 5.5
+  confere). Antes de rodar, sempre aparece um cartão com as etapas, a
+  estimativa de custo e um teto, e dá para trocar modelo e raciocínio de cada
+  etapa ou tirar etapas. Etapas podem rodar em paralelo, e dá para abrir cada
+  uma e ver o que ela está fazendo. Cinco fluxos prontos (Planejar, fazer e
+  testar; Pesquisa profunda; Revisão em paralelo; Planilha grande; Escrever e
+  revisar), com histórico de tudo o que rodou.
+- Agentes: seis prontos (planejador, executor, testador, revisor, pesquisador
+  e redator) e um editor para criar os seus, no mesmo formato do Claude Code
+  (`.claude/agents`).
+- Permissões por regras, no formato do Claude Code: Nunca, Sempre perguntar e
+  Fazer sem perguntar, para comandos, arquivos, sites, conectores, GitHub e
+  fluxos. Valem no Clave inteiro ou numa pasta (`.claude/settings.local.json`).
+  O cartão de aprovação ganhou "Mais opções" para liberar pelo resto da tarefa
+  ou salvar a regra sugerida. Página de permissões com teste ("esse comando
+  passaria?") e histórico de cada decisão.
+- Plugins no formato do Claude Code, com skills, agentes, comandos e fluxos.
+  Sete prontos (Escritório, Automação no Windows, Pesquisa, Escrita, Sites e
+  apps, Programação e Crie o seu) com 25 skills novas. Instalação de uma pasta
+  ou do GitHub (plugin único ou marketplace), sempre mostrando o conteúdo
+  antes.
+- Comandos de barra: `/novo`, `/modelo`, `/esforco`, `/plano`, `/custo`,
+  `/fluxo`, `/memoria`, `/permissoes`, `/plugins`, `/ajuda`, os comandos dos
+  plugins e os seus (`.claude/commands`), e as skills chamadas pelo nome.
+- Modo Plano com cartão de plano: você aprova e escolhe como ele executa
+  (perguntando, aceitando edições ou livre) ou pede para continuar planejando.
+- Rotinas: pedidos que o Claude faz sozinho todo dia, em alguns dias da semana
+  ou a cada poucas horas, com teto por rodada. Rodam com o Clave aberto ou,
+  se você quiser, pelo Agendador de Tarefas do Windows com ele fechado. Numa
+  rotina o Claude não pergunta nada: o que precisaria de OK faz a rotina parar
+  e contar a regra que faltou.
+- Skills também no chat (as que não são manuais).
+- Cinco lições novas (por que usar o Clave, fluxos e agentes, permissões,
+  rotinas, plugins e comandos) e oito termos novos no glossário.
+- No README, a seção "Por que você deveria usar o Clave".
+
+**Mudou**
+
+- Os avisos do Windows saem pela janela do Clave, piscam na barra de tarefas
+  e avisam também quando o Claude espera um OK, propõe um fluxo, termina um
+  plano ou quando um fluxo ou rotina termina.
+- O botão Atualizar também atualiza os plugins, agentes e fluxos que vêm com
+  o app.
+
+**Corrigido**
+
+- Menus compridos (como o de comandos) não saem mais da tela: abrem para baixo
+  quando não cabem para cima e rolam.
+
 ## 1.0.0 (14/10/2026)
 
 Primeira versão.

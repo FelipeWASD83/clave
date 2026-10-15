@@ -136,3 +136,69 @@
 .arquivo-gerado { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--linha); background: var(--papel); flex-wrap: wrap; }
 .arquivo-gerado .icone-arq { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 6px; background: var(--sucesso-suave); color: var(--sucesso); font-family: var(--mono); font-size: 10.5px; font-weight: 600; text-transform: uppercase; }
 .arquivo-gerado b { flex: 1; min-width: 120px; font-weight: 500; overflow-wrap: anywhere; }
+
+/* ---------- fluxos, agentes, plugins, rotinas e permissões ---------- */
+.abas { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 22px; border-bottom: 1px solid var(--linha); }
+.abas a { padding: 8px 14px; margin-bottom: -1px; border-bottom: 2px solid transparent; text-decoration: none; color: var(--texto-2); font-weight: 500; }
+.abas a:hover { color: var(--texto); }
+.abas a[aria-current="page"] { color: var(--texto); border-bottom-color: var(--acao); }
+.faixa-opcoes { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.faixa-opcoes > p { margin: 0; flex: 1 1 320px; }
+.faixa-opcoes > .chave-liga { flex: 1 1 320px; }
+.cartao.fluxo-modelo, .cartao.agente, .cartao.plugin, .cartao.rotina { cursor: default; gap: 10px; }
+.cartao.fluxo-modelo:hover, .cartao.agente:hover, .cartao.plugin:hover, .cartao.rotina:hover { background: var(--papel); }
+.cartao.desligado { opacity: .7; }
+.cartao-cab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cartao-cab h3 { flex: 1; min-width: 0; }
+.cartao-cab .ic svg { width: 18px; height: 18px; color: var(--acao); display: block; }
+.cartao p { margin: 0; color: var(--texto-2); font-size: 14px; }
+.cartao-acoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.cartao-acoes .chave-liga { margin-right: auto; }
+.etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
+.etiqueta svg { width: 13px; height: 13px; vertical-align: -2px; margin-right: 3px; }
+.etiqueta.perigo { background: var(--erro-suave); color: var(--erro); border-color: transparent; }
+.etapas-resumo { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+.etapas-resumo li > span:first-child { margin-right: 8px; }
+.cartao details > summary { cursor: pointer; color: var(--acao); font-size: 14px; }
+.plugin-detalhes { display: grid; gap: 10px; padding-top: 8px; font-size: 13.5px; }
+.plugin-detalhes .rotulo-detalhe { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-3); }
+.lista-simples { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+.lista-simples code { font-family: var(--mono); font-size: 12.5px; color: var(--acao); }
+.nota-plugin { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 8px 10px; border-radius: var(--raio-p); background: var(--aviso-suave); font-size: 13px; }
+.nota-plugin.info { background: var(--acao-suave); align-items: center; }
+.nota-plugin svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.nota-plugin .botao { margin-left: auto; }
+.rotina-pedido { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.form-grade { display: grid; gap: 14px; }
+.form-grade label { display: grid; gap: 5px; }
+.form-grade label > span, .form-grade .rotulo { font-size: 13.5px; font-weight: 500; color: var(--texto-2); }
+.form-grade label.check, .checks label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.linha-pasta { display: flex; gap: 10px; align-items: end; padding-bottom: 6px; flex-wrap: wrap; }
+.linha-pasta .meta { overflow-wrap: anywhere; }
+.editor-etapas { display: grid; gap: 12px; }
+.etapa-editor { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--linha); border-radius: var(--raio-m); background: var(--papel-2); }
+.etapa-editor-cab { display: flex; justify-content: space-between; align-items: center; }
+.regras-colunas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.regras-coluna { padding: 12px; border: 1px solid var(--linha); border-radius: var(--raio-m); }
+.regras-coluna .rotulo { font-weight: 600; margin-bottom: 6px; }
+.regras-coluna.perigo .rotulo { color: var(--erro); }
+.regras-coluna.acao .rotulo { color: var(--acao); }
+.regras-coluna ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.regras-coluna li { display: flex; align-items: center; gap: 6px; }
+.regras-coluna li code { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.regras-coluna p { margin: 0; }
+.linha-regra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.linha-regra .entrada { flex: 1 1 200px; width: auto; }
+.linha-regra select.entrada { flex: 0 1 220px; }
+.resultado-teste { display: grid; gap: 4px; padding: 10px 14px; border-radius: var(--raio-m); background: var(--papel-2); }
+.resultado-teste.auto { background: var(--sucesso-suave); }
+.resultado-teste.perguntar { background: var(--aviso-suave); }
+.resultado-teste.negar { background: var(--erro-suave); }
+.tabela code.corta { display: inline-block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; font-family: var(--mono); font-size: 12.5px; }
+.tabela td.decisao.negar, .tabela td.decisao.recusar { color: var(--erro); }
+.tabela td.decisao.auto, .tabela td.decisao.permitir { color: var(--sucesso); }
+@media (max-width: 720px) {
+  .tabela { display: block; overflow-x: auto; }
+  .tabela code.corta { max-width: 180px; }
+}

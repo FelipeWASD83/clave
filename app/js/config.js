@@ -213,7 +213,9 @@ const SECOES = {
           ['plano', 'Plano: só lê e propõe'],
           ['livre', 'Livre: faz tudo (menos apagar ou publicar)']])),
         liga('carregar_claude_md', 'Ler as regras da pasta (CLAUDE.md e AGENTS.md)', 'Como no Claude Code: as regras escritas na pasta e nas pastas acima dela valem para o Claude.'),
-        campo('Arquivos e pastas protegidos', prot, 'Um por linha (ex.: .env, *.key, segredos/**). As ferramentas de arquivo nunca leem nem mudam o que combina com estes padrões, e um comando que cite um deles sempre pede o seu OK.')));
+        campo('Arquivos e pastas protegidos', prot, 'Um por linha (ex.: .env, *.key, segredos/**). As ferramentas de arquivo nunca leem nem mudam o que combina com estes padrões, e um comando que cite um deles sempre pede o seu OK.')),
+      secao('Regras de permissão', 'Para liberar ou bloquear ações específicas (um comando, uma pasta, um site), sem mudar o modo inteiro. Mesmo formato do Claude Code.',
+        el('a', { class: 'botao', href: '#/permissoes', html: `${ic('escudo')}Abrir as regras de permissão` })));
   },
 
   async github(alvo) {
@@ -276,8 +278,9 @@ const SECOES = {
         campo('Largura da conversa', selecao('largura_chat', [['estreita', 'Estreita'], ['media', 'Média'], ['larga', 'Larga']]))),
       campo('Enviar mensagem com', selecao('enviar_com', [['enter', 'Enter (Shift+Enter pula linha)'], ['ctrl_enter', 'Ctrl+Enter (Enter pula linha)']])),
       liga('mostrar_custo', 'Mostrar o custo de cada resposta', 'Aparece pequeno, embaixo de cada resposta.'),
-      'Notification' in window ? el('button', { class: 'botao', type: 'button', texto: Notification.permission === 'granted' ? 'Avisos do sistema ligados' : 'Ligar avisos quando ele terminar',
-        disabled: Notification.permission === 'granted', onclick: async () => { await Notification.requestPermission(); SECOES.aparencia(alvo); } }) : null));
+      liga('notificacoes', 'Notificação do Windows', 'Avisa quando o Claude termina, pede o seu OK, propõe um fluxo ou quando uma rotina acaba, se a janela do Clave estiver em segundo plano.'),
+      !window.clave && 'Notification' in window && Notification.permission !== 'granted' ? el('button', { class: 'botao', type: 'button', texto: 'Deixar o navegador mostrar as notificações',
+        onclick: async () => { await Notification.requestPermission(); SECOES.aparencia(alvo); } }) : null));
   },
 
   async dados(alvo) {

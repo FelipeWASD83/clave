@@ -217,6 +217,7 @@ img { max-width: 100%; }
 /* ---------- menus flutuantes ---------- */
 .menu {
   position: fixed; z-index: 85; min-width: 220px; max-width: 340px; padding: 6px;
+  max-height: min(62vh, 560px); overflow-y: auto;
   background: var(--papel); border: 1px solid var(--linha); border-radius: var(--raio-m); box-shadow: var(--sombra-2);
   animation: entrar var(--rapido) var(--curva);
 }

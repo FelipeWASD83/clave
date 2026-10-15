@@ -7,6 +7,58 @@ uso e com um teto de gasto que você define.
 > O Clave é um app independente. Ele não é um produto da Anthropic e não tem
 > ligação com ela. "Claude" é marca da Anthropic.
 
+## Por que você deveria usar o Clave
+
+**Você paga pelo que usa, não por uma mensalidade.** A assinatura Pro do
+Claude custa US$ 20 por mês, use você muito ou pouco. Pela API, cada resposta
+custa o que gastou: mil mensagens curtas no Haiku 5.5 saem por volta de
+**US$ 0,40**; no Sonnet 5.5, uns US$ 7 (estimativas, sem raciocínio longo). Quem
+usa a IA algumas vezes por dia gasta centavos, e o Clave mostra o custo de cada
+resposta, em tempo real.
+
+**Nunca mais "você atingiu o limite, volte em 5 horas".** Os planos do app têm
+limite por janela de 5 horas e limite semanal. Na API não existe janela de 5
+horas nem limite semanal: o limite é de pedidos por minuto, folgado para uma
+pessoa. Quem manda no seu gasto é você: o Clave tem um **teto mensal** e para
+quando chega nele. Sem susto na fatura.
+
+**Seus dados são seus.** Por padrão, a Anthropic **não usa o que passa pela
+API para treinar modelos** e apaga do servidor dela em até 30 dias ([política
+oficial](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data)).
+As conversas, a memória e o histórico ficam **só no seu computador**, a chave
+fica criptografada pelo Windows e o código do Clave é aberto: dá para ler cada
+linha.
+
+**O melhor modelo para cada tarefa, na mesma janela.** Haiku para o simples
+(rápido e baratíssimo), Sonnet para o dia a dia, Opus para o difícil. E com os
+**fluxos**, os três trabalham juntos na mesma tarefa: o Opus planeja, o Sonnet
+faz, o Haiku confere, e você vê o preço estimado antes de aprovar.
+
+**Automação de verdade no seu Windows.** No modo Code o Claude trabalha numa
+pasta sua: organiza arquivos, monta planilhas com fórmula e gráfico, escreve
+scripts e roda comandos, sempre mostrando o antes e o depois, com botão de
+desfazer e você decidindo o que ele pode fazer sozinho. As **rotinas** fazem o
+Claude trabalhar no horário, até com o app fechado.
+
+**Feito para quem nunca usou IA.** Lições curtas em português, glossário sem
+tecniquês ("quem é JASON?" vira uma explicação de JSON) e um ajudante
+que tira dúvida de cada lição por uma fração de centavo.
+
+**O que você aprende aqui vale no Claude Code.** CLAUDE.md, skills, agentes,
+comandos, plugins e regras de permissão usam os mesmos arquivos e o mesmo
+formato. Quando quiser ir para a ferramenta profissional, já sabe tudo.
+
+**Já assina o Max?** O plano Max dá crédito mensal na API (US$ 100 no Max 5x,
+US$ 200 no Max 20x), e o Clave usa esse crédito. É dinheiro que você já pagou.
+
+### E quando o app oficial é melhor
+
+Sem enrolação: se você quer o Claude **no celular** ou sincronizado entre
+vários aparelhos, o app oficial faz isso e o Clave não (ele é para Windows). E
+quem usa o Opus o dia inteiro, todo dia, pode gastar mais pela API do que na
+assinatura. O Clave mostra quanto você gasta por dia e por modelo na página de
+uso, então em um mês você sabe qual dos dois sai mais barato para você.
+
 ## O que ele faz
 
 - **Chat** com o Claude: conversas, projetos, anexos (imagens, PDFs, planilhas,
@@ -14,6 +66,25 @@ uso e com um teto de gasto que você define.
 - **Modo Code**: o Claude trabalha numa pasta do seu computador, lê e cria
   arquivos, mexe em planilhas e roda comandos para automatizar tarefas. Você
   aprova cada mudança (ou libera de vez), vê o antes e depois e pode desfazer.
+- **Fluxos**: uma tarefa grande vira etapas, cada uma no modelo certo (o Opus
+  planeja, o Sonnet faz e testa, o Haiku confere), com etapas em paralelo.
+  Fluxo gasta mais, então ele **sempre pede o seu OK** antes, mostrando as
+  etapas, a estimativa de custo e um teto que você ajusta.
+- **Agentes**: especialistas prontos (planejador, executor, testador, revisor,
+  pesquisador, redator) e os que você criar, no formato do Claude Code.
+- **Permissões por regras**, no formato do Claude Code (`Bash(npm test *)`,
+  `Edit(docs/**)`...): o que ele faz sozinho, o que sempre pergunta e o que
+  nunca faz, no app inteiro ou numa pasta, com teste e histórico de cada
+  decisão.
+- **Modo Plano**: ele só lê, apresenta o plano num cartão e você aprova
+  escolhendo como ele executa.
+- **Plugins e comandos de barra**: sete plugins prontos com 25 skills
+  (Excel, e-mail, pesquisa com fontes, scripts do Windows, testes...),
+  instalação de plugins do GitHub no formato do Claude Code, e atalhos como
+  `/modelo haiku`, `/fluxo` e `/escrita:email`.
+- **Rotinas**: pedidos que o Claude faz sozinho no horário (todo dia, em
+  alguns dias da semana, a cada poucas horas), até com o Clave fechado, pelo
+  Agendador de Tarefas do Windows.
 - **Excel**: lê, cria e altera planilhas (fórmulas, formatação, tabelas,
   gráficos, filtros, listas de opção). Com o Excel instalado, recalcula e
   exporta PDF.
@@ -83,10 +154,16 @@ teto que você definiu.
 - O Clave só aceita conexões do próprio computador, e cada pedido precisa da
   sessão que o atalho cria: nenhuma página da internet consegue mandar o Claude
   mexer nos seus arquivos.
-- No modo Code, mudar arquivos e rodar comandos pede o seu OK (dá para ajustar).
-  Comandos que apagam ou publicam algo **sempre** pedem, e o modo Plano não
+- No modo Code, mudar arquivos e rodar comandos pede o seu OK (dá para ajustar
+  com o modo e com regras). Comandos que apagam ou publicam algo **sempre**
+  pedem, a não ser que uma regra sua libere aquele comando, e o modo Plano não
   muda nada. Arquivos sensíveis vão para a lista de protegidos: as ferramentas
   de arquivo nunca mexem neles e comando que os cite pede OK.
+- Fluxos sempre pedem OK. Rotinas nunca perguntam: só fazem o que as suas
+  regras já liberam e param no resto.
+- Plugins trazem instruções para o Claude: instale só de quem você confia. O
+  Clave mostra o conteúdo antes de instalar e ignora as partes que rodariam
+  programas sozinhas (hooks e servidores MCP locais).
 
 ## Atualizar
 
@@ -118,6 +195,8 @@ use Configurações > Dados e backup.
 - `tutoriais/`: as lições, em Markdown.
 - `modelo-de-pasta/`: o modelo de pasta de trabalho.
 - `skills/`: skills que vêm com o Clave (ver-video).
+- `plugins/`, `agentes/`, `fluxos/`: plugins, agentes e fluxos que vêm com o
+  Clave (os formatos são os do Claude Code; os fluxos são `.json` do Clave).
 - Testes: `.venv\Scripts\python.exe -m unittest discover -s testes -t testes`.
 - Publicar versão: `ferramentas\publicar-versao.ps1` (cria a release no GitHub
   que o botão Atualizar baixa).

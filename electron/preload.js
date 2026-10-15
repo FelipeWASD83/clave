@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('clave', {
   abrirExterno: (url) => ipcRenderer.invoke('clave:abrir-externo', url),
   reiniciar: () => ipcRenderer.invoke('clave:reiniciar'),
   sair: () => ipcRenderer.invoke('clave:sair'),
+  notificar: (titulo, corpo) => ipcRenderer.invoke('clave:notificar', String(titulo || ''), String(corpo || '')),
   aoPedir: (fn) => ipcRenderer.on('clave:pedido', (_e, pedido) => fn(pedido)),
 });

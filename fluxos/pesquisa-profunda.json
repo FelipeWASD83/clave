@@ -1,0 +1,15 @@
+{
+  "nome": "Pesquisa profunda",
+  "descricao": "Três Haiku 5.5 pesquisam ângulos diferentes ao mesmo tempo e um Sonnet 5.5 junta tudo com as fontes.",
+  "pede": "o assunto e o que você quer descobrir",
+  "etapas": [
+    {"nome": "Pesquisar: fatos e números", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium",
+     "tarefa": "Pesquise os fatos principais e os números (preços, datas, versões) sobre o assunto, com fontes.", "pode": ["web"]},
+    {"nome": "Pesquisar: prós e contras", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium", "paralelo": true,
+     "tarefa": "Pesquise vantagens, desvantagens e problemas conhecidos, com fontes.", "pode": ["web"]},
+    {"nome": "Pesquisar: alternativas", "agente": "pesquisador", "modelo": "haiku", "esforco": "medium", "paralelo": true,
+     "tarefa": "Pesquise as alternativas e como elas se comparam, com fontes.", "pode": ["web"]},
+    {"nome": "Juntar", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Junte as três pesquisas num texto só: conclusão primeiro, depois os detalhes, com as fontes. Aponte onde as fontes discordam.", "pode": []}
+  ]
+}

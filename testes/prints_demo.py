@@ -10,6 +10,7 @@ import base64
 import importlib.util
 import json
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -109,6 +110,39 @@ def main():
         a.print("11b-recursos")
         a.ir("#/config/conectores", 1.0)
         a.print("11c-conectores")
+        # sistemas do 2.0: fluxos, agentes, plugins, rotinas, permissões e os cartões na conversa
+        pasta = tempfile.mkdtemp(prefix="clave-prints-")
+        a.js("fetch('/api/permissoes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({escopo:'app',acao:'deny',regra:'Bash(git push *)'})})", 0.3)
+        a.js("fetch('/api/permissoes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({escopo:'app',acao:'allow',regra:'Bash(git status *)'})})", 0.3)
+        a.js("fetch('/api/rotinas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Resumo da manhã',prompt:'Resuma os arquivos novos da pasta e diga o que precisa da minha atenção hoje.',quando:{tipo:'semanal',hora:'08:00',dias:[0,1,2,3,4]},modelo:'claude-sonnet-5-5',teto_usd:0.5})})", 0.5)
+        for rota, nome in (("#/fluxos", "30-fluxos"), ("#/fluxos/agentes", "31-agentes"), ("#/plugins", "32-plugins"),
+                           ("#/rotinas", "33-rotinas"), ("#/permissoes", "34-permissoes")):
+            a.ir(rota, 1.6)
+            a.print(nome)
+        a.ir("#/novo", 1.2)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = '/'; t.dispatchEvent(new Event('input')); })()", 1.0)
+        a.print("35-comandos-de-barra")
+        a.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}))", 0.2)
+        a.ir("#/novo", 1.2)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = 'faça isso como um fluxo'; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()", 5.0)
+        a.print("36-fluxo-proposta")
+        a.js("document.querySelector('.fluxo.proposta button.primario')?.click()", 6.0)
+        a.js("document.querySelector('.fluxo .fluxo-etapa.viva')?.setAttribute('open', '')", 0.5)
+        a.print("37-fluxo-concluido")
+        cid = a.js(f"fetch('/api/conversas',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{modo:'code',pasta:{json.dumps(pasta)}}})}}).then(r=>r.json()).then(d=>d.conversa.id)")
+        a.ir(f"#/c/{cid}", 1.5)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = 'crie um arquivo de exemplo'; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()", 3.5)
+        a.js("(() => { const b = [...document.querySelectorAll('.aprovacao button')].find(x => x.textContent.startsWith('Mais opções')); b?.click(); })()", 0.6)
+        a.js("(() => { const i = [...document.querySelectorAll('.menu button, .menu [role=menuitem]')].find(x => x.textContent.includes('Sempre nesta pasta')); i?.click(); })()", 0.6)
+        a.print("38-aprovacao-com-regra")
+        a.js("[...document.querySelectorAll('.aprovacao button')].find(x => x.textContent === 'Recusar')?.click()", 2.0)
+        cid = a.js(f"fetch('/api/conversas',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{modo:'code',pasta:{json.dumps(pasta)}}})}}).then(r=>r.json()).then(d=>d.conversa.id)")
+        a.ir(f"#/c/{cid}", 1.5)
+        a.js("(() => { const c = [...document.querySelectorAll('.compositor .chip')].find(x => x.textContent.includes('Perguntar')); c?.click(); })()", 0.4)
+        a.js("(() => { const i = [...document.querySelectorAll('.menu button, .menu [role=menuitem]')].find(x => x.textContent.startsWith('Plano')); i?.click(); })()", 0.3)
+        a.js("(() => { const t = document.querySelector('.compositor textarea'); t.value = 'planeje a organização desta pasta'; t.dispatchEvent(new Event('input')); document.querySelector('.enviar').click(); })()", 3.5)
+        a.print("39-plano")
+        a.js("[...document.querySelectorAll('.fluxo.plano button')].find(x => x.textContent === 'Continuar planejando')?.click()", 2.0)
         a.ir("#/uso", 1.0)
         a.print("12-uso")
         a.ir("#/projetos", 1.0)

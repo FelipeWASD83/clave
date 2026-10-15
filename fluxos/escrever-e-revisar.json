@@ -1,0 +1,13 @@
+{
+  "nome": "Escrever e revisar",
+  "descricao": "Sonnet 5.5 escreve o rascunho, Opus 5.5 critica e Sonnet faz a versão final. Bom no chat, para textos importantes.",
+  "pede": "o texto que você precisa, para quem e com qual objetivo",
+  "etapas": [
+    {"nome": "Rascunho", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Escreva o primeiro rascunho completo do texto pedido.", "pode": []},
+    {"nome": "Crítica", "agente": "revisor", "modelo": "opus", "esforco": "high",
+     "tarefa": "Critique o rascunho: o que está fraco, confuso, longo demais ou faltando. Seja específico.", "pode": []},
+    {"nome": "Versão final", "agente": "redator", "modelo": "sonnet", "esforco": "medium",
+     "tarefa": "Reescreva o rascunho aplicando a crítica e entregue a versão final pronta para usar.", "pode": []}
+  ]
+}

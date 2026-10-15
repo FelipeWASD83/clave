@@ -100,6 +100,14 @@ PADRAO = {
     "tutoriais_feitos": [],
     # conversas escondidas dos ajudantes (lições e editor de memória)
     "ajudantes": {},
+    # regras de permissão do app inteiro, no formato do Claude Code: {"allow": [], "ask": [], "deny": []}
+    "permissoes": {"allow": [], "ask": [], "deny": []},
+    # fluxos (várias etapas em modelos diferentes): sempre pedem OK antes de rodar
+    "fluxos_ligados": True,
+    # plugins: {nome: {ligado, fonte, versao}}
+    "plugins": {},
+    # notificação do Windows quando uma resposta termina ou pede OK com a janela em segundo plano
+    "notificacoes": True,
 }
 
 _trava = threading.Lock()

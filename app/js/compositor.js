@@ -1,5 +1,5 @@
 // A caixa de texto: anexos, escolha de modelo e raciocínio, busca na web, GitHub, permissões e a régua de contexto.
-import { enviarArquivo } from './api.js';
+import { api, enviarArquivo } from './api.js';
 import { estado, cfg, modeloInfo } from './estado.js';
 import { ic } from './icones.js';
 import { el, menu, aviso, escolherArquivos, tokens, usd } from './ui.js';
@@ -34,12 +34,18 @@ export function opcoesPadrao(modo, ajustes = {}) {
   return { ...base, ...ajustes };
 }
 
-export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, pasta = null, skills = [], placeholder }) {
+const ALIAS_MODELO = { opus: 'claude-opus-5-5', sonnet: 'claude-sonnet-5-5', haiku: 'claude-haiku-5-5', fable: 'claude-fable-5-1' };
+const ALIAS_ESFORCO = { baixo: 'low', medio: 'medium', médio: 'medium', alto: 'high', 'muito-alto': 'xhigh', maximo: 'max', máximo: 'max',
+  low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: 'max' };
+const ROTULO_TIPO = { app: 'Do Clave', comando: 'Comandos', skill: 'Skills', fluxo: 'Fluxos prontos' };
+
+export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, pasta = null, skills = [], placeholder, aoComandoApp }) {
   const op = { ...opcoes };
   let anexos = [];  // {id, nome, tipo, url?}
   let rodando = false;
+  let comandos = null;  // carregados na primeira vez que a pessoa digita /
 
-  const area = el('textarea', { rows: 1, placeholder: placeholder || (modo === 'code' ? 'Peça uma tarefa (use / para chamar uma skill)' : 'Escreva para o Claude…'), 'aria-label': 'Mensagem' });
+  const area = el('textarea', { rows: 1, placeholder: placeholder || (modo === 'code' ? 'Peça uma tarefa (/ para comandos e skills)' : 'Escreva para o Claude… (/ para comandos)'), 'aria-label': 'Mensagem' });
   const pendentes = el('div', { class: 'anexos-pendentes', hidden: true });
   const botaoEnviar = el('button', { class: 'enviar', type: 'button', 'aria-label': 'Enviar', title: 'Enviar', html: ic('enviar') });
   const chipModelo = el('button', { class: 'chip', type: 'button', title: 'Modelo' });
@@ -169,7 +175,7 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     area.style.height = Math.min(area.scrollHeight, innerHeight * 0.4) + 'px';
     botaoEnviar.disabled = !rodando && !area.value.trim() && !anexos.length;
   }
-  area.addEventListener('input', () => { ajustarAltura(); sugerirSkills(); });
+  area.addEventListener('input', () => { ajustarAltura(); sugerirComandos(); });
 
   area.addEventListener('keydown', (e) => {
     const porCtrl = cfg().enviar_com === 'ctrl_enter';
@@ -182,10 +188,40 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
 
   botaoEnviar.addEventListener('click', () => (rodando ? aoParar?.() : enviar()));
 
+  // comandos que o próprio app resolve, sem ir para o Claude
+  async function comandoDoApp(texto) {
+    const m = /^\/([\w-]+)(?:\s+(.*))?$/s.exec(texto);
+    if (!m) return false;
+    const [, nome, args = ''] = m;
+    const limpar = () => { area.value = ''; ajustarAltura(); };
+    if (nome === 'novo') { location.hash = modo === 'code' ? '#/code' : '#/novo'; limpar(); return true; }
+    if (nome === 'modelo') {
+      const alvo = ALIAS_MODELO[args.trim().toLowerCase()] || (estado.info?.modelos || []).find((x) => x.nome.toLowerCase() === args.trim().toLowerCase())?.id;
+      if (!alvo) { aviso('Use /modelo opus, sonnet, haiku ou fable.', 'erro'); return true; }
+      op.modelo = alvo; desenharChips(); limpar(); aviso(`Modelo: ${modeloInfo(alvo).nome}.`); return true;
+    }
+    if (nome === 'esforco' || nome === 'esforço') {
+      const alvo = ALIAS_ESFORCO[args.trim().toLowerCase()];
+      if (!alvo) { aviso('Use /esforco baixo, medio, alto, muito-alto ou maximo.', 'erro'); return true; }
+      op.esforco = alvo; desenharChips(); limpar(); return true;
+    }
+    if (nome === 'plano') {
+      if (modo !== 'code') { aviso('O modo Plano é do modo Code.', 'erro'); return true; }
+      op.permissao = 'plano'; desenharChips(); limpar();
+      aviso('Modo Plano: o Claude investiga e mostra o plano antes de mudar qualquer coisa.');
+      return true;
+    }
+    const paginas = { memoria: '#/config/memoria', permissoes: '#/permissoes', plugins: '#/plugins' };
+    if (paginas[nome]) { location.hash = paginas[nome]; limpar(); return true; }
+    if (['custo', 'ajuda'].includes(nome) && aoComandoApp) { limpar(); return aoComandoApp(nome, args); }
+    return false;
+  }
+
   async function enviar() {
     if (rodando) return;
     const texto = area.value.trim();
     if (!texto && !anexos.length) return;
+    if (!anexos.length && await comandoDoApp(texto)) return;
     const lista = anexos.slice();
     const ok = await aoEnviar?.(texto, lista, { ...op });
     if (ok !== false) {
@@ -196,14 +232,38 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
     }
   }
 
-  function sugerirSkills() {
-    if (modo !== 'code' || !skills.length) return;
-    const m = /^\/([\w.-]*)$/.exec(area.value);
+  async function carregarComandos() {
+    if (comandos) return comandos;
+    try {
+      const q = pasta ? `?pasta=${encodeURIComponent(pasta)}` : '';
+      comandos = (await api(`/comandos${q}`)).comandos;
+    } catch {
+      comandos = skills.map((s) => ({ nome: s.nome, descricao: s.descricao, tipo: 'skill' }));
+    }
+    return comandos;
+  }
+
+  async function sugerirComandos() {
+    const m = /^\/([\w.:-]*)( ([\w-]*))?$/.exec(area.value);
     if (!m) return;
-    const itens = skills.filter((s) => s.nome.startsWith(m[1])).slice(0, 10).map((s) => ({
-      texto: '/' + s.nome, sub: s.descricao.slice(0, 120), acao: () => { area.value = `/${s.nome} `; area.focus(); ajustarAltura(); },
-    }));
-    if (itens.length) menu(area, [{ titulo: 'Skills desta pasta' }, ...itens], { acima: true });
+    const lista = await carregarComandos();
+    let filtrados;
+    if (m[2] !== undefined) {
+      if (m[1] !== 'fluxo') return;  // "/fluxo " mostra os fluxos prontos
+      filtrados = lista.filter((c) => c.tipo === 'fluxo' && c.nome.slice(6).startsWith(m[3] || ''));
+    } else {
+      filtrados = lista.filter((c) => c.tipo !== 'fluxo' && c.nome.toLowerCase().includes(m[1].toLowerCase()))
+        .sort((a, b) => (b.nome.startsWith(m[1]) - a.nome.startsWith(m[1])));
+    }
+    if (modo !== 'code') filtrados = filtrados.filter((c) => c.nome !== 'plano');
+    const itens = [];
+    let tipoAtual = null;
+    for (const c of filtrados.slice(0, 14)) {
+      if (c.tipo !== tipoAtual) { tipoAtual = c.tipo; itens.push({ titulo: ROTULO_TIPO[c.tipo] || c.tipo }); }
+      itens.push({ texto: '/' + c.nome + (c.argumentos ? ` ${c.argumentos}` : ''), sub: (c.descricao || '').slice(0, 120),
+        acao: () => { area.value = `/${c.nome} `; area.focus(); ajustarAltura(); if (c.nome === 'fluxo') sugerirComandos(); } });
+    }
+    if (itens.length) menu(area, itens, { acima: true });
   }
 
   desenharChips();
@@ -229,7 +289,8 @@ export function criarCompositor({ modo = 'chat', opcoes, aoEnviar, aoParar, past
       reguaTexto.textContent = usado ? `${tokens(usado)} de ${tokens(limite)} tokens` : 'conversa nova';
     },
     definirCusto(v) { custoTexto.textContent = v ? usd(v) : ''; if (!cfg().mostrar_custo) custoTexto.textContent = ''; },
-    definirSkills(lista) { skills = lista || []; },
+    definirSkills(lista) { skills = lista || []; comandos = null; },
+    definirPermissao(p) { op.permissao = p; desenharChips(); },
   };
 }
 

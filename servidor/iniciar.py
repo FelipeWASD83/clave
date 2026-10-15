@@ -156,6 +156,8 @@ def main() -> int:
                 "--fechar-sem-janela", "10"]
         if a.pai:
             args += ["--pai", str(a.pai)]
+        if os.environ.get("CLAVE_TESTE_DEMO") == "1":  # só nos testes da janela: API de mentira, nada é cobrado
+            args += ["--demo"]
         inicio = time.time()
         log(f"Subindo o servidor na porta {porta}.")
         proc = subprocess.Popen(args, cwd=str(config.RAIZ))

@@ -1,0 +1,9 @@
+{
+  "name": "pesquisa",
+  "displayName": "Pesquisa",
+  "version": "1.0.0",
+  "description": "Pesquisa na web com fonte e data em cada fato, e comparação de opções com recomendação clara.",
+  "author": {"name": "Clave"},
+  "license": "MIT",
+  "keywords": ["pesquisa", "web", "fontes", "comparar"]
+}

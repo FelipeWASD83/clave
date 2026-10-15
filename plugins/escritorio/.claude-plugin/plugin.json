@@ -1,0 +1,9 @@
+{
+  "name": "escritorio",
+  "displayName": "Escritório",
+  "version": "1.0.0",
+  "description": "Excel, relatórios em PDF e dados: ler, limpar, comparar e apresentar planilhas sem estragar a original.",
+  "author": {"name": "Clave"},
+  "license": "MIT",
+  "keywords": ["excel", "planilha", "pdf", "relatório", "csv"]
+}

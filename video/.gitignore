@@ -1,0 +1,6 @@
+# Gerados: a narração (voz da Microsoft pelo edge-tts), os sons e o vídeo pronto. Saem dos scripts de ferramentas/.
+public/narracao/
+public/sons/
+src/narracao.gerado.json
+saida/
+quadros/

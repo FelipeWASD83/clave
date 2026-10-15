@@ -1,0 +1,20 @@
+{
+  "name": "clave-video",
+  "private": true,
+  "description": "Vídeo em motion graphics \"Por que usar o Clave\", com narração em português, feito com Remotion.",
+  "scripts": {
+    "narrar": "python ferramentas/narrar.py",
+    "sons": "python ferramentas/sons.py",
+    "studio": "remotion studio src/index.ts",
+    "video": "remotion render src/index.ts PorQueOClave saida/bruto.mp4 --codec h264 --crf 18 --audio-bitrate 192k && ffmpeg -y -v error -i saida/bruto.mp4 -c:v copy -af loudnorm=I=-16:TP=-1.5:LRA=11 -ar 48000 -c:a aac -b:a 192k -movflags +faststart saida/por-que-o-clave.mp4",
+    "capa": "remotion still src/index.ts PorQueOClave saida/capa.png --frame 2600"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "@remotion/media": "4.0.534",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.534"
+  }
+}

@@ -64,7 +64,8 @@ export function acompanhar(execucaoId, aoEvento) {
               if (!linha.startsWith('data: ')) continue;
               const ev = JSON.parse(linha.slice(6));
               desde = ev.seq + 1;
-              aoEvento(ev);
+              // erro de tela num evento não pode virar "reconectar": aparece no console e a conversa segue
+              try { aoEvento(ev); } catch (erro) { console.error('Erro ao mostrar o evento', ev.tipo, erro); }
               if (ev.tipo === 'fim') terminou = true;
             }
           }

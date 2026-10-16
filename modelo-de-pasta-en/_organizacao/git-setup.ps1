@@ -1,4 +1,4 @@
-# Checks the Git of the projects in this folder (each subfolder of the root is a project).
+﻿# Checks the Git of the projects in this folder (each subfolder of the root is a project).
 # - Creates Git in the ones that don't have it yet (with the root .gitignore) and saves a first version.
 # - Lists the ones with unsaved changes and the ones with no copy on GitHub.
 # Sends nothing to the internet: sending (git push) is your decision.

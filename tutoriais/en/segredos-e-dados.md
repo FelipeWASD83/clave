@@ -64,7 +64,7 @@ In Settings > Code mode there's the **Protected files and folders** list. It alr
 - A command that mentions one of these files **always** asks for your OK.
 - Add anything sensitive there, one per line: `passwords.txt`, `documents/**`.
 
-The list protects you well against mistakes, but a command can't know everything it will touch. The safest way is to keep passwords and documents **outside the working folder**: in Code mode, the file tools ask for your OK every time they read or change anything outside it, unless one of your [permission rules](#/aprender/permissoes) allows it.
+The list protects you well against mistakes, but a command can't know everything it will touch. The safest way is to keep passwords and documents **outside the working folder**: in Code mode, the file tools ask for your OK every time they read or change anything outside it (except in **Auto** mode, which doesn't ask), unless one of your [permission rules](#/aprender/permissoes) allows it.
 
 ## Personal data and documents
 

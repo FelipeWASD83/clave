@@ -31,7 +31,7 @@ This is the best moment to catch a mistake, because nothing has changed yet. It 
 
 Below each answer that created or edited files you'll see **Undo changes**. It puts that answer's files back the way they were before it: what was edited goes back to the old text, and a file the answer created disappears.
 
-What it **doesn't** bring back is what a [command](#/aprender/glossario/comando) did: moving, renaming, deleting, running a script, installing a program, sending something to the internet. The button can't reach any of that. That's why the card for each command shows what will run first, and a command that deletes or publishes always asks for your OK, even in **Auto** mode.
+What it **doesn't** bring back is what a [command](#/aprender/glossario/comando) did: moving, renaming, deleting, running a script, installing a program, sending something to the internet. The button can't reach any of that. That's why the card for each command shows what will run first, and a command that deletes always asks for your OK, even in **Auto** mode. Publishing and sending something to the internet ask too, except in Auto.
 
 Details worth knowing:
 
@@ -61,7 +61,7 @@ Undo covers one answer. [Git](#/aprender/glossario/git) covers weeks: it keeps "
 
 - Folders created with the [folder template](#/aprender/modelo-de-pasta) already start with Git, if Git is installed on the computer.
 - The `.git` folder, where the history lives, already comes on the protected files list: Claude's file tools don't touch it.
-- A command that throws changes away (`git reset --hard`, `git clean`) or that sends to the internet (`git push`) always asks for your OK.
+- A command that throws changes away (`git reset --hard`, `git clean`) always asks for your OK, even in Auto mode. One that sends to the internet (`git push`) asks in the other modes, but in Auto it goes on its own.
 
 Before a big task:
 
@@ -79,7 +79,7 @@ The lesson [Git and GitHub for people who have never used them](#/aprender/githu
 
 ## GitHub: the copy outside your computer
 
-Git keeps the history on the computer itself: if the computer breaks, the history goes with it. [GitHub](#/aprender/glossario/github) keeps a copy on the internet, in a **private** repository only you can see. Clave always asks for your OK before sending (`git push`).
+Git keeps the history on the computer itself: if the computer breaks, the history goes with it. [GitHub](#/aprender/glossario/github) keeps a copy on the internet, in a **private** repository only you can see. Clave asks for your OK before sending (`git push`), except in Auto mode.
 
 Passwords, keys and personal data do **not** go to GitHub, not even in a private repository. Ask Claude for a `.gitignore` file (the list of what Git leaves out) with your password and key files. See [Passwords, keys and personal data](#/aprender/segredos-e-dados).
 

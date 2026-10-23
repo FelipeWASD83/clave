@@ -258,6 +258,39 @@ class TestFluxo(unittest.TestCase):
         finally:
             shutil.rmtree(pasta, ignore_errors=True)
 
+    def test_livre_roda_fluxo_e_cria_arquivo_sem_perguntar_nada(self):
+        s = self.s
+        pasta = tempfile.mkdtemp(prefix="clave-livre-")
+        try:
+            _, r = s.pedir("POST", "/api/conversas", {"modo": "code", "pasta": pasta})
+            cid = r["conversa"]["id"]
+            _, r = s.pedir("POST", f"/api/conversas/{cid}/enviar", {"texto": "rode isso como um fluxo",
+                                                                    "opcoes": {"permissao": "livre"}})
+            evs = s.eventos(r["execucao"], decidir="recusar")  # qualquer cartão seria recusado e o teste falharia
+            tipos = [e["tipo"] for e in evs]
+            for pedido in ("fluxo_proposta", "aprovacao", "plano_proposto"):
+                self.assertNotIn(pedido, tipos)
+            self.assertFalse(any(e["tipo"] == "etapa_evento" and e["ev"]["tipo"] == "aprovacao" for e in evs))
+            for t in ("fluxo_inicio", "etapa_fim", "fluxo_fim"):
+                self.assertIn(t, tipos)
+            self.assertTrue((Path(pasta) / "exemplo-do-fluxo.txt").exists())
+            _, h = s.pedir("GET", "/api/permissoes/historico")
+            self.assertTrue(any(x["ferramenta"] == "executar_fluxo" and x["decisao"] == "auto" for x in h["registros"]))
+            _, v = s.pedir("GET", f"/api/conversas/{cid}")
+            primeira = next(m for m in v["mensagens"] if m["papel"] == "user")
+            self.assertTrue(primeira["conteudo"][-1]["text"].startswith("<modo-do-clave>Modo Livre ligado"),
+                            "o modelo fica sabendo do modo Livre pela própria mensagem")
+        finally:
+            shutil.rmtree(pasta, ignore_errors=True)
+
+    def test_livre_so_vale_no_code(self):
+        import execucao
+        ex = execucao.Execucao("x", {"permissao": "livre"})
+        self.assertEqual(ex._permissao({}), "livre")
+        self.assertTrue(ex._livre({}, "code"))
+        self.assertFalse(ex._livre({}, "chat"), "no chat não existe Livre")
+        self.assertFalse(execucao.Execucao("y", {"permissao": "perguntar"})._livre({"permissao_code": "livre"}, "code"))
+
     def test_fluxo_recusado_nao_roda_nada(self):
         s = self.s
         _, r = s.pedir("POST", "/api/conversas", {"modo": "chat"})

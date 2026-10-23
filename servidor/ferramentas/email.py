@@ -5,7 +5,7 @@ Dois jeitos de ligar (Configurações > Conectores > E-mail):
 - O Outlook clássico instalado no computador, por automação do Windows (COM): serve para Outlook.com e
   Microsoft 365, que não aceitam mais senha por IMAP. O Outlook novo não tem essa automação.
 
-Ler é livre; enviar sempre pede o OK de quem usa (a não ser uma regra de permitir escrita para isso:
+Ler é livre; enviar pede o OK de quem usa, menos no modo Livre (a não ser uma regra de permitir escrita para isso:
 Email(enviar)). Os ids das mensagens são o UID do IMAP ou o EntryID do Outlook.
 """
 from __future__ import annotations
@@ -75,7 +75,7 @@ def definicoes() -> list[dict]:
              "desde": {"type": "string", "description": "Só a partir desta data (AAAA-MM-DD)."},
              "limite": {"type": "integer", "description": "Quantas trazer (padrão 15, máximo 50)."}}}},
         {"name": "email_enviar", "eager_input_streaming": True,
-         "description": "Envia um e-mail pela conta da pessoa. Ela sempre vê o e-mail inteiro e aprova antes de sair. Escreva o texto pronto, no tom certo, sem inventar fatos, preços ou prazos.",
+         "description": "Envia um e-mail pela conta da pessoa. Ela vê o e-mail inteiro e aprova antes de sair (menos no modo Livre, em que sai direto). Escreva o texto pronto, no tom certo, sem inventar fatos, preços ou prazos.",
          "input_schema": {"type": "object", "properties": {
              "para": {"type": "string", "description": "Destinatários, separados por vírgula."},
              "cc": {"type": "string"},

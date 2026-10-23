@@ -29,7 +29,7 @@ Numa rotina ninguém está olhando, então ela **não pergunta nada**:
 - mudar arquivos, rodar comandos: só se houver uma [regra de permissão](#/aprender/permissoes) liberando;
 - se precisar de um OK, ela **para** e conta o que precisaria (com a regra sugerida). Você cria a regra e roda de novo.
 
-Rotina também não roda fluxo (fluxo sempre precisa do seu OK).
+Rotina também não roda fluxo (ninguém estaria lá para aprovar o cartão do fluxo).
 
 ## Com o Clave fechado
 

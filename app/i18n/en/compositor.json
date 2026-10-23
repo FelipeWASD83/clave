@@ -11,7 +11,7 @@
   "Plano": "Plan",
   "Só lê e propõe um plano. Não muda nada.": "Only reads and proposes a plan. Changes nothing.",
   "Livre": "Auto",
-  "Faz tudo sozinho, menos apagar ou publicar, que sempre pedem OK.": "Does everything on its own, except deleting or publishing, which always ask for OK.",
+  "Faz tudo sozinho, sem perguntar. Só apagar arquivos ainda pede OK.": "Does everything on its own, without asking. Only deleting files still asks for OK.",
   "Do Clave": "Built into Clave",
   "Comandos": "Commands",
   "Skills": "Skills",

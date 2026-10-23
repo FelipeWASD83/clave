@@ -8,7 +8,7 @@ Uma regra é `Ferramenta` ou `Ferramenta(padrão)`:
     WebFetch(domain:x.com)    abrir página ("domain:*.x.com" vale os subdomínios)
     mcp__servidor             conector inteiro; mcp__servidor__ferramenta, uma ferramenta dele
     Agent(nome)               usar um agente nos fluxos
-    Fluxo                     propor fluxos (só "negar" tem efeito: fluxo sempre pede OK)
+    Fluxo                     propor fluxos (só "negar" tem efeito: fluxo pede OK, menos no Livre)
     GitHub(nome)              ferramentas do GitHub que publicam algo
     Navegador(exemplo.com)    o navegador do Code naquele site ("*.exemplo.com" vale o site e os subdomínios)
     Navegador(clicar:x.com)   só uma ação do navegador (abrir, ler, print, rolar, voltar, clicar, digitar, ou em

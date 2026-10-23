@@ -641,11 +641,22 @@ def _nota_de_modo(conv: dict, opcoes: dict) -> str:
             t("Modo Plano ligado: investigue só lendo (não crie, não edite e não rode comandos) e, quando o plano estiver pronto, apresente com a ferramenta apresentar_plano."),
             t("Quem usa aprova e você segue executando na mesma resposta."),
         ]) + execucao.FIM_MARCA_MODO)
+    partes = []
     if antes == "plano":
         nome_modo = t(execucao.NOMES_MODO[agora]) if agora in execucao.NOMES_MODO else agora
-        return (execucao.MARCA_MODO + t("O modo Plano foi desligado; o modo agora é {modo}. Pode executar normalmente.",
-                                        modo=nome_modo) + execucao.FIM_MARCA_MODO)
-    return ""
+        partes.append(t("O modo Plano foi desligado; o modo agora é {modo}. Pode executar normalmente.", modo=nome_modo))
+    if agora == "livre" and antes != "livre":
+        partes.append(" ".join([
+            t("Modo Livre ligado: nada pede OK, então não peça permissão nem apresente plano antes de começar (a ferramenta apresentar_plano não existe neste modo); vá direto e conte no fim o que fez."),
+            t("Publicar (git push, deploy), mandar e-mail, mexer fora da pasta de trabalho e rodar fluxo seguem sozinhos."),
+            t("Só apagar arquivos ou dados (e o que cita um arquivo protegido) ainda pede o OK de quem usa; por isso, não apague nada sem necessidade."),
+        ]))
+    elif antes == "livre" and agora != "livre" and agora != "plano":
+        partes.append(t("O modo Livre foi desligado; o modo agora é {modo}. Ações voltam a pedir OK conforme o modo, e apresentar_plano volta a existir.",
+                        modo=t(execucao.NOMES_MODO[agora]) if agora in execucao.NOMES_MODO else agora))
+    if not partes:
+        return ""
+    return execucao.MARCA_MODO + " ".join(partes) + execucao.FIM_MARCA_MODO
 
 
 def _opcoes(d: dict) -> dict:

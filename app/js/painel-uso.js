@@ -129,7 +129,7 @@ export function painelAmbientes({ atual, aoEscolher, auto, aoAuto }) {
     estado.info.modelo_de_pasta ? { texto: t('Criar pasta com o modelo…'), sub: t('Regras, skills e referências prontas'), icone: 'mais', acao: async () => aoEscolher(await criarPastaComModelo()) } : null,
   ].filter(Boolean)));
   const autoBotao = el('button', { class: `ambiente-auto ${auto ? 'ligado' : ''}`, type: 'button', 'aria-pressed': String(!!auto),
-    title: t('Modo automático: o Claude muda arquivos e roda comandos sem perguntar (é o modo Livre). Apagar e publicar continuam pedindo OK.') },
+    title: t('Modo automático: o Claude muda arquivos e roda comandos sem perguntar (é o modo Livre). Apagar continua pedindo OK.') },
     el('span', { html: ic('raio') }), el('span', { texto: auto ? t('Modo automático ligado') : t('Ativar modo automático') }),
     auto ? el('span', { class: 'ambiente-check', html: ic('certo') }) : null);
   autoBotao.addEventListener('click', () => aoAuto(!auto));

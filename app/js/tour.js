@@ -17,7 +17,7 @@ const TOURS = {
     { alvo: '[data-tour="esforco"]', titulo: t('Raciocínio'), texto: t('Quanto o Claude pensa antes de responder. Mais raciocínio resolve coisas difíceis, mas custa mais.') },
     { alvo: '[data-tour="web"]', titulo: t('Busca na web'), texto: t('Vem ligada: o Claude pesquisa na internet quando a resposta pedir algo atual. Clique para desligar nesta conversa.') },
     { alvo: '.painel-uso', titulo: t('Seu uso'), texto: t('Tokens, dias seguidos, o mapa de calor e a projeção: em que dia o teto do mês acaba no seu ritmo.') },
-    { alvo: '.lateral [data-secao="fluxos"]', titulo: t('Fluxos e agentes'), texto: t('Tarefas grandes divididas em etapas, cada uma num modelo. Sempre pedem o seu OK antes, com o custo estimado.') },
+    { alvo: '.lateral [data-secao="fluxos"]', titulo: t('Fluxos e agentes'), texto: t('Tarefas grandes divididas em etapas, cada uma num modelo. Pedem o seu OK antes (menos no modo Livre), com o custo estimado.') },
     { alvo: '.lateral [data-secao="rotinas"]', titulo: t('Rotinas'), texto: t('Pedidos que o Claude faz sozinho no horário que você escolher.') },
     { alvo: '.lateral [data-secao="plugins"]', titulo: t('Plugins'), texto: t('Pacotes de skills, agentes e comandos para tipos de trabalho: escritório, escrita, programação e mais.') },
     { alvo: '.lateral [data-secao="aprender"]', titulo: t('Aprender'), texto: t('Lições curtas do zero e um glossário. Cada lição tem um ajudante para tirar dúvidas.') },
@@ -27,7 +27,7 @@ const TOURS = {
   ],
   code: () => [
     { alvo: '.painel-ambientes .ambientes-lista', titulo: t('Ambiente'), texto: t('A pasta em que o Claude trabalha. Ele só mexe dentro dela. Troque aqui ou escolha outra.') },
-    { alvo: '.ambiente-auto', titulo: t('Modo automático'), texto: t('Liga o modo Livre: o Claude muda arquivos e roda comandos sem perguntar. Apagar e publicar continuam pedindo OK.') },
+    { alvo: '.ambiente-auto', titulo: t('Modo automático'), texto: t('Liga o modo Livre: o Claude muda arquivos e roda comandos sem perguntar. Apagar continua pedindo OK.') },
     { alvo: '[data-tour="permissao"]', titulo: t('Permissões'), texto: t('Quanta liberdade ele tem: Perguntar, Aceitar edições, Plano (só lê e apresenta o plano) ou Livre.') },
     { alvo: '.contexto-code', titulo: t('O que ele sabe da pasta'), texto: t('Regras da pasta (CLAUDE.md) e skills que ele vai seguir.') },
   ],
@@ -46,7 +46,7 @@ const TOURS = {
   ],
   fluxos: () => [
     { alvo: '.abas', titulo: t('Fluxos, agentes e histórico'), texto: t('Os fluxos prontos, os agentes que fazem as etapas e tudo o que já rodou.') },
-    { alvo: '.grade-cartoes .cartao', titulo: t('Um fluxo pronto'), texto: t('Mostra as etapas e o modelo de cada uma, com o custo estimado. Use no chat ou no Code; ele sempre pede OK antes de rodar.') },
+    { alvo: '.grade-cartoes .cartao', titulo: t('Um fluxo pronto'), texto: t('Mostra as etapas e o modelo de cada uma, com o custo estimado. Use no chat ou no Code; ele pede OK antes de rodar (menos no modo Livre).') },
   ],
 };
 

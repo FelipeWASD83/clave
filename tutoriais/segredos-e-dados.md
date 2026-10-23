@@ -64,7 +64,7 @@ Em Configurações > Modo Code fica a lista **Arquivos e pastas protegidos**. El
 - Um comando que cite um desses arquivos **sempre** pede o seu OK.
 - Ponha ali o que for sensível, um por linha: `senhas.txt`, `documentos/**`.
 
-A lista protege bem contra engano, mas um comando não tem como saber tudo o que vai tocar. O jeito mais seguro é deixar senhas e documentos **fora da pasta de trabalho**: no modo Code, as ferramentas de arquivo pedem o seu OK toda vez para ler ou mudar qualquer coisa fora dela, a não ser que uma [regra de permissão](#/aprender/permissoes) sua libere.
+A lista protege bem contra engano, mas um comando não tem como saber tudo o que vai tocar. O jeito mais seguro é deixar senhas e documentos **fora da pasta de trabalho**: no modo Code, as ferramentas de arquivo pedem o seu OK toda vez para ler ou mudar qualquer coisa fora dela (menos no modo **Livre**, que não pergunta), a não ser que uma [regra de permissão](#/aprender/permissoes) sua libere.
 
 ## Dados pessoais e documentos
 

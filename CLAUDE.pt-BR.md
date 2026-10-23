@@ -144,8 +144,9 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
   conversas antigas de chat e Code gravaram (era o padrão de antes, não uma escolha). Sem a opção no pedido, chat
   e Code seguem a configuração; etapa de fluxo, rotina e ajudante sempre mandam a deles. Regra que nega
   `WebSearch` continua valendo.
-- **Enviar e-mail sempre pergunta.** O `email_enviar` mostra o e-mail inteiro e espera OK em qualquer modo; só
-  uma regra de permitir específica `Email(enviar)` dispensa, e rotina para sem ela. Ler é livre. A Microsoft
+- **Enviar e-mail pergunta.** O `email_enviar` mostra o e-mail inteiro e espera OK em qualquer modo, menos no Livre,
+  onde sai direto a não ser que quem usa tenha escrito uma regra `ask` para `Email(enviar)`; uma regra de permitir
+  específica `Email(enviar)` também dispensa, e rotina para sem ela. Ler é livre. A Microsoft
   (Outlook.com, Microsoft 365) não aceita mais senha por IMAP: o caminho é o Outlook clássico (COM) ou o Zapier. O
   Outlook novo não tem COM.
 - **Word sem python-docx.** Ele precisa do lxml (parte nativa que o Smart App Control pode barrar), então o
@@ -323,13 +324,20 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 - **Ajudantes** (modo `tutor` no Haiku 5.5, modo `memoria` no Sonnet 5.5) são
   conversas escondidas da lista (`banco.listar_conversas` filtra só chat e code)
   com modelo forçado (`execucao.AJUDANTES`).
-- **Comandos perigosos sempre pedem OK**, mesmo no modo Livre
-  (`code.PERIGOSOS`: qualquer apagar, push, reset, publicar, deploy, registro),
-  a não ser que uma regra allow específica para aquele comando exista.
-  Protegidos: as ferramentas de arquivo negam sempre; comando que cita um deles
-  pede OK. No modo Plano, escrita e comando são negados. "Permitir nesta
-  tarefa" só libera escrita e comando dentro da pasta: caminho de fora pede OK
-  toda vez.
+- **Comandos perigosos pedem OK** (`code.PERIGOSOS` = `APAGADORES` +
+  `OUTROS_PERIGOSOS`: apagar, push, reset, publicar, deploy, registro), a não
+  ser que uma regra allow específica para aquele comando exista. **O modo Livre
+  só pergunta pelos `APAGADORES`** (apagar arquivo ou dado, `reset --hard`,
+  `clean`, `gh repo delete`...); publicar, mexer fora da pasta, mandar e-mail
+  (`_email`), escrever no GitHub e rodar fluxo passam sozinhos
+  (`Execucao._livre`), e a ferramenta `apresentar_plano` nem é oferecida. No
+  Livre continuam valendo: regra `deny` e `ask` escrita por quem usa, arquivo
+  protegido (as ferramentas de arquivo negam sempre; comando que cita um deles
+  pede OK) e o cartão de perguntas do modelo. O modelo fica sabendo do Livre
+  pela nota escondida de `servidor._nota_de_modo` (o prompt de sistema é
+  congelado). No modo Plano, escrita e comando são negados. Fora do Livre,
+  "permitir nesta tarefa" só libera escrita e comando dentro da pasta: caminho
+  de fora pede OK toda vez.
 - **O atalho abre pelo `ferramentas/abrir.pyw`**, não direto no `electron.exe`:
   uma atualização pode trocar a versão do Electron (`versao.json`), e é o
   `abrir.pyw` que baixa a nova antes de abrir. O "reiniciar" da janela também
@@ -337,8 +345,9 @@ janela ◄── http://127.0.0.1:8040/?t=<segredo>  (vira cookie HttpOnly e som
 - **Excel com openpyxl**: ele escreve fórmula mas não calcula; recalcular é pelo
   Excel instalado (`excel.no_excel`). Ao salvar arquivo existente, imagens e
   formas podem se perder: a descrição da ferramenta manda salvar cópia.
-- **Fluxo sempre pede OK** (cartão `fluxo_proposta`), em qualquer modo e com
-  qualquer regra; regra só consegue proibir (`deny` em `Fluxo`). Cada etapa é
+- **Fluxo pede OK** (cartão `fluxo_proposta`) em qualquer modo e com qualquer
+  regra, menos no Livre, onde roda direto com o teto de gasto sugerido; regra só
+  consegue proibir (`deny` em `Fluxo`). Cada etapa é
   uma conversa escondida (modo `etapa`) rodada por uma `Execucao` filha: os
   eventos sobem para a mãe como `etapa_evento`, os pedidos de OK aparecem na
   conversa mãe, o custo vai para a conversa mãe com origem `fluxo` e o

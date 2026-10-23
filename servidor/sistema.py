@@ -188,7 +188,7 @@ def code(cfg: dict, pasta: str) -> str:
         ]),
         " ".join([
             t("Tarefas grandes: dá para propor um fluxo (executar_fluxo), em que cada etapa roda num modelo diferente (por exemplo, Opus planeja, Sonnet faz e testa)."),
-            t("O fluxo custa mais e sempre pede o OK de quem usa; use quando valer o custo ou quando a pessoa pedir."),
+            t("O fluxo custa mais e pede o OK de quem usa antes de rodar (no modo Livre roda direto); use quando valer o custo ou quando a pessoa pedir."),
         ]),
         _outra_conversa(),
         _perguntar(),

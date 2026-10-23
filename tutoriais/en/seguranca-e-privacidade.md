@@ -26,7 +26,7 @@ Avoid sending passwords, card numbers and other people's documents unless you re
 
 - **Read the card**: it shows the command or the before and after of the file.
 - **Don't understand it?** Deny it and ask "what does this command do?".
-- Actions that delete or publish something **always** ask for OK, even in Auto mode.
+- Actions that delete files or data **always** ask for OK, even in Auto mode. Publishing and sending e-mail ask in the other modes, but in Auto they happen on their own.
 - Start in **Ask** or **Plan** mode. Allow more only once you feel confident.
 - Put sensitive files in **Protected files and folders** (Settings > Code mode).
 - **In the Code browser**, outside Auto mode, each site asks for your OK the first time Claude is about to use it in the task (sites on your own computer, `localhost`, don't ask). Once the site is allowed, opening, reading, taking a screenshot, scrolling and going back run on their own; clicking and typing ask for your OK every time, except in Auto mode. Claude never types passwords, access codes or card details: you type those.

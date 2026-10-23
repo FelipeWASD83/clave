@@ -63,4 +63,4 @@ In Code mode, ask:
 I want to keep this folder on GitHub as a private repository. Explain the step-by-step to me and do what you can from here, always showing me the commands first.
 ```
 
-Clave always asks for your OK before a `git push` (the command that sends things to the internet).
+Clave asks for your OK before a `git push` (the command that sends things to the internet), except in **Auto** mode, where it sends on its own.

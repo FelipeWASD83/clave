@@ -35,7 +35,7 @@
   "Uma pasta do computador": "A folder on your computer",
   "Criar pasta com o modelo…": "Create a folder from the template…",
   "Regras, skills e referências prontas": "Rules, skills and references ready to go",
-  "Modo automático: o Claude muda arquivos e roda comandos sem perguntar (é o modo Livre). Apagar e publicar continuam pedindo OK.": "Auto mode: Claude changes files and runs commands without asking (it's the Auto permission mode). Deleting and publishing still ask for your OK.",
+  "Modo automático: o Claude muda arquivos e roda comandos sem perguntar (é o modo Livre). Apagar continua pedindo OK.": "Auto mode: Claude changes files and runs commands without asking (it's the Auto permission mode). Deleting still asks for your OK.",
   "Modo automático ligado": "Auto mode on",
   "Ativar modo automático": "Turn on auto mode",
   "Ambiente": "Environment",

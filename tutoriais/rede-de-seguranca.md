@@ -31,7 +31,7 @@ Antes de mexer em muita coisa (criar ou mudar três arquivos ou mais, mover, ren
 
 Embaixo de cada resposta que criou ou editou arquivos aparece **Desfazer mudanças**. Ele volta os arquivos daquela resposta para como estavam antes dela: o que foi editado volta ao texto antigo, e o arquivo que ela criou some.
 
-O que ele **não** volta é o que um [comando](#/aprender/glossario/comando) fez: mover, renomear, apagar, rodar um script, instalar um programa, mandar algo para a internet. O botão não alcança nada disso. Por isso o cartão de cada comando mostra o que vai rodar antes, e comando que apaga ou publica sempre pede o seu OK, até no modo **Livre**.
+O que ele **não** volta é o que um [comando](#/aprender/glossario/comando) fez: mover, renomear, apagar, rodar um script, instalar um programa, mandar algo para a internet. O botão não alcança nada disso. Por isso o cartão de cada comando mostra o que vai rodar antes, e comando que apaga sempre pede o seu OK, até no modo **Livre**. Publicar e mandar algo para a internet também pedem, menos no Livre.
 
 Detalhes que valem saber:
 
@@ -61,7 +61,7 @@ O Desfazer cobre uma resposta. O [Git](#/aprender/glossario/git) cobre semanas: 
 
 - Pastas criadas pelo [modelo de pasta](#/aprender/modelo-de-pasta) já começam com Git, se o Git estiver instalado no computador.
 - A pasta `.git`, onde mora o histórico, já vem na lista de arquivos protegidos: as ferramentas de arquivo do Claude não mexem nela.
-- Comando que joga mudanças fora (`git reset --hard`, `git clean`) ou que envia para a internet (`git push`) sempre pede o seu OK.
+- Comando que joga mudanças fora (`git reset --hard`, `git clean`) sempre pede o seu OK, até no modo Livre. O que envia para a internet (`git push`) pede nos outros modos, mas no Livre vai sozinho.
 
 Antes de uma tarefa grande:
 
@@ -79,7 +79,7 @@ A lição [Git e GitHub para quem nunca usou](#/aprender/github) explica com cal
 
 ## GitHub: a cópia fora do computador
 
-O Git guarda o histórico no próprio computador: se o computador quebrar, vai junto. O [GitHub](#/aprender/glossario/github) guarda uma cópia na internet, num repositório **privado** que só você vê. O Clave sempre pede o seu OK antes de enviar (`git push`).
+O Git guarda o histórico no próprio computador: se o computador quebrar, vai junto. O [GitHub](#/aprender/glossario/github) guarda uma cópia na internet, num repositório **privado** que só você vê. O Clave pede o seu OK antes de enviar (`git push`), menos no modo Livre.
 
 Senhas, chaves e dados pessoais **não** vão para o GitHub, nem em repositório privado. Peça ao Claude um arquivo `.gitignore` (a lista do que o Git deixa de fora) com os arquivos de senha e chave. Veja [Senhas, chaves e dados pessoais](#/aprender/segredos-e-dados).
 

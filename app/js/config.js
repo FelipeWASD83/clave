@@ -355,8 +355,8 @@ const SECOES = {
           ['perguntar', t('Perguntar: pede OK para editar e rodar comandos')],
           ['aceitar_edicoes', t('Aceitar edições: só pede OK para comandos')],
           ['plano', t('Plano: só lê e propõe')],
-          ['livre', t('Livre: faz tudo (menos apagar ou publicar)')]])),
-        liga('pedir_ok_plano', t('Pedir OK antes de tarefas grandes'), t('Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer "pode ir", em qualquer modo. Vale para as conversas novas.')),
+          ['livre', t('Livre: faz tudo (menos apagar)')]])),
+        liga('pedir_ok_plano', t('Pedir OK antes de tarefas grandes'), t('Antes de mexer em vários arquivos ou fazer algo difícil de desfazer, o Claude mostra o plano e espera você dizer "pode ir", em qualquer modo, menos no Livre. Vale para as conversas novas.')),
         liga('carregar_claude_md', t('Ler as regras da pasta (CLAUDE.md e AGENTS.md)'), t('Como no Claude Code: as regras escritas na pasta e nas pastas acima dela valem para o Claude.')),
         liga('navegador_ligado', t('Deixar o Claude usar o navegador do Code'), t('Ele abre páginas, lê, tira print e, com o seu OK, clica e digita. Fora do modo Livre, você libera cada site novo uma vez por tarefa (o seu computador, localhost, não pergunta). Senha e cartão quem digita é você. Só funciona na janela do Clave.')),
         el('div', { class: 'campo' }, el('span', { texto: t('Dados do navegador') }),
@@ -382,7 +382,7 @@ const SECOES = {
       catch (e) { aviso(e.message, 'erro'); }
     };
     const conectado = g.origem && g.usuario;
-    alvo.replaceChildren(secao(t('GitHub'), t('Conecte para anexar arquivos dos seus repositórios e deixar o Claude ler código, issues e pull requests. Criar issue, comentar e abrir PR sempre pedem o seu OK.'),
+    alvo.replaceChildren(secao(t('GitHub'), t('Conecte para anexar arquivos dos seus repositórios e deixar o Claude ler código, issues e pull requests. Criar issue, comentar e abrir PR pedem o seu OK, menos no modo Livre.'),
       conectado ? el('div', { class: 'item-lista' }, el('span', { html: ic('ramo') }), el('span', { class: 'textos' }, el('b', { texto: g.usuario.login }), el('small', { texto: g.origem === 'gh' ? t('Pelo login do gh') : t('Por token pessoal') })),
         el('button', { class: 'botao pequeno', type: 'button', texto: t('Desconectar'), onclick: () => conectar('') }))
         : g.erro ? el('div', { class: 'nota-conversa erro' }, el('span', { html: ic('alerta') }), g.erro) : null,

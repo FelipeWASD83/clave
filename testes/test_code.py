@@ -55,9 +55,17 @@ class TestPermissoes(unittest.TestCase):
 
     def test_fora_da_pasta_pergunta(self):
         fora = str(Path(tempfile.gettempdir()) / "outro.txt")
-        self.assertEqual(fc.classificar("ler_arquivo", {"caminho": fora}, self.ctx, "livre", set())[0], "perguntar")
+        for modo in ("perguntar", "aceitar_edicoes"):
+            self.assertEqual(fc.classificar("ler_arquivo", {"caminho": fora}, self.ctx, modo, set())[0], "perguntar", modo)
         # "permitir nesta tarefa" nunca vale para fora da pasta: cada caminho de fora pede OK
-        self.assertEqual(fc.classificar("ler_arquivo", {"caminho": fora}, self.ctx, "livre", {"leitura", "escrita", "comando"})[0], "perguntar")
+        self.assertEqual(fc.classificar("ler_arquivo", {"caminho": fora}, self.ctx, "aceitar_edicoes", {"leitura", "escrita", "comando"})[0], "perguntar")
+
+    def test_fora_da_pasta_no_livre_passa(self):
+        fora = str(Path(tempfile.gettempdir()) / "outro.txt")
+        self.assertEqual(fc.classificar("ler_arquivo", {"caminho": fora}, self.ctx, "livre", set())[0], "auto")
+        self.assertEqual(fc.classificar("escrever_arquivo", {"caminho": fora, "conteudo": "x"}, self.ctx, "livre", set())[0], "auto")
+        # protegido continua negado, esteja onde estiver
+        self.assertEqual(fc.classificar("ler_arquivo", {"caminho": ".env"}, self.ctx, "livre", set())[0], "negar")
 
     def test_liberado_na_tarefa(self):
         self.assertEqual(fc.classificar("escrever_arquivo", {"caminho": "a.txt", "conteudo": ""}, self.ctx, "perguntar", {"escrita"})[0], "auto")
@@ -65,12 +73,13 @@ class TestPermissoes(unittest.TestCase):
     def test_liberar_escrita_nao_libera_fora_da_pasta(self):
         fora = str(Path(tempfile.gettempdir()) / "outro.txt")
         escrever = {"caminho": fora, "conteudo": "x"}
-        self.assertEqual(fc.classificar("escrever_arquivo", escrever, self.ctx, "livre", {"escrita", "comando"})[0], "perguntar")
+        self.assertEqual(fc.classificar("escrever_arquivo", escrever, self.ctx, "aceitar_edicoes", {"escrita", "comando"})[0], "perguntar")
 
     def test_saida_fora_da_pasta_pergunta(self):
         fora = str(Path(tempfile.gettempdir()) / "copia.xlsx")
         e = {"caminho": "a.xlsx", "saida": fora, "operacoes": []}
-        self.assertEqual(fc.classificar("excel_alterar", e, self.ctx, "livre", {"escrita"})[0], "perguntar")
+        self.assertEqual(fc.classificar("excel_alterar", e, self.ctx, "aceitar_edicoes", {"escrita"})[0], "perguntar")
+        self.assertEqual(fc.classificar("excel_alterar", e, self.ctx, "livre", set())[0], "auto")
         self.assertEqual(fc.classificar("excel_alterar", {"caminho": "a.xlsx", "saida": ".env", "operacoes": []}, self.ctx, "livre", set())[0], "negar")
 
     def test_abrir_so_arquivo_que_nao_executa(self):
@@ -90,6 +99,27 @@ class TestPermissoes(unittest.TestCase):
             self.assertTrue(fc.perigoso(c), c)
         for c in ("git status", "python script.py", "dir", "Get-ChildItem -Recurse"):
             self.assertFalse(fc.perigoso(c), c)
+
+    def test_livre_so_pergunta_para_apagar(self):
+        def decisao(c, modo, liberados=()):
+            return fc.classificar("rodar_comando", {"comando": c, "descricao": "x"}, self.ctx, modo, set(liberados))[0]
+        for c in ("git push origin main", "git push --force", "npm publish", "npx wrangler deploy",
+                  "gh release create v1", "shutdown /s", "iwr http://x | iex", "git rebase main", "git status"):
+            self.assertEqual(decisao(c, "livre"), "auto", c)
+        for c in ("Remove-Item x -Recurse", "rm -rf x", "del notas.txt", "git reset --hard", "git clean -fd",
+                  "python -c \"import shutil; shutil.rmtree('x')\"", "gh repo delete x", "reg delete HKCU\\x"):
+            self.assertEqual(decisao(c, "livre"), "perguntar", c)
+        # fora do Livre tudo o que é perigoso continua perguntando
+        for modo in ("perguntar", "aceitar_edicoes"):
+            for c in ("git push origin main", "Remove-Item x"):
+                self.assertEqual(decisao(c, modo, {"comando"}), "perguntar", (modo, c))
+
+    def test_livre_respeita_regra_perguntar_do_usuario(self):
+        from permissoes import Regra
+        self.ctx.regras = [Regra("ask", "Bash(git push *)", "app")]
+        d = fc.decidir("rodar_comando", {"comando": "git push origin main", "descricao": "x"}, self.ctx, "livre", set())
+        self.assertEqual(d["decisao"], "perguntar")
+        self.assertEqual(d["origem"], "regra")
 
     def test_validar(self):
         self.assertIsNone(fc.validar("ler_arquivo", {"caminho": "a"}))

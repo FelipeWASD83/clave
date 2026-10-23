@@ -151,8 +151,9 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
   old chat/Code conversations saved (it was the old default, not a choice). Without the option in a request, chat
   and Code follow the setting; workflow steps, routines and helpers always send their own. A `WebSearch` deny rule
   still wins.
-- **Sending e-mail always asks.** `email_enviar` shows the whole e-mail and waits for an OK in any mode; only a
-  specific allow rule `Email(enviar)` skips it, and a routine stops without it. Reading is free. Microsoft
+- **Sending e-mail asks.** `email_enviar` shows the whole e-mail and waits for an OK in any mode except Auto
+  (Livre), where it goes out straight away unless the user wrote an `ask` rule for `Email(enviar)`; a specific allow
+  rule `Email(enviar)` also skips it, and a routine stops without it. Reading is free. Microsoft
   (Outlook.com, Microsoft 365) doesn't take passwords over IMAP anymore: the path is the classic Outlook (COM) or
   Zapier. The new Outlook has no COM.
 - **Word without python-docx.** It needs lxml (native code that Smart App Control may block), so `word.py` reads
@@ -325,12 +326,20 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
 - **Helpers** (`tutor` mode on Haiku 5.5, `memoria` mode on Sonnet 5.5) are
   conversations hidden from the list (`banco.listar_conversas` filters only chat
   and code) with a forced model (`execucao.AJUDANTES`).
-- **Dangerous commands always ask for an OK**, even in Auto mode
-  (`code.PERIGOSOS`: any delete, push, reset, publish, deploy, registry), unless
-  a specific allow rule exists for that command. Protected files: the file tools
-  always deny; a command that mentions one asks for an OK. In Plan mode, writes
-  and commands are denied. "Allow for this task" only allows writes and commands
-  inside the folder: a path outside asks every time.
+- **Dangerous commands ask for an OK** (`code.PERIGOSOS` = `APAGADORES` +
+  `OUTROS_PERIGOSOS`: delete, push, reset, publish, deploy, registry), unless a
+  specific allow rule exists for that command. **Auto mode (Livre) only asks
+  about the `APAGADORES`** (deleting a file or data, `reset --hard`, `clean`,
+  `gh repo delete`...); publishing, touching things outside the folder, sending
+  e-mail (`_email`), writing to GitHub and running a workflow go ahead on their
+  own (`Execucao._livre`), and the `apresentar_plano` tool isn't even offered.
+  In Auto mode these still hold: `deny` and `ask` rules written by the user,
+  protected files (the file tools always deny; a command that mentions one asks
+  for an OK) and the model's own questions card. The model learns about Auto
+  mode from the hidden note in `servidor._nota_de_modo` (the system prompt is
+  frozen). In Plan mode, writes and commands are denied. Outside Auto mode,
+  "Allow for this task" only allows writes and commands inside the folder: a
+  path outside asks every time.
 - **The shortcut opens through `ferramentas/abrir.pyw`**, not straight into
   `electron.exe`: an update may change the Electron version (`versao.json`), and
   it is `abrir.pyw` that downloads the new one before opening. The window's
@@ -339,8 +348,9 @@ window ◄── http://127.0.0.1:8040/?t=<secret>  (becomes an HttpOnly cookie 
   recalculating is done by the installed Excel (`excel.no_excel`). When saving an
   existing file, images and shapes may be lost: the tool's description tells the
   model to save a copy.
-- **A workflow always asks for an OK** (the `fluxo_proposta` card), in any mode
-  and with any rule; a rule can only forbid (`deny` on `Fluxo`). Each step is a
+- **A workflow asks for an OK** (the `fluxo_proposta` card) in any mode and
+  with any rule, except in Auto mode, where it runs straight away with the
+  suggested spending cap; a rule can only forbid (`deny` on `Fluxo`). Each step is a
   hidden conversation (`etapa` mode) run by a child `Execucao`: events go up to
   the parent as `etapa_evento`, the OK requests appear in the parent
   conversation, the cost goes to the parent conversation with origin `fluxo` and

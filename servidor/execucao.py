@@ -412,7 +412,7 @@ class Execucao:
                 liberadas = set(SEMPRE).union(*(POR_CAPACIDADE[c] for c in pode if c in POR_CAPACIDADE))
                 defs = [d for d in defs if d["name"] in liberadas]
             ferramentas_cliente += defs
-            if (not etapa and not op.get("rotina")
+            if (not etapa and not op.get("rotina") and self._permissao(cfg) != "livre"  # no Livre ninguém pede plano
                     and (op.get("permissao") == "plano" or cfg.get("pedir_ok_plano", True))):
                 ferramentas_cliente.append(dict(PLANO))
         elif modo == "chat":
@@ -703,7 +703,7 @@ class Execucao:
             return _res(tid, t("Skill \"{nome}\" (aqui no chat não há pasta nem terminal: siga as partes que não dependem deles).\n\n{conteudo}", nome=s["nome"], conteudo=s["texto"]))
 
         if nome in femail.NOMES:
-            return self._email(tid, nome, entrada or {})
+            return self._email(tid, nome, entrada or {}, livre=self._livre(cfg, modo))
 
         if nome in fgithub.FERRAMENTAS:
             risco = fgithub.FERRAMENTAS[nome]["risco"]
@@ -712,7 +712,9 @@ class Execucao:
                 if acao == "deny":
                     self._log(nome, nome, "negar", "regra", regra)
                     return _res(tid, t("Bloqueado pelo Clave: {motivo}.", motivo=regra.descrever()), True)
-                if acao != "allow" or permissoes.generica(regra):
+                if self._livre(cfg, modo) and acao != "ask":
+                    self._log(nome, nome, "auto", "modo")  # no Livre só uma regra "perguntar" escrita por quem usa segura
+                elif acao != "allow" or permissoes.generica(regra):
                     motivo_gh = t("publica algo no GitHub")
                     if self.op.get("rotina"):
                         return self._rotina_parou(tid, nome, nome, motivo_gh, f"GitHub({nome})")
@@ -745,7 +747,7 @@ class Execucao:
             return _res(tid, _json.dumps({"INVALID_JSON": _json.dumps(entrada, ensure_ascii=False), "erro": erro},
                                          ensure_ascii=False), True)
 
-        permissao = self.op.get("permissao") or cfg.get("permissao_code") or "perguntar"
+        permissao = self._permissao(cfg)
         det = fcode.decidir(nome, entrada, self.ctx, permissao, self.liberados)
         decisao, motivo = det["decisao"], det["motivo"]
         alvo = _resumo_alvo(nome, entrada, self.ctx)
@@ -789,6 +791,14 @@ class Execucao:
     def resultado(self, tid: str, conteudo, erro=False) -> dict:
         """O tool_result de uma chamada (para os módulos de provedores.py)."""
         return _res(tid, conteudo, erro)
+
+    def _permissao(self, cfg: dict) -> str:
+        return self.op.get("permissao") or cfg.get("permissao_code") or "perguntar"
+
+    def _livre(self, cfg: dict, modo: str) -> bool:
+        """Modo Livre do Code: publicar, mandar e-mail e rodar fluxo seguem sozinhos (apagar e as regras
+        "perguntar" de quem usa continuam pedindo). No chat não existe Livre."""
+        return modo == "code" and self._permissao(cfg) == "livre"
 
     def _pedir_aprovacao(self, tid, nome, entrada, motivo, previa, extra: dict | None = None,
                          tipo: str = "aprovacao") -> str:
@@ -885,18 +895,21 @@ class Execucao:
             self.emitir({"tipo": "ferramenta_fim", "id": tid, "nome": nome, "erro": True, "resumo": str(e)})
             return _res(tid, t("Fluxo inválido: {erro}. Corrija e proponha de novo.", erro=e), True)
         banco.salvar_fluxo({**proposta, "conversa_id": self.conversa_id, "execucao_id": self.id})
-        d = self._pedir_aprovacao(tid, nome, entrada, "fluxo", None, extra={"proposta": proposta},
-                                  tipo="fluxo_proposta")
-        if d != "permitir":
-            proposta["status"] = "recusado"
-            banco.salvar_fluxo({**proposta, "conversa_id": self.conversa_id, "execucao_id": self.id})
-            self._log(nome, proposta["titulo"], "recusar", "voce")
-            return self._recusado(tid, nome)
-        try:
-            proposta = fluxos.aplicar_ajustes(proposta, (self.aprovacoes[tid].get("dados") or {}))
-        except fluxos.ErroFluxo as e:
-            return _res(tid, t("O fluxo não rodou: {erro}.", erro=e), True)
-        self._log(nome, proposta["titulo"], "permitir", "voce")
+        if self._livre(cfg, modo):  # no Livre o cartão não aparece: roda com o teto de gasto sugerido
+            self._log(nome, proposta["titulo"], "auto", "modo")
+        else:
+            d = self._pedir_aprovacao(tid, nome, entrada, "fluxo", None, extra={"proposta": proposta},
+                                      tipo="fluxo_proposta")
+            if d != "permitir":
+                proposta["status"] = "recusado"
+                banco.salvar_fluxo({**proposta, "conversa_id": self.conversa_id, "execucao_id": self.id})
+                self._log(nome, proposta["titulo"], "recusar", "voce")
+                return self._recusado(tid, nome)
+            try:
+                proposta = fluxos.aplicar_ajustes(proposta, (self.aprovacoes[tid].get("dados") or {}))
+            except fluxos.ErroFluxo as e:
+                return _res(tid, t("O fluxo não rodou: {erro}.", erro=e), True)
+            self._log(nome, proposta["titulo"], "permitir", "voce")
         rodada = fluxos.Rodada(self, proposta, cfg)
         relatorio = rodada.rodar()
         self.custo_fluxos += float(proposta.get("custo_usd") or 0)
@@ -976,9 +989,10 @@ class Execucao:
                      "resumo": t("sugeriu: {titulo}", titulo=titulo)})
         return _res(tid, t("A sugestão apareceu para quem usa como um cartão; é ele que decide se abre a outra conversa. Não repita no texto a sugestão nem o que você já escreveu: se a resposta já foi dada, termine aqui."))
 
-    def _email(self, tid: str, nome: str, entrada: dict) -> dict:
-        """Ler é livre (a não ser regra de negar); enviar sempre mostra o e-mail e pede OK, menos com uma regra de
-        permitir escrita para isso: Email(enviar). Rotina para no envio sem essa regra."""
+    def _email(self, tid: str, nome: str, entrada: dict, livre: bool = False) -> dict:
+        """Ler é livre (a não ser regra de negar); enviar mostra o e-mail e pede OK, menos com uma regra de
+        permitir escrita para isso: Email(enviar), ou no modo Livre (só uma regra "perguntar" segura). Rotina para
+        no envio sem essa regra."""
         acao = "enviar" if nome == "email_enviar" else "ler"
         decisao_regra, regra = permissoes.avaliar(self.regras, [("Email", acao)], None)
         if decisao_regra == "deny":
@@ -995,7 +1009,9 @@ class Execucao:
                 if self.ctx.protegido(p):
                     return _res(tid, t("Anexo protegido não sai por e-mail: {caminho}", caminho=c), True)
                 anexos.append(p)
-            if decisao_regra != "allow" or permissoes.generica(regra):
+            if livre and decisao_regra != "ask":
+                self._log(nome, entrada.get("para", ""), "auto", "modo")
+            elif decisao_regra != "allow" or permissoes.generica(regra):
                 motivo = t("envia um e-mail")
                 if self.op.get("rotina"):
                     return self._rotina_parou(tid, nome, entrada.get("para", ""), motivo, "Email(enviar)")

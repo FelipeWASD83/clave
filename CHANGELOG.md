@@ -2,6 +2,17 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 5.2.0 (2026-10-23)
+
+**Changed**
+
+- **Auto mode no longer asks about anything except deleting.** Before, it still asked about publishing (`git push`,
+  deploys, releases), sending e-mail, touching files outside the folder, writing to GitHub, and the workflow card.
+  Now all of that happens on its own in Auto mode, and the workflow runs with the suggested spending cap. What still
+  asks: a command that deletes files or data, a command that mentions a protected file, and the `Always ask` rules
+  you wrote yourself. `Never` rules and the protected-files list keep working. Other modes are unchanged, and
+  routines still never run in Auto mode. The tour, the settings texts and the lessons say the same now.
+
 ## 5.1.0 (2026-10-23)
 
 **New**

@@ -63,4 +63,4 @@ No modo Code, peça:
 Quero guardar esta pasta no GitHub como repositório privado. Me explique o passo a passo e faça o que der por aqui, sempre me mostrando os comandos antes.
 ```
 
-O Clave sempre pede o seu OK antes de um `git push` (o comando que envia para a internet).
+O Clave pede o seu OK antes de um `git push` (o comando que envia para a internet), menos no modo **Livre**, em que ele envia sozinho.

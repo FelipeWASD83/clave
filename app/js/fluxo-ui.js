@@ -434,7 +434,7 @@ export function cartaoPlano(ev, { execucaoId }) {
     el('div', { class: 'aprovacao-botoes' },
       el('button', { class: 'botao pequeno primario', type: 'button', texto: t('Executar, pedindo OK a cada mudança'), onclick: () => decidir('executar_perguntar') }),
       el('button', { class: 'botao pequeno', type: 'button', texto: t('Executar e aceitar as edições'), onclick: () => decidir('executar_aceitar') }),
-      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Modo Livre'), title: t('Faz tudo sozinho, menos apagar ou publicar'), onclick: () => decidir('executar_livre') })),
+      el('button', { class: 'botao pequeno fantasma', type: 'button', texto: t('Modo Livre'), title: t('Faz tudo sozinho, menos apagar'), onclick: () => decidir('executar_livre') })),
     el('div', { class: 'aprovacao-botoes' }, comentario,
       el('button', { class: 'botao pequeno', type: 'button', texto: t('Continuar planejando'), onclick: () => decidir('recusar') })));
   notificar(t('O plano está pronto'), t('O Claude terminou o plano e espera a sua decisão.'));

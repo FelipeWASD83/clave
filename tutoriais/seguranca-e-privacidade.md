@@ -26,7 +26,7 @@ Evite mandar senhas, números de cartão e documentos de terceiros sem necessida
 
 - **Leia o cartão**: ele mostra o comando ou o antes e depois do arquivo.
 - **Não entendeu?** Recuse e pergunte "o que esse comando faz?".
-- Ações que apagam ou publicam algo **sempre** pedem OK, mesmo no modo Livre.
+- Ações que apagam arquivos ou dados **sempre** pedem OK, mesmo no modo Livre. Publicar e mandar e-mail pedem nos outros modos, mas no Livre acontecem sozinhos.
 - Comece no modo **Perguntar** ou **Plano**. Libere mais só quando pegar confiança.
 - Ponha arquivos sensíveis em **Arquivos e pastas protegidos** (Configurações > Modo Code).
 - **No navegador do Code**, fora do modo Livre, cada site pede o seu OK na primeira vez que o Claude vai usar ele na tarefa (os do seu computador, `localhost`, não pedem). Com o site liberado, abrir, ler, tirar print, rolar e voltar rodam sozinhos; clicar e digitar pedem o seu OK a cada vez, menos no modo Livre. Senha, código de acesso e dados de cartão o Claude nunca digita: quem digita é você.

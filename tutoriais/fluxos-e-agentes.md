@@ -17,9 +17,9 @@ Numa conversa normal, um [modelo](#/aprender/glossario/modelo) faz tudo. Num **f
 
 Cada etapa recebe o objetivo e o relatório das etapas anteriores, e no fim o Claude junta tudo e te conta o que foi feito.
 
-## Ele sempre pede o seu OK
+## Ele pede o seu OK
 
-Fluxo gasta mais que uma resposta comum (são várias conversas por trás). Por isso o Clave **nunca** roda um fluxo sozinho. Primeiro aparece um cartão com:
+Fluxo gasta mais que uma resposta comum (são várias conversas por trás). Por isso o Clave não roda um fluxo sozinho: primeiro aparece um cartão com:
 
 - as etapas, o modelo e o nível de raciocínio de cada uma (você pode trocar ali mesmo, por exemplo pôr o Haiku numa etapa simples);
 - o que cada etapa pode fazer (ler, mudar arquivos, rodar comandos, pesquisar na web);
@@ -27,6 +27,8 @@ Fluxo gasta mais que uma resposta comum (são várias conversas por trás). Por 
 - o **teto do fluxo**: se a soma passar desse valor, o fluxo para.
 
 Só depois de **Rodar o fluxo** alguma coisa acontece. Durante o fluxo, clique numa etapa para ver o que ela está fazendo; se uma etapa quiser mudar um arquivo, o pedido de permissão aparece ali.
+
+No modo **Livre** o cartão não aparece: o fluxo roda direto, com o teto de gasto sugerido, e as etapas também não pedem permissão (só comando que apaga). Se quiser conferir antes, use outro modo.
 
 ## Como começar um fluxo
 

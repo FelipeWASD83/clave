@@ -29,7 +29,7 @@ O botão do escudo na caixa de texto escolhe quanta liberdade ele tem:
 | **Perguntar** (padrão) | Lê sozinho; pede o seu OK para mudar arquivos e rodar comandos. |
 | **Aceitar edições** | Muda arquivos sozinho; pede OK para comandos. |
 | **Plano** | Só lê e apresenta um plano num cartão. Você aprova (e escolhe como ele executa) ou pede outro. Ótimo para começar. |
-| **Livre** | Faz tudo sozinho, menos apagar ou publicar coisas, que sempre pedem OK. No navegador do Code, usa qualquer site, clica e digita sem perguntar. |
+| **Livre** | Faz tudo sozinho, inclusive publicar, mandar e-mail e mexer fora da pasta. Só comando que apaga arquivos ou dados pede OK. No navegador do Code, usa qualquer site, clica e digita sem perguntar. |
 
 Quando ele pede permissão, aparece um cartão mostrando **exatamente** o que vai fazer: o comando, ou o antes e depois do arquivo (as linhas vermelhas saem, as verdes entram). Você pode **Permitir** ou **Recusar** dizendo o que prefere. Em **Mais opções** dá para liberar aquilo pelo resto da tarefa ou salvar uma regra ("sempre nesta pasta" ou "sempre em todo o Clave"), para ele não perguntar de novo. Veja a lição de [permissões](#/aprender/permissoes).
 
@@ -47,7 +47,7 @@ Isso vale em qualquer modo. Se preferir que ele vá direto, desligue em **Config
 
 ## Desfazer
 
-Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou editou naquela resposta voltam a ser como eram. O que um **comando** fez (mover, renomear, apagar, rodar um script) não volta com o botão: por isso o card do comando mostra o que vai rodar antes, e os que apagam ou mexem fora da pasta sempre pedem OK. Para uma mudança grande feita por comando, peça antes uma lista do que vai ser mexido, ou uma cópia. Mais jeitos de voltar atrás em [Desfazer, backup e Git: a sua rede de segurança](#/aprender/rede-de-seguranca).
+Errou? Embaixo da resposta aparece **Desfazer mudanças**: os arquivos que ele criou ou editou naquela resposta voltam a ser como eram. O que um **comando** fez (mover, renomear, apagar, rodar um script) não volta com o botão: por isso o card do comando mostra o que vai rodar antes, e os que apagam sempre pedem OK (os que mexem fora da pasta também, menos no modo Livre). Para uma mudança grande feita por comando, peça antes uma lista do que vai ser mexido, ou uma cópia. Mais jeitos de voltar atrás em [Desfazer, backup e Git: a sua rede de segurança](#/aprender/rede-de-seguranca).
 
 ## Arquivos protegidos
 

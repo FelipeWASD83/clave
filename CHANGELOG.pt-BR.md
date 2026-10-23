@@ -2,6 +2,17 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 5.2.0 (23/10/2026)
+
+**Mudou**
+
+- **O modo Livre não pergunta mais nada além de apagar.** Antes ele ainda perguntava sobre publicar (`git push`,
+  deploy, release), mandar e-mail, mexer em arquivo fora da pasta, escrever no GitHub e o cartão do fluxo. Agora tudo
+  isso acontece sozinho no modo Livre, e o fluxo roda com o teto de gasto sugerido. O que ainda pergunta: comando que
+  apaga arquivos ou dados, comando que cita arquivo protegido e as regras `Sempre perguntar` que você mesmo
+  escreveu. As regras `Nunca` e a lista de arquivos protegidos continuam valendo. Os outros modos não mudaram, e
+  rotina continua nunca rodando no modo Livre. O tour, os textos das configurações e as lições dizem o mesmo agora.
+
 ## 5.1.0 (23/10/2026)
 
 **Novo**

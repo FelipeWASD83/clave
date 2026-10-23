@@ -20,7 +20,7 @@ Recommend one based on what the person already uses; with no preference, Cloudfl
 
 ## Step by step
 - Prefer to guide through the service's dashboard (the person logs in in their own browser). Don't ask for or type a password.
-- If it is done by command (e.g. `npx wrangler pages deploy`), show the command and explain it: in Clave, a command that publishes always asks for OK.
+- If it is done by command (e.g. `npx wrangler pages deploy`), show the command and explain it: in Clave, a command that publishes asks for OK (except in Auto mode).
 - Own domain: buy it from a registrar (e.g. Registro.br for `.com.br`) and point the DNS as the service indicates.
 
 ## Afterwards

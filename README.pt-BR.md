@@ -91,7 +91,7 @@ uso, então em um mês você sabe qual dos dois sai mais barato para você.
   comparações, linhas do tempo e listas para marcar.
 - **Fluxos**: uma tarefa grande vira etapas, cada uma no modelo certo (o Opus
   planeja, o Sonnet faz e testa, o Haiku confere), com etapas em paralelo.
-  Fluxo gasta mais, então ele **sempre pede o seu OK** antes, mostrando as
+  Fluxo gasta mais, então ele **pede o seu OK** antes (menos no modo Livre), mostrando as
   etapas, a estimativa de custo e um teto que você ajusta.
 - **Agentes**: especialistas prontos (planejador, executor, testador, revisor,
   pesquisador, redator) e os que você criar, no formato do Claude Code.
@@ -229,9 +229,10 @@ teto que você definiu.
   sessão que o atalho cria: nenhuma página da internet consegue mandar o Claude
   mexer nos seus arquivos.
 - No modo Code, mudar arquivos e rodar comandos pede o seu OK (dá para ajustar
-  com o modo e com regras). Comandos que apagam ou publicam algo **sempre**
-  pedem, a não ser que uma regra sua libere aquele comando, e o modo Plano não
-  muda nada. Arquivos sensíveis vão para a lista de protegidos: as ferramentas
+  com o modo e com regras). Comandos que apagam arquivos ou dados **sempre**
+  pedem, até no modo Livre (a única coisa que ele ainda pergunta), a não ser que
+  uma regra sua libere aquele comando. Publicar, mandar e-mail e mexer fora da
+  pasta pedem nos outros modos, e o modo Plano não muda nada. Arquivos sensíveis vão para a lista de protegidos: as ferramentas
   de arquivo nunca mexem neles e comando que os cite pede OK.
 - O navegador do modo Code guarda cookies e logins próprios, separados do resto
   do Clave. Fora do modo Livre, o Claude pergunta antes de usar cada site novo
@@ -241,7 +242,7 @@ teto que você definiu.
 - Fotos dos widgets vêm de outros sites, então só carregam quando você clica
   (uma página poderia usar o endereço de uma foto para levar dados para fora).
   Os mapas vêm do OpenStreetMap pelo Clave.
-- Fluxos sempre pedem OK. Rotinas nunca perguntam: só fazem o que as suas
+- Fluxos pedem OK, menos no modo Livre. Rotinas nunca perguntam: só fazem o que as suas
   regras já liberam e param no resto.
 - Plugins trazem instruções para o Claude: instale só de quem você confia. O
   Clave mostra o conteúdo antes de instalar e ignora as partes que rodariam

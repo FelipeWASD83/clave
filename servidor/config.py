@@ -136,7 +136,7 @@ PADRAO = {
     "ajudantes": {},
     # regras de permissão do app inteiro, no formato do Claude Code: {"allow": [], "ask": [], "deny": []}
     "permissoes": {"allow": [], "ask": [], "deny": []},
-    # fluxos (várias etapas em modelos diferentes): sempre pedem OK antes de rodar
+    # fluxos (várias etapas em modelos diferentes): pedem OK antes de rodar, menos no modo Livre
     "fluxos_ligados": True,
     # 5.0: widgets (cartões que o Claude desenha na conversa), o navegador do Code e os vídeos das lições
     "widgets_ligados": True,

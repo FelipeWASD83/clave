@@ -17,9 +17,9 @@ In a normal conversation, one [model](#/aprender/glossario/modelo) does everythi
 
 Each step receives the goal and the reports from the previous steps, and at the end Claude puts everything together and tells you what was done.
 
-## It always asks for your OK
+## It asks for your OK
 
-A workflow costs more than a normal reply (there are several conversations behind it). That is why Clave **never** runs a workflow on its own. First a card appears with:
+A workflow costs more than a normal reply (there are several conversations behind it). That is why Clave doesn't run a workflow on its own: first a card appears with:
 
 - the steps, the model and the reasoning level of each one (you can change them right there, for example putting Haiku on a simple step);
 - what each step is allowed to do (read, change files, run commands, search the web);
@@ -27,6 +27,8 @@ A workflow costs more than a normal reply (there are several conversations behin
 - the **workflow cap**: if the total goes over this amount, the workflow stops.
 
 Nothing happens until you click **Run workflow**. While it runs, click a step to see what it is doing; if a step wants to change a file, the permission request shows up right there.
+
+In **Auto** mode the card doesn't appear: the workflow runs straight away, with the suggested spending cap, and the steps don't ask for permission either (only a command that deletes does). If you want to check first, use another mode.
 
 ## How to start a workflow
 

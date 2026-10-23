@@ -29,7 +29,7 @@ In a routine nobody is watching, so it **doesn't ask anything**:
 - changing files or running commands: only if a [permission rule](#/aprender/permissoes) allows it;
 - if it needs an OK, it **stops** and tells you what it would need (with the suggested rule). You create the rule and run it again.
 
-A routine also doesn't run workflows (a workflow always needs your OK).
+A routine also doesn't run workflows (nobody would be there to approve the workflow card).
 
 ## With Clave closed
 

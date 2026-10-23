@@ -6,6 +6,7 @@
   "o modo Plano só lê; termine de investigar e apresente o plano com apresentar_plano (aprovado, o modo muda)": "Plan mode only reads; finish investigating and present the plan with apresentar_plano (once it is approved, the mode changes)",
   "pedido pela {regra}": "requested by the {regra}",
   "comando que pode apagar ou publicar algo": "a command that can delete or publish something",
+  "comando que apaga arquivos ou dados": "a command that deletes files or data",
   "o comando cita um arquivo protegido ({padrao})": "the command mentions a protected file ({padrao})",
   "rodar comando": "run a command",
   "o modo Plano só lê": "Plan mode only reads",

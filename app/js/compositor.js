@@ -18,7 +18,7 @@ const PERMISSOES = () => ({
   perguntar: [t('Perguntar'), t('Lê sozinho; pede seu OK para editar e rodar comandos.')],
   aceitar_edicoes: [t('Aceitar edições'), t('Edita arquivos sozinho; pede OK para rodar comandos.')],
   plano: [t('Plano'), t('Só lê e propõe um plano. Não muda nada.')],
-  livre: [t('Livre'), t('Faz tudo sozinho, menos apagar ou publicar, que sempre pedem OK.')],
+  livre: [t('Livre'), t('Faz tudo sozinho, sem perguntar. Só apagar arquivos ainda pede OK.')],
 });
 
 export function opcoesPadrao(modo, ajustes = {}) {

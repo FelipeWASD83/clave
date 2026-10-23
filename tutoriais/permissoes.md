@@ -40,15 +40,16 @@ O formato é o mesmo do Claude Code, então as regras servem nos dois:
 - `Navegador(clicar:exemplo.com)`: só uma ação do navegador naquele site. As ações são `abrir`, `ler`, `print`, `rolar`, `voltar`, `clicar` e `digitar`, ou em inglês `open`, `read`, `print`, `scroll`, `back`, `click` e `type`; `Navegador(digitar)` ou `Navegador(clicar:*)` valem em qualquer site. Só uma regra que diz a ação dispensa o OK de clicar e digitar. Exemplo: `Navegador(clicar:localhost)` em **Fazer sem perguntar** deixa ele clicar no site que você está testando no seu computador sem pedir OK. Uma palavra que não é ação (`Navegador(apagar:exemplo.com)`) ou os dois-pontos sem nada antes (`Navegador(:exemplo.com)`) não valem como regra.
 - **A porta conta.** `Navegador(clicar:localhost:5173)` vale só na porta 5173; sem porta, vale em qualquer uma. `Navegador(*:8080)` vale para qualquer site na porta 8080.
 - O site da regra é lido do mesmo jeito que o navegador lê o endereço. `EXEMPLO.com`, `exemplo.com.` (com ponto no fim) e outros jeitos disfarçados de escrever o mesmo endereço contam como `exemplo.com`, e um IP escrito de outro jeito (`127.1`) conta como o mesmo IP (`127.0.0.1`). Assim, ninguém escapa de uma regra **Nunca** mudando a escrita.
-- `Fluxo`: os fluxos (só "Nunca" tem efeito; fluxo sempre pede OK).
+- `Fluxo`: os fluxos (só "Nunca" tem efeito; fluxo pede OK, menos no modo Livre).
 
 As regras de uma pasta ficam no arquivo `.claude/settings.local.json` dela, o mesmo que o Claude Code usa.
 
 ## Proteções que continuam valendo
 
 - **Arquivos e pastas protegidos** (Configurações > Modo Code), como `.env` e chaves: as ferramentas de arquivo nunca leem nem mudam.
-- Comando que **apaga ou publica** algo pergunta mesmo com os comandos liberados, a não ser que a regra seja escrita para aquele comando.
-- **Fluxo** sempre pede OK.
+- Comando que **apaga** arquivos ou dados pergunta até no modo **Livre** e mesmo com os comandos liberados, a não ser que a regra seja escrita para aquele comando. Fora do Livre, comando que publica algo também pergunta nessas condições.
+- No modo **Livre**, é só isso que pergunta (fora o que as suas regras **Sempre perguntar** mandarem): publicar, mandar e-mail, mexer fora da pasta, escrever no GitHub e rodar fluxo acontecem sem pedir OK.
+- **Fluxo** pede OK, menos no modo Livre.
 - No navegador do Code, campos de **senha**, de **código de acesso** e de **cartão** o Claude nunca preenche, nem com regra: quem digita é você. No modo **Plano**, ele não clica nem digita.
 
 ## Testar e conferir

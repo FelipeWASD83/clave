@@ -1,4 +1,4 @@
-"""Ferramentas do GitHub para o Claude. As de escrita sempre pedem o OK de quem usa."""
+"""Ferramentas do GitHub para o Claude. As de escrita pedem o OK de quem usa (menos no modo Livre)."""
 from __future__ import annotations
 
 import json
@@ -43,15 +43,15 @@ FERRAMENTAS = {
         "github_commits", "Lista os commits recentes de um repositório.",
         {"repo": _REPO, "ref": {"type": "string"}}, ["repo"], "leitura"),
     "github_criar_issue": _f(
-        "github_criar_issue", "Cria uma issue. Sempre pede confirmação de quem usa antes.",
+        "github_criar_issue", "Cria uma issue. Pede confirmação de quem usa antes (menos no modo Livre).",
         {"repo": _REPO, "titulo": {"type": "string"}, "texto": {"type": "string"}}, ["repo", "titulo", "texto"],
         "github_escrita"),
     "github_comentar": _f(
-        "github_comentar", "Comenta numa issue ou PR. Sempre pede confirmação de quem usa antes.",
+        "github_comentar", "Comenta numa issue ou PR. Pede confirmação de quem usa antes (menos no modo Livre).",
         {"repo": _REPO, "numero": {"type": "integer"}, "texto": {"type": "string"}}, ["repo", "numero", "texto"],
         "github_escrita"),
     "github_criar_pr": _f(
-        "github_criar_pr", "Abre um pull request de um ramo já enviado ao GitHub. Sempre pede confirmação antes.",
+        "github_criar_pr", "Abre um pull request de um ramo já enviado ao GitHub. Pede confirmação antes (menos no modo Livre).",
         {"repo": _REPO, "titulo": {"type": "string"}, "texto": {"type": "string"},
          "ramo_origem": {"type": "string"}, "ramo_destino": {"type": "string"}},
         ["repo", "titulo", "texto", "ramo_origem", "ramo_destino"], "github_escrita"),

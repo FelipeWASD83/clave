@@ -93,7 +93,7 @@ you.
   comparisons, timelines and checklists.
 - **Workflows**: a big task becomes steps, each on the right model (Opus plans,
   Sonnet does the work and tests it, Haiku checks it), with steps running in
-  parallel. A workflow costs more, so it **always asks for your OK** first,
+  parallel. A workflow costs more, so it **asks for your OK** first (except in Auto mode),
   showing the steps, the cost estimate and a cap that you can adjust.
 - **Agents**: ready-made specialists (planejador, executor, testador, revisor,
   pesquisador and redator: planner, executor, tester, reviewer, researcher and
@@ -235,9 +235,11 @@ shows the cost of each reply and stops when the month reaches the cap you set.
   needs the session that the shortcut creates: no web page on the internet can
   tell Claude to touch your files.
 - In Code mode, changing files and running commands asks for your OK (you can
-  adjust this with the permission mode and with rules). Commands that delete or
-  publish something **always** ask, unless a rule of yours allows that command,
-  and Plan mode changes nothing. Sensitive files go on the protected list: the
+  adjust this with the permission mode and with rules). Commands that delete files or data
+  **always** ask, even in Auto mode (the only thing that mode still asks about),
+  unless a rule of yours allows that command. Publishing, sending email and
+  working outside the folder ask in the other modes, and Plan mode changes
+  nothing. Sensitive files go on the protected list: the
   file tools never touch them, and a command that mentions them asks for an OK.
 - The browser in Code mode keeps its own cookies and logins, apart from the
   rest of Clave. Outside Auto mode, Claude asks before using each new site in a
@@ -247,7 +249,7 @@ shows the cost of each reply and stops when the month reaches the cap you set.
 - Photos in widgets come from other sites, so they only load when you click
   (a page could use a photo's address to carry data out). Maps come from
   OpenStreetMap through Clave.
-- Workflows always ask for your OK. Routines never ask: they only do what your
+- Workflows ask for your OK, except in Auto mode. Routines never ask: they only do what your
   rules already allow and stop at the rest.
 - Plugins bring instructions for Claude: install them only from people you
   trust. Clave shows the content before installing and ignores the parts that

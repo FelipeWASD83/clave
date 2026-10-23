@@ -122,7 +122,7 @@ async function desenhar(corpo) {
     el('p', { html: t('O formato é o do Claude Code: <code>Ferramenta(padrão)</code>. <code>Bash</code> é comando (o <code>*</code> vale qualquer coisa), <code>Read</code> é ler, <code>Edit</code> é criar ou mudar arquivo (padrões como no .gitignore: <code>docs/**</code>, <code>*.xlsx</code>; <code>//c/...</code> é caminho completo), <code>WebFetch(domain:site.com)</code> é página da web, <code>mcp__conector</code> é um conector. A ordem é: <b>nunca</b> vence <b>sempre perguntar</b>, que vence <b>fazer sem perguntar</b>.') }),
     el('table', { class: 'tabela' }, el('tbody', {}, ...EXEMPLOS().map(([acao, regra, desc]) => el('tr', {},
       el('td', { texto: acoes.find((a) => a[0] === acao)[1] }), el('td', {}, el('code', { texto: regra })), el('td', { texto: desc }))))),
-    el('p', { class: 'ajuda', html: t('Algumas proteções não mudam com regra: arquivos protegidos (<a href="#/config/code">Configurações &gt; Modo Code</a>) nunca são lidos nem mudados; comando que apaga ou publica pergunta mesmo com <code>Bash</code> liberado, a não ser que a regra seja escrita para ele; e fluxo sempre pede OK.') }));
+    el('p', { class: 'ajuda', html: t('Algumas proteções não mudam com regra: arquivos protegidos (<a href="#/config/code">Configurações &gt; Modo Code</a>) nunca são lidos nem mudados; comando que apaga (e, fora do modo Livre, que publica) pergunta mesmo com <code>Bash</code> liberado, a não ser que a regra seja escrita para ele; e fluxo pede OK, menos no modo Livre.') }));
 
   // histórico
   const filtro = el('select', { class: 'entrada', 'aria-label': t('Filtrar') }, el('option', { value: '', texto: t('Tudo') }),

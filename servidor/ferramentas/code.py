@@ -35,25 +35,39 @@ IMAGENS = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".g
            ".webp": "image/webp"}
 LIMITE_SAIDA = 30_000
 
-# Comandos que apagam, sobrescrevem em massa ou publicam algo: sempre pedem OK, em qualquer modo.
-# Comparados com o comando em minúsculas.
-PERIGOSOS = [
+# Comandos que apagam arquivos, pastas ou dados (ou jogam mudanças fora): pedem OK em qualquer modo, inclusive no
+# Livre, onde são a única coisa que ainda pergunta. Comparados com o comando em minúsculas.
+APAGADORES = [
     # apagar arquivos e pastas (PowerShell, cmd, bash, Python)
     r"\bremove-item\b", r"\bri\s", r"(^|[\s;|&(])(rm|del|erase|rd|rmdir)(\s|$)", r"\bclear-content\b",
     r"\bclear-recyclebin\b", r"\bshutil\.rmtree\b", r"\bos\.(remove|unlink|rmdir|removedirs)\b", r"\.unlink\(",
     r"\brmtree\b", r"\bsend2trash\b",
-    # git e publicação
-    r"\bgit\s+push\b", r"\bgit\s+reset\s+--hard\b", r"\bgit\s+clean\b", r"\bgit\s+checkout\s+--\s",
-    r"\bgit\s+branch\s+-d\b", r"\bgit\s+rebase\b", r"--force\b", r"\bnpm\s+publish\b",
-    r"\bgh\s+(repo\s+delete|release\s+delete|release\s+create|repo\s+create)\b", r"\bwrangler\s+(deploy|publish)\b",
-    # sistema
-    r"\bformat(-volume)?\b\s", r"\bdiskpart\b", r"\bshutdown\b", r"\bstop-computer\b", r"\brestart-computer\b",
-    r"\breg\s+(delete|add)\b", r"\bremove-itemproperty\b", r"\bset-itemproperty\b.*hk(lm|cu)", r"\bset-executionpolicy\b",
-    r"\bcipher\s+/w\b", r"\bbcdedit\b", r"\bvssadmin\b", r"\bmkfs\b", r"\bdd\s+if=", r"\bchmod\s+-r\b",
+    # git que joga trabalho fora, apagar no GitHub
+    r"\bgit\s+reset\s+--hard\b", r"\bgit\s+clean\b", r"\bgit\s+checkout\s+--\s", r"\bgit\s+branch\s+-d\b",
+    r"\bgh\s+(repo\s+delete|release\s+delete)\b",
+    # sistema: apagar disco, registro, tarefa agendada
+    r"\bformat(-volume)?\b\s", r"\bdiskpart\b", r"\breg\s+delete\b", r"\bremove-itemproperty\b",
+    r"\bcipher\s+/w\b", r"\bvssadmin\b", r"\bmkfs\b", r"\bdd\s+if=",
     r"\bschtasks\b.*/delete", r"\bunregister-scheduledtask\b",
+]
+# Publicar, mexer no sistema, baixar e executar: pedem OK em Perguntar e Aceitar edições; o Livre deixa passar.
+OUTROS_PERIGOSOS = [
+    # git e publicação
+    r"\bgit\s+push\b", r"\bgit\s+rebase\b", r"--force\b", r"\bnpm\s+publish\b",
+    r"\bgh\s+(release\s+create|repo\s+create)\b", r"\bwrangler\s+(deploy|publish)\b",
+    # sistema
+    r"\bshutdown\b", r"\bstop-computer\b", r"\brestart-computer\b", r"\breg\s+add\b",
+    r"\bset-itemproperty\b.*hk(lm|cu)", r"\bset-executionpolicy\b", r"\bbcdedit\b", r"\bchmod\s+-r\b",
     # baixar e executar direto
     r"\b(iwr|irm|invoke-webrequest|invoke-restmethod|curl|wget)\b.*\|\s*(iex|invoke-expression|sh|bash|python)\b",
 ]
+PERIGOSOS = APAGADORES + OUTROS_PERIGOSOS
+
+
+def apaga(comando: str) -> bool:
+    """O comando apaga arquivos ou dados: a única coisa que o modo Livre ainda pergunta."""
+    c = comando.lower()
+    return any(re.search(p, c) for p in APAGADORES)
 
 
 def perigoso(comando: str) -> bool:
@@ -336,6 +350,9 @@ def decidir(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) 
     Ordem: arquivo protegido (sempre recusado), regra de negar, modo Plano, regra de perguntar, comando
     perigoso ou que cita protegido (pergunta, a não ser que uma regra escrita para ele permita), regra de
     permitir, "nesta tarefa", e por fim o modo de permissão. Devolve {decisao, motivo, origem, regra}.
+
+    No modo Livre quase nada pergunta: só o comando que apaga arquivos ou dados (`apaga`), o que cita um arquivo
+    protegido e o que uma regra `ask` escrita por quem usa pede. Publicar, mexer fora da pasta e o resto passam.
     """
     def r(decisao, motivo="", origem="modo", regra=None):
         return {"decisao": decisao, "motivo": motivo, "origem": origem, "regra": regra.texto if regra else None,
@@ -371,7 +388,10 @@ def decidir(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) 
         if acao == "ask":
             return r("perguntar", t("pedido pela {regra}", regra=regra.descrever()), "regra", regra)
         especifica = acao == "allow" and not permissoes.generica(regra)
-        if perigoso(cmd) and not especifica:
+        if modo == "livre":
+            if apaga(cmd) and not especifica:
+                return r("perguntar", t("comando que apaga arquivos ou dados"), "perigoso")
+        elif perigoso(cmd) and not especifica:
             return r("perguntar", t("comando que pode apagar ou publicar algo"), "perigoso")
         citado = _cita_protegido(cmd, ctx.protegidos)
         if citado and not especifica:
@@ -389,7 +409,7 @@ def decidir(nome: str, entrada: dict, ctx: Contexto, modo: str, liberados: set) 
         return r("perguntar", t("pedido pela {regra}", regra=regra.descrever()), "regra", regra)
     if acao == "allow":
         return r("auto", "", "regra", regra)
-    if fora:
+    if fora and modo != "livre":
         return r("perguntar", t("caminho fora da pasta de trabalho"))
     if risco == "leitura":
         return r("auto")

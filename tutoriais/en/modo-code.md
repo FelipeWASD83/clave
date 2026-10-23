@@ -29,7 +29,7 @@ The shield button in the text box sets how much freedom it has:
 | **Ask** (default) | Reads on its own; asks for your OK to change files and run commands. |
 | **Accept edits** | Changes files on its own; asks for your OK to run commands. |
 | **Plan** | Only reads and shows a plan on a card. You approve it (and choose how it runs) or ask for a different one. Great for getting started. |
-| **Auto** | Does everything on its own, except deleting or publishing things, which always ask for your OK. In the Code browser, it uses any site, clicks and types without asking. |
+| **Auto** | Does everything on its own, including publishing, sending e-mail and touching anything outside the folder. Only a command that deletes files or data asks for your OK. In the Code browser, it uses any site, clicks and types without asking. |
 
 When it asks for permission, a card shows you **exactly** what it is about to do: the command, or the before and after of the file (red lines go away, green lines come in). You can **Allow** it or **Deny** it and say what you would prefer instead. Under **More options** you can allow that for the rest of the task or save a rule ("Always in this folder" or "Always, everywhere in Clave") so it doesn't ask again. See the [permissions](#/aprender/permissoes) lesson.
 
@@ -47,7 +47,7 @@ This works in any mode. If you would rather it went straight ahead, turn it off 
 
 ## Undo
 
-Made a mistake? Below the reply you will see **Undo changes**: the files it created or edited in that reply go back to how they were. What a **command** did (moving, renaming, deleting, running a script) doesn't come back with the button: that's why the command card shows what will run first, and the ones that delete things or touch anything outside the folder always ask for your OK. For a big change made by a command, ask first for a list of what will be touched, or for a copy. More ways to go back in [Undo, backup and Git: your safety net](#/aprender/rede-de-seguranca).
+Made a mistake? Below the reply you will see **Undo changes**: the files it created or edited in that reply go back to how they were. What a **command** did (moving, renaming, deleting, running a script) doesn't come back with the button: that's why the command card shows what will run first, and the ones that delete things always ask for your OK (so do the ones that touch anything outside the folder, except in Auto mode). For a big change made by a command, ask first for a list of what will be touched, or for a copy. More ways to go back in [Undo, backup and Git: your safety net](#/aprender/rede-de-seguranca).
 
 ## Protected files
 

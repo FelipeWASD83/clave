@@ -2,6 +2,15 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 5.0.1 (23/10/2026)
+
+**Corrigido**
+
+- **Tarefa longa no modo Code não para mais "do nada".** Quando uma resposta parava antes do fim (o teto por tarefa,
+  muitas voltas seguidas, resposta longa demais, a conversa cheia ou um erro no meio do trabalho), o aviso aparecia
+  por um instante e sumia assim que a resposta acabava, e o Windows ainda avisava que o Claude tinha terminado. Agora
+  o motivo fica escrito no fim da resposta, com um botão **Continuar**, e o aviso do Windows diz por que parou.
+
 ## 5.0.0 (15/10/2026)
 
 O modo Code vira uma bancada: os seus arquivos, um console de verdade, um navegador que você divide com o Claude e o

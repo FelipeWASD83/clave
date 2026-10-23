@@ -240,6 +240,7 @@ class Execucao:
                                     for r in (opcoes.get("regras_tarefa") or []) if not permissoes.validar(r)]
         self.skills_chat: list = []
         self.pediu_ok: dict | None = None       # rotina que parou porque precisaria de OK
+        self.pausa: dict | None = None          # parou sem erro antes do fim (teto da tarefa, voltas demais...)
         self.inicio = time.time()               # para a aba Tarefas mostrar há quanto tempo está rodando
 
     # ---- eventos ----
@@ -304,7 +305,7 @@ class Execucao:
                 self.status = "parada"
             self.fim_em = time.time()
             self.emitir({"tipo": "fim", "status": self.status, "custo": round(self.custo_total + self.custo_fluxos, 6),
-                         "mudou_arquivos": self.mudou_arquivos, "pediu_ok": self.pediu_ok})
+                         "mudou_arquivos": self.mudou_arquivos, "pediu_ok": self.pediu_ok, "pausa": self.pausa})
             _limpar_antigas()
 
     # ---- conselheiro de modelo (conselheiro.py) ----
@@ -359,6 +360,17 @@ class Execucao:
                 meta = dict(m.get("meta") or {})
                 meta["erro"] = mensagem
                 banco.atualizar_meta(m["id"], meta)
+
+    def _pausar(self, mensagem: str, motivo: str) -> None:
+        """Parada sem erro antes do fim (teto da tarefa, voltas demais, resposta longa demais). Além do evento, o aviso
+        fica guardado na última mensagem: quando a resposta acaba a tela redesenha a conversa a partir do banco, e um
+        aviso que só existia como evento sumia, parecendo que a resposta tinha parado do nada."""
+        self.pausa = {"mensagem": mensagem, "motivo": motivo}
+        self.emitir({"tipo": "aviso", "mensagem": mensagem, "motivo": motivo})
+        conv = banco.conversa(self.conversa_id)
+        m = banco.mensagem(conv["folha_id"]) if conv and conv.get("folha_id") else None
+        if m:
+            banco.atualizar_meta(m["id"], {**(m.get("meta") or {}), "pausa": self.pausa})
 
     def _loop(self) -> None:
         cfg = config.carregar()
@@ -446,14 +458,14 @@ class Execucao:
                 self._erro(motivo, "teto")
                 return
             if self.cofre is not None and self.cofre.estourou():
-                self.emitir({"tipo": "aviso", "mensagem": t("{rotulo} chegou ao teto de gasto aprovado e parou.",
-                                                        rotulo=t(self.cofre.rotulo))})
+                self._pausar(t("{rotulo} chegou ao teto de gasto aprovado e parou.", rotulo=t(self.cofre.rotulo)),
+                             "teto_fluxo")
                 return
             teto_tarefa = float(cfg.get("teto_tarefa_code_usd") or 0)
             if modo == "code" and not etapa and teto_tarefa and self.custo_total >= teto_tarefa:
-                self.emitir({"tipo": "aviso", "mensagem": t(
+                self._pausar(t(
                     "Esta tarefa chegou ao teto por tarefa (US$ {teto}) e foi pausada. Mande \"continue\" para seguir, ou aumente o teto em Configurações > Limite de gasto.",
-                    teto=f"{teto_tarefa:.2f}")})
+                    teto=f"{teto_tarefa:.2f}"), "teto_tarefa")
                 return
 
             caminho = banco.caminho(self.conversa_id)
@@ -530,15 +542,16 @@ class Execucao:
                 pausas += 1
                 if pausas <= MAX_PAUSAS:
                     continue
+                self._pausar(t("A API pausou a resposta muitas vezes seguidas. Mande \"continue\" para ele seguir."), "pausas")
                 return
             if stop == "max_tokens":
                 if any(b.get("type") == "tool_use" for b in conteudo):
-                    self.emitir({"tipo": "aviso", "mensagem": t("A resposta passou do tamanho máximo no meio de uma ação. Peça para ele continuar em partes menores.")})
+                    self._pausar(t("A resposta passou do tamanho máximo no meio de uma ação. Peça para ele continuar em partes menores."), "max_tokens")
                 else:
-                    self.emitir({"tipo": "aviso", "mensagem": t("A resposta chegou ao tamanho máximo e foi cortada. Mande \"continue\" para ele seguir.")})
+                    self._pausar(t("A resposta chegou ao tamanho máximo e foi cortada. Mande \"continue\" para ele seguir."), "max_tokens")
                 return
             if stop == "model_context_window_exceeded":
-                self.emitir({"tipo": "aviso", "mensagem": t("A conversa encheu a memória do modelo. Comece uma conversa nova (ou ligue a compactação nas configurações).")})
+                self._pausar(t("A conversa encheu a memória do modelo. Comece uma conversa nova (ou ligue a compactação nas configurações)."), "contexto")
                 return
             if stop == "tool_use":
                 usos = [b for b in conteudo if b.get("type") == "tool_use"]
@@ -553,7 +566,7 @@ class Execucao:
                 continue
             return
         else:
-            self.emitir({"tipo": "aviso", "mensagem": t("Parei depois de muitas voltas seguidas. Mande \"continue\" se quiser que ele siga.")})
+            self._pausar(t("Parei depois de muitas voltas seguidas. Mande \"continue\" se quiser que ele siga."), "voltas")
 
     def _chamar(self, cli: anthropic.Anthropic, kw: dict):
         self.emitir({"tipo": "chamando", "modelo": kw["model"]})

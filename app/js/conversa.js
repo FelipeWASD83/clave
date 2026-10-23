@@ -370,7 +370,7 @@ class TelaConversa {
     avisar('conversas-mudaram');
     setTimeout(() => avisar('conversas-mudaram'), 2500);
     if (ev.status === 'parada' && !ev.pediu_ok) aviso(t('Resposta interrompida.'));
-    if (ev.status === 'concluida') notificar('Clave', t('O Claude terminou de responder.'));
+    if (ev.status === 'concluida') notificar('Clave', ev.pausa?.mensagem || t('O Claude terminou de responder.'));
   }
 
   // encerrada: a resposta acabou. O passo que ficou "fazendo" para de girar e a lista diz se sobrou passo aberto,
@@ -412,6 +412,7 @@ class TelaConversa {
       if (meta.erro && !turno.respostas.some((r) => r.papel === 'assistant')) {
         filhos.push(nota(meta.erro, 'erro', el('button', { class: 'botao pequeno', type: 'button', texto: t('Tentar de novo'), onclick: () => this.regenerar(turno.usuario.id) })));
       }
+      if (meta.pausa && !turno.respostas.length) filhos.push(nota(meta.pausa.mensagem));
       if (meta.recusa && !turno.respostas.length) filhos.push(nota(t('O Claude recusou este pedido pelas regras de segurança da Anthropic. Reformule ou tente outro modelo.')));
     });
     if (!turnos.length) filhos.push(el('div', { class: 'vazio', texto: t('Conversa vazia.') }));
@@ -488,8 +489,15 @@ class TelaConversa {
       const meta = r.meta || {};
       if (meta.recusa) notas.push(nota(t('O Claude recusou parte deste pedido pelas regras de segurança da Anthropic.')));
       if (meta.respondido_por) notas.push(nota(t('Respondido pelo {modelo}, porque o modelo escolhido recusou o pedido.', { modelo: modeloInfo(meta.respondido_por).nome }), 'info'));
-      if (meta.stop === 'max_tokens') notas.push(nota(t('A resposta chegou ao tamanho máximo e foi cortada. Mande "continue".')));
+      if (meta.stop === 'max_tokens' && !meta.pausa) notas.push(nota(t('A resposta chegou ao tamanho máximo e foi cortada. Mande "continue".')));
     }
+    // por que a resposta acabou antes do fim (teto da tarefa, voltas demais, erro no meio de uma tarefa): o aviso fica
+    // guardado na última mensagem do turno, senão some quando a conversa é redesenhada e parece que parou do nada
+    const fimMeta = turno.respostas[turno.respostas.length - 1]?.meta || {};
+    const continuar = ultimo ? el('button', { class: 'botao pequeno', type: 'button', texto: t('Continuar'),
+      onclick: (e) => { e.currentTarget.disabled = true; this.enviar('continue', [], this.comp.opcoes()); } }) : null;
+    if (fimMeta.pausa) notas.push(nota(fimMeta.pausa.mensagem, '', continuar));
+    else if (fimMeta.erro) notas.push(nota(fimMeta.erro, 'erro', continuar));
     const nomeModelo = ultima?.modelo ? modeloInfo(ultima.modelo).nome : '';
     const acoes = el('div', { class: 'acoes-msg' },
       primeira ? this.navVersoes(primeira.irmaos, primeira.id) : null,

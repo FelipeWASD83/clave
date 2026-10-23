@@ -45,6 +45,7 @@
   "Resposta interrompida.": "Response stopped.",
   "O Claude terminou de responder.": "Claude finished responding.",
   "Tentar de novo": "Try again",
+  "Continuar": "Continue",
   "O Claude recusou este pedido pelas regras de segurança da Anthropic. Reformule ou tente outro modelo.": "Claude declined this request under Anthropic's safety rules. Rephrase it or try another model.",
   "Conversa vazia.": "Empty chat.",
   "Editar e reenviar": "Edit and resend",

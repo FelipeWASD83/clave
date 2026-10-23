@@ -2,6 +2,16 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 5.0.1 (2026-10-23)
+
+**Fixed**
+
+- **Long Code tasks no longer stop "out of nowhere".** When a reply stopped before the end (the per-task cap, too
+  many rounds in a row, a reply that was too long, a full conversation or an error in the middle of the work), the
+  notice showed for a moment and vanished as soon as the reply ended, and Windows still said Claude had finished.
+  Now the reason stays written at the end of the reply, with a **Continue** button, and the Windows notification says
+  why it stopped.
+
 ## 5.0.0 (2026-10-15)
 
 Code mode becomes a workbench: your files, a real console, a browser you share with Claude and the work running in

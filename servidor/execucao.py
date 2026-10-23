@@ -450,7 +450,13 @@ class Execucao:
         pausas = 0
         extra_desligados: set = set()
         tentou_sem_pensamento = False
-        for _volta in range(MAX_VOLTAS):
+        voltas = MAX_VOLTAS
+        if modo == "code" and not etapa:  # quem usa escolhe em Configurações > Limite de gasto
+            try:
+                voltas = max(10, min(1000, int(cfg.get("max_voltas_code") or MAX_VOLTAS)))
+            except (TypeError, ValueError):
+                pass
+        for _volta in range(voltas):
             if self.parar.is_set():
                 break
             ok, motivo = orcamento.pode_gastar()
@@ -566,7 +572,11 @@ class Execucao:
                 continue
             return
         else:
-            self._pausar(t("Parei depois de muitas voltas seguidas. Mande \"continue\" se quiser que ele siga."), "voltas")
+            if modo == "code" and not etapa:
+                self._pausar(t("Parei depois de {n} ações seguidas neste envio. Mande \"continue\" para ele seguir, ou aumente o limite em Configurações > Limite de gasto.",
+                               n=voltas), "voltas")
+            else:
+                self._pausar(t("Parei depois de muitas voltas seguidas. Mande \"continue\" se quiser que ele siga."), "voltas")
 
     def _chamar(self, cli: anthropic.Anthropic, kw: dict):
         self.emitir({"tipo": "chamando", "modelo": kw["model"]})

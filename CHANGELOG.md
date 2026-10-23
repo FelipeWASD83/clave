@@ -2,6 +2,15 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 5.1.0 (2026-10-23)
+
+**New**
+
+- **You choose how many actions in a row Claude takes in Code mode.** Each action (reading a file, editing, running a
+  command) is one round trip to the API, and after 60 in a row in the same message it used to pause and ask for
+  "continue". Now the number is in Settings > Spending limit, from 10 to 1000 (the default is still 60). The pause
+  notice says how many it took and where to raise it.
+
 ## 5.0.1 (2026-10-23)
 
 **Fixed**

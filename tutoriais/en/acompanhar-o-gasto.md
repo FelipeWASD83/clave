@@ -45,6 +45,7 @@ The forecast looks at the pace of the last 14 days and tells you where the month
 | **Monthly cap** | Settings > Spending limit | the amount chosen the first time you opened Clave | warnings at 50%, 80% and 95%; at the cap, it stops answering until the month resets, or just warns you |
 | **Day the month resets** | Settings > Spending limit | day 1 | use the day your credit renews (from 1 to 28) |
 | **Per-task cap in Code mode** | Settings > Spending limit | $2 | pauses the task; you send "continue" to keep going |
+| **Actions in a row in Code mode** | Settings > Spending limit | 60 | after this many actions (read, edit, run a command) in one message, it pauses; you send "continue" or click Continue |
 | **Cap per run** | in each routine's form | | the run stops when it reaches it |
 | **Workflow cap** | on the workflow card, before it runs | | the workflow stops if the total goes past it |
 | **Limit in the Anthropic Console** | a workspace with a spending limit, and a key from that workspace | | a limit that not even Clave can get past |

@@ -357,7 +357,7 @@ def r_chave_apagar(h: Manipulador):
 
 
 CAMPOS_NUMERICOS = {"teto_mensal_usd": (0, 100000), "dia_virada": (1, 28), "teto_tarefa_code_usd": (0, 10000),
-                    "compactar_em": (50000, 900000), "tamanho_letra": (12, 24)}
+                    "compactar_em": (50000, 900000), "tamanho_letra": (12, 24), "max_voltas_code": (10, 1000)}
 
 
 @rota("POST", "/api/config")
@@ -378,7 +378,7 @@ def r_config(h: Manipulador):
                 raise Erro(400, t("Valor inválido em {campo}.", campo=k))
             lo, hi = CAMPOS_NUMERICOS[k]
             v = max(lo, min(hi, v))
-            if k in ("dia_virada", "compactar_em", "tamanho_letra"):
+            if k in ("dia_virada", "compactar_em", "tamanho_letra", "max_voltas_code"):
                 v = int(v)
         if k == "idioma" and v not in config.IDIOMAS:
             raise Erro(400, t("Valor inválido em {campo}.", campo=k))

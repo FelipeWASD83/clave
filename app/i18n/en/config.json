@@ -113,6 +113,8 @@
   "Só avisar e continuar": "Just warn and keep going",
   "Teto por tarefa no modo Code (US$)": "Per-task cap in Code mode (USD)",
   "Uma tarefa longa no Code pausa ao gastar isso, e você decide se continua. 0 = sem teto.": "A long task in Code pauses after spending this much, and you decide whether to continue. 0 = no cap.",
+  "Ações seguidas no modo Code": "Actions in a row in Code mode",
+  "Quantas ações (ler, editar, rodar um comando) o Claude faz num envio antes de pausar e pedir \"continue\". De 10 a 1000.": "How many actions (read, edit, run a command) Claude takes in one message before pausing and asking for \"continue\". From 10 to 1000.",
   "Para ter uma trava que nem o Clave consegue passar, crie no Console da Anthropic um workspace com limite de gasto e use uma chave dele.": "For a limit that not even Clave can get past, create a workspace with a spending limit in the Anthropic Console and use a key from it.",
   "No modo Code o Claude trabalha numa pasta do seu computador: lê, cria e edita arquivos e roda comandos.": "In Code mode, Claude works in a folder on your computer: it reads, creates and edits files and runs commands.",
   "Permissão padrão": "Default permission",

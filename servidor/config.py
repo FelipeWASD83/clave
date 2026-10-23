@@ -102,6 +102,7 @@ PADRAO = {
     "dia_virada": 1,
     "ao_atingir": "bloquear",
     "teto_tarefa_code_usd": 2.0,
+    "max_voltas_code": 60,  # chamadas à API seguidas num envio do Code antes de pausar e pedir "continue"
     "ajustes": {},
     "alertas_vistos": {},
     # modo Code

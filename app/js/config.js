@@ -340,6 +340,7 @@ const SECOES = {
           campo(t('Dia em que o mês vira'), texto('dia_virada', { tipo: 'number' }), t('De 1 a 28. Use o dia em que seu crédito renova.'))),
         campo(t('Quando chegar no teto'), selecao('ao_atingir', [['bloquear', t('Parar de responder até o mês virar')], ['avisar', t('Só avisar e continuar')]])),
         campo(t('Teto por tarefa no modo Code (US$)'), texto('teto_tarefa_code_usd', { tipo: 'number' }), t('Uma tarefa longa no Code pausa ao gastar isso, e você decide se continua. 0 = sem teto.')),
+        campo(t('Ações seguidas no modo Code'), texto('max_voltas_code', { tipo: 'number' }), t('Quantas ações (ler, editar, rodar um comando) o Claude faz num envio antes de pausar e pedir "continue". De 10 a 1000.')),
         el('p', { class: 'ajuda', texto: t('Para ter uma trava que nem o Clave consegue passar, crie no Console da Anthropic um workspace com limite de gasto e use uma chave dele.') })));
   },
 

@@ -10,6 +10,7 @@
   "A resposta chegou ao tamanho máximo e foi cortada. Mande \"continue\" para ele seguir.": "The reply reached the maximum length and was cut off. Send \"continue\" for Claude to go on.",
   "A conversa encheu a memória do modelo. Comece uma conversa nova (ou ligue a compactação nas configurações).": "The conversation filled the model's memory. Start a new conversation (or turn on compaction in the settings).",
   "Parei depois de muitas voltas seguidas. Mande \"continue\" se quiser que ele siga.": "Stopped after too many rounds in a row. Send \"continue\" if you want Claude to keep going.",
+  "Parei depois de {n} ações seguidas neste envio. Mande \"continue\" para ele seguir, ou aumente o limite em Configurações > Limite de gasto.": "Stopped after {n} actions in a row in this message. Send \"continue\" for Claude to go on, or raise the limit in Settings > Spending limit.",
   "A API pausou a resposta muitas vezes seguidas. Mande \"continue\" para ele seguir.": "The API paused the reply too many times in a row. Send \"continue\" for Claude to go on.",
   "[resposta interrompida]": "[reply interrupted]",
   "Interrompido por quem usa antes de rodar.": "Interrupted by the user before running.",

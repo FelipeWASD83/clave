@@ -2,6 +2,15 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 5.1.0 (23/10/2026)
+
+**Novo**
+
+- **Você escolhe quantas ações seguidas o Claude faz no modo Code.** Cada ação (ler um arquivo, editar, rodar um
+  comando) é uma ida e volta com a API, e depois de 60 seguidas num mesmo envio ele pausava e pedia "continue". Agora
+  o número fica em Configurações > Limite de gasto, de 10 a 1000 (o padrão continua 60). O aviso de pausa diz quantas
+  foram e onde aumentar.
+
 ## 5.0.1 (23/10/2026)
 
 **Corrigido**

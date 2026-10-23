@@ -45,6 +45,7 @@ A projeção olha o ritmo dos últimos 14 dias e diz quanto o mês deve fechar e
 | **Teto por mês** | Configurações > Limite de gasto | o valor escolhido na primeira vez que você abriu o Clave | avisos em 50%, 80% e 95%; no teto, para de responder até o mês virar, ou só avisa |
 | **Dia em que o mês vira** | Configurações > Limite de gasto | dia 1 | use o dia em que o seu crédito renova (de 1 a 28) |
 | **Teto por tarefa no modo Code** | Configurações > Limite de gasto | US$ 2 | pausa a tarefa; você manda "continue" para seguir |
+| **Ações seguidas no modo Code** | Configurações > Limite de gasto | 60 | depois desse número de ações (ler, editar, rodar um comando) num envio, pausa; você manda "continue" ou clica em Continuar |
 | **Teto por rodada** | no formulário de cada rotina | | a rodada para ao chegar nele |
 | **Teto do fluxo** | no cartão do fluxo, antes de rodar | | o fluxo para se a soma passar dele |
 | **Limite no Console da Anthropic** | um workspace com limite de gasto, e uma chave desse workspace | | uma trava que nem o Clave consegue passar |

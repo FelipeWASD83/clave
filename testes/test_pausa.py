@@ -44,6 +44,36 @@ class TestPausaFicaGuardada(unittest.TestCase):
         self.assertEqual(guardada["meta"]["pausa"]["motivo"], "teto_tarefa")
         self.assertTrue(any(e["tipo"] == "aviso" for e in ex.eventos))
 
+    def test_limite_de_acoes_vem_da_configuracao(self):
+        class Bloco:
+            def __init__(self, i):
+                self.i = i
+
+            def model_dump(self, **_):
+                return {"type": "tool_use", "id": f"t{self.i}", "name": "ler_arquivo", "input": {"caminho": "x"}}
+
+        class Final:
+            def __init__(self, i):
+                self.content, self.usage, self.model, self.stop_reason = [Bloco(i)], None, "claude-haiku-5-5", "tool_use"
+
+        antes = config.carregar().get("max_voltas_code")
+        config.salvar({"max_voltas_code": 12})
+        try:
+            cid = banco.criar_conversa(modo="code", pasta=self.pasta, titulo="teste")["id"]
+            banco.adicionar_mensagem(cid, None, "user", [{"type": "text", "text": "faz algo longo"}])
+            ex = execucao.Execucao(cid, {"sem_conselheiro": True, "modelo": "claude-haiku-5-5"})
+            chamadas = []
+            ex._chamar = lambda cli, kw: chamadas.append(1) or Final(len(chamadas))
+            ex._ferramentas = lambda usos, cfg, modo: [
+                {"type": "tool_result", "tool_use_id": u["id"], "content": "ok"} for u in usos]
+            ex.rodar()
+        finally:
+            config.salvar({"max_voltas_code": antes})
+        self.assertEqual(len(chamadas), 12)
+        pausa = ex.eventos[-1]["pausa"]
+        self.assertEqual(pausa["motivo"], "voltas")
+        self.assertIn("12 ações", pausa["mensagem"])
+
     def test_resposta_normal_nao_tem_pausa(self):
         cid = banco.criar_conversa(modo="code", pasta=self.pasta, titulo="teste")["id"]
         banco.adicionar_mensagem(cid, None, "user", [{"type": "text", "text": "oi"}])

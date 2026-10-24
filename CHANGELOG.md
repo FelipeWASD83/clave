@@ -2,6 +2,16 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 5.2.2 (2026-10-23)
+
+**Fixed**
+
+- **A conversation no longer gets stuck when it has many large images.** The API only accepts images up to 2000 px
+  on a side once a request carries more than 20 images (screenshots and frames Claude read earlier count), and it
+  refuses the whole request otherwise, on every message after that. Now Claude's file reads shrink any image above
+  2000 px first, and when a conversation goes past 20 images, old images above that size are swapped for a short text
+  note instead of breaking it. Conversations already stuck start working again.
+
 ## 5.2.1 (2026-10-23)
 
 **Fixed**

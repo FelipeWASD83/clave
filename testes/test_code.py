@@ -13,6 +13,17 @@ import execucao
 from ferramentas import code as fc
 
 
+def _png(largura: int, altura: int) -> bytes:
+    import struct
+    import zlib
+
+    def bloco(tipo, dados):
+        return struct.pack(">I", len(dados)) + tipo + dados + struct.pack(">I", zlib.crc32(tipo + dados))
+    linhas = b"".join(b"\x00" + b"\x80" * largura for _ in range(altura))
+    return (b"\x89PNG\r\n\x1a\n" + bloco(b"IHDR", struct.pack(">IIBBBBB", largura, altura, 8, 0, 0, 0, 0))
+            + bloco(b"IDAT", zlib.compress(linhas)) + bloco(b"IEND", b""))
+
+
 def contexto(raiz: Path) -> fc.Contexto:
     eventos = []
     ctx = fc.Contexto(raiz=raiz.resolve(), protegidos=[".env", "*.key", "segredos/**", ".git/**"],
@@ -208,6 +219,41 @@ class TestFerramentas(unittest.TestCase):
         self.assertEqual(c[2]["source"]["media_type"], "image/png")
         self.assertEqual(c[3]["type"], "text")
         self.assertEqual(antes[0]["content"][1]["source"]["media_type"], "image/png", "não pode mexer no guardado")
+    def test_muitas_imagens_tiram_as_maiores_que_2000_px(self):
+        import base64
+        grande, pequena = base64.b64encode(_png(3500, 40)).decode(), base64.b64encode(_png(800, 40)).decode()
+
+        def img(d):
+            return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": d}}
+        resultado = {"type": "tool_result", "tool_use_id": "x", "content": [img(grande)] + [img(pequena)] * 19}
+        poucas = [{"role": "user", "content": [resultado]}]
+        self.assertEqual(anexos.limitar_imagens_grandes(poucas), poucas, "até 20 imagens a API aceita até 8000 px")
+        muitas = [{"role": "user", "content": [resultado, img(pequena), img(pequena)]}]
+        saida = anexos.limitar_imagens_grandes(muitas)
+        c = saida[0]["content"][0]["content"]
+        self.assertEqual(c[0]["type"], "text")
+        self.assertIn("3500 x 40", c[0]["text"])
+        self.assertTrue(all(b["type"] == "image" for b in c[1:]))
+        self.assertEqual(muitas[0]["content"][0]["content"][0]["type"], "image", "não pode mexer no guardado")
+
+    def test_dimensoes_de_cada_formato(self):
+        import struct
+        self.assertEqual(anexos.dimensoes(_png(3500, 7)), (3500, 7))
+        self.assertEqual(anexos.dimensoes(b"GIF89a" + struct.pack("<HH", 640, 480) + b"\x00" * 8), (640, 480))
+        jpeg = (b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+                + b"\xff\xdb\x00\x05\x00\x00\x00" + b"\xff\xc0\x00\x11\x08" + struct.pack(">HH", 1200, 4000) + b"\x03" * 10)
+        self.assertEqual(anexos.dimensoes(jpeg), (4000, 1200))
+        webp = b"RIFF\x00\x00\x00\x00WEBPVP8X\x0a\x00\x00\x00\x00\x00\x00\x00" + (2999).to_bytes(3, "little") + (99).to_bytes(3, "little")
+        self.assertEqual(anexos.dimensoes(webp), (3000, 100))
+        self.assertIsNone(anexos.dimensoes(b"nao e imagem"))
+
+    @unittest.skipUnless(sys.platform == "win32", "usa o System.Drawing do Windows")
+    def test_ler_imagem_enorme_reduz_para_2000(self):
+        (self.pasta / "larga.png").write_bytes(_png(3400, 1400))
+        r = fc.executar("ler_arquivo", {"caminho": "larga.png"}, self.ctx)
+        import base64
+        d = anexos.dimensoes(base64.b64decode(r[1]["source"]["data"]))
+        self.assertEqual(d, (2000, 823))
     def test_skill_desconhecida(self):
         with self.assertRaises(fc.ErroFerramenta):
             fc.executar("usar_skill", {"nome": "nao-existe"}, self.ctx)

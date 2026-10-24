@@ -2,6 +2,16 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 5.2.2 (23/10/2026)
+
+**Corrigido**
+
+- **A conversa não trava mais quando tem muitas imagens grandes.** A API só aceita imagem de até 2000 px de lado
+  quando o pedido tem mais de 20 imagens (prints e quadros que o Claude leu antes contam), e senão recusa o pedido
+  inteiro, em toda mensagem seguinte. Agora a leitura de arquivo do Claude reduz antes qualquer imagem acima de
+  2000 px, e quando a conversa passa de 20 imagens, as antigas acima desse tamanho viram um aviso curto de texto em vez
+  de quebrar tudo. Conversas que já estavam travadas voltam a funcionar.
+
 ## 5.2.1 (23/10/2026)
 
 **Corrigido**

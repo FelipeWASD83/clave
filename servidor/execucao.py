@@ -1113,7 +1113,7 @@ def _para_api(conv: dict, caminho: list[dict]) -> list[dict]:
                 base = conteudo if isinstance(conteudo, list) else [{"type": "text", "text": conteudo}]
                 conteudo = list(contexto) + base
         msgs.append({"role": m["papel"], "content": anexos.expandir_conteudo(conteudo)})
-    return msgs
+    return anexos.limitar_imagens_grandes(msgs)
 
 
 def _mensagem_api(e: anthropic.APIStatusError) -> str:

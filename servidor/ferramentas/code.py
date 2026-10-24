@@ -517,7 +517,7 @@ def _f_ler_arquivo(e, ctx: Contexto):
         raise ErroFerramenta(t("Arquivo não encontrado: {caminho}", caminho=p))
     ext = p.suffix.lower()
     if ext in IMAGENS:
-        dados = p.read_bytes()
+        dados = anexos.reduzir_imagem(p.read_bytes())  # acima de 2000 px a API recusa o pedido quando há muitas imagens
         if len(dados) > 5 * 1024 * 1024:
             raise ErroFerramenta(t("Imagem maior que 5 MB; reduza antes (por exemplo, com um script Python)."))
         tipo = anexos.tipo_imagem(dados)

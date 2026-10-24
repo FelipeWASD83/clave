@@ -188,6 +188,134 @@ def corrigir_imagens(blocos):
     return saida
 
 
+# A API só aceita imagem de até 8000 px, e de até 2000 px quando o pedido tem mais de 20 imagens (as de resultados de
+# ferramenta e as de turnos antigos contam). Passou disso, ela recusa o pedido inteiro, em toda mensagem seguinte.
+MUITAS_IMAGENS = 20
+LADO_MAXIMO_COM_MUITAS = 2000
+
+
+def dimensoes(dados: bytes) -> tuple[int, int] | None:
+    """(largura, altura) de PNG, JPEG, GIF ou WebP lidas do cabeçalho; None se não deu para saber."""
+    try:
+        if dados[:8] == b"\x89PNG\r\n\x1a\n":
+            return int.from_bytes(dados[16:20], "big"), int.from_bytes(dados[20:24], "big")
+        if dados[:6] in (b"GIF87a", b"GIF89a"):
+            return int.from_bytes(dados[6:8], "little"), int.from_bytes(dados[8:10], "little")
+        if dados[:4] == b"RIFF" and dados[8:12] == b"WEBP":
+            tipo = dados[12:16]
+            if tipo == b"VP8X":
+                return 1 + int.from_bytes(dados[24:27], "little"), 1 + int.from_bytes(dados[27:30], "little")
+            if tipo == b"VP8L":
+                bits = int.from_bytes(dados[21:25], "little")
+                return 1 + (bits & 0x3FFF), 1 + ((bits >> 14) & 0x3FFF)
+            if tipo == b"VP8 ":
+                return int.from_bytes(dados[26:28], "little") & 0x3FFF, int.from_bytes(dados[28:30], "little") & 0x3FFF
+        if dados[:3] == b"\xff\xd8\xff":
+            i = 2
+            while i + 9 < len(dados):
+                if dados[i] != 0xFF:
+                    i += 1
+                    continue
+                marca = dados[i + 1]
+                if marca in (0xD8, 0x01) or 0xD0 <= marca <= 0xD7 or marca == 0xFF:
+                    i += 1 if marca == 0xFF else 2
+                    continue
+                tam = int.from_bytes(dados[i + 2:i + 4], "big")
+                if 0xC0 <= marca <= 0xCF and marca not in (0xC4, 0xC8, 0xCC):
+                    return int.from_bytes(dados[i + 7:i + 9], "big"), int.from_bytes(dados[i + 5:i + 7], "big")
+                i += 2 + tam
+    except (IndexError, ValueError):
+        pass
+    return None
+
+
+def _dimensoes_do_base64(dados_b64: str) -> tuple[int, int] | None:
+    for pedaco in (400_000, len(dados_b64)):  # o JPEG guarda o tamanho depois de blocos que podem ser grandes
+        trecho = dados_b64[:pedaco]
+        try:
+            d = dimensoes(base64.b64decode(trecho[:len(trecho) // 4 * 4]))
+        except ValueError:
+            return None
+        if d:
+            return d
+        if pedaco >= len(dados_b64):
+            break
+    return None
+
+
+def _contar_imagens(blocos) -> int:
+    n = 0
+    for b in blocos if isinstance(blocos, list) else []:
+        if isinstance(b, dict):
+            if b.get("type") == "image":
+                n += 1
+            elif b.get("type") == "tool_result":
+                n += _contar_imagens(b.get("content"))
+    return n
+
+
+def _tirar_grandes(blocos):
+    saida = []
+    for b in blocos:
+        if isinstance(b, dict) and b.get("type") == "image" and isinstance(b.get("source"), dict) \
+                and b["source"].get("type") == "base64":
+            d = _dimensoes_do_base64(str(b["source"].get("data") or ""))
+            if d is None or max(d) > LADO_MAXIMO_COM_MUITAS:
+                tam = f"{d[0]} x {d[1]}" if d else "?"
+                saida.append({"type": "text", "text": t("[Imagem antiga de {tamanho} px tirada daqui: a API só aceita imagem de até {limite} px quando a conversa tem mais de {n} imagens. Se precisar dela, leia o arquivo de novo.]",
+                                                         tamanho=tam, limite=LADO_MAXIMO_COM_MUITAS, n=MUITAS_IMAGENS)})
+            else:
+                saida.append(b)
+        elif isinstance(b, dict) and b.get("type") == "tool_result" and isinstance(b.get("content"), list):
+            saida.append({**b, "content": _tirar_grandes(b["content"])})
+        else:
+            saida.append(b)
+    return saida
+
+
+def limitar_imagens_grandes(mensagens: list[dict]) -> list[dict]:
+    """Com mais de 20 imagens no pedido, troca por um aviso de texto as que passam de 2000 px de lado.
+
+    Só olha o tamanho quando passa de 20 imagens; o que foi guardado não é mexido (devolve cópias)."""
+    if sum(_contar_imagens(m.get("content")) for m in mensagens) <= MUITAS_IMAGENS:
+        return mensagens
+    return [{**m, "content": _tirar_grandes(m["content"])} if isinstance(m.get("content"), list) else m
+            for m in mensagens]
+
+
+def reduzir_imagem(dados: bytes, lado: int = LADO_MAXIMO_COM_MUITAS) -> bytes:
+    """Imagem com lado maior que `lado` volta menor (mesmo formato, PNG para GIF), pelo System.Drawing do Windows.
+
+    Se não der para reduzir (sem Windows, WebP, arquivo estranho), devolve os bytes como vieram."""
+    import subprocess
+    import tempfile
+    d = dimensoes(dados)
+    tipo = tipo_imagem(dados)
+    if not d or max(d) <= lado or tipo in (None, "image/webp"):
+        return dados
+    jpeg = tipo == "image/jpeg"
+    with tempfile.TemporaryDirectory() as tmp:
+        entrada, saida = Path(tmp) / "entrada", Path(tmp) / "saida"
+        entrada.write_bytes(dados)
+        def q(x):
+            return "'" + str(x).replace("'", "''") + "'"
+        roteiro = (
+            "Add-Type -AssemblyName System.Drawing;"
+            f"$i=[System.Drawing.Image]::FromFile({q(entrada)});$e=[Math]::Min(1.0,{int(lado)}/[Math]::Max($i.Width,$i.Height));"
+            "$w=[int][Math]::Max(1,[Math]::Floor($i.Width*$e));$h=[int][Math]::Max(1,[Math]::Floor($i.Height*$e));"
+            "$b=New-Object System.Drawing.Bitmap $w,$h;$g=[System.Drawing.Graphics]::FromImage($b);"
+            "$g.InterpolationMode='HighQualityBicubic';$g.DrawImage($i,0,0,$w,$h);"
+            f"$b.Save({q(saida)},[System.Drawing.Imaging.ImageFormat]::{'Jpeg' if jpeg else 'Png'});"
+            "$g.Dispose();$b.Dispose();$i.Dispose()")
+        try:
+            r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", roteiro],
+                               capture_output=True, timeout=40, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            novo = saida.read_bytes() if r.returncode == 0 and saida.is_file() else b""
+        except (OSError, subprocess.SubprocessError):
+            return dados
+    return novo if novo and len(novo) <= 5 * 1024 * 1024 and tipo_imagem(novo) else dados
+
+
 def expandir_conteudo(conteudo) -> list | str:
     if isinstance(conteudo, str):
         return conteudo

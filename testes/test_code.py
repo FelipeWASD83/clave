@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest import mock
 
 import base  # noqa: F401
+import anexos
 import banco
 import execucao
 from ferramentas import code as fc
@@ -182,6 +183,31 @@ class TestFerramentas(unittest.TestCase):
         lento = fc.executar("rodar_comando", {"comando": "Start-Sleep -Seconds 30", "descricao": "espera", "tempo_limite_s": 5}, self.ctx)
         self.assertIn("tempo limite", lento)
 
+    def test_imagem_com_extensao_errada_vai_com_o_tipo_de_verdade(self):
+        jpeg = b"\xff\xd8\xff\xe0" + b"\x00" * 40
+        (self.pasta / "foto.png").write_bytes(jpeg)  # JPEG salvo como .png: a API recusava o pedido inteiro
+        r = fc.executar("ler_arquivo", {"caminho": "foto.png"}, self.ctx)
+        self.assertEqual(r[1]["source"]["media_type"], "image/jpeg")
+        (self.pasta / "falso.png").write_bytes(b"<svg xmlns='http://www.w3.org/2000/svg'/>")
+        with self.assertRaises(fc.ErroFerramenta):
+            fc.executar("ler_arquivo", {"caminho": "falso.png"}, self.ctx)
+
+    def test_historico_com_imagem_de_tipo_errado_e_corrigido_no_envio(self):
+        import base64
+        jpeg = base64.b64encode(b"\xff\xd8\xff\xe0" + b"\x00" * 40).decode()
+        png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x00" * 40).decode()
+        lixo = base64.b64encode(b"<svg/>").decode()
+        antes = [{"type": "tool_result", "tool_use_id": "x", "content": [
+            {"type": "text", "text": "Imagem"},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": jpeg}},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": png}},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": lixo}}]}]
+        depois = anexos.expandir_conteudo(antes)
+        c = depois[0]["content"]
+        self.assertEqual(c[1]["source"]["media_type"], "image/jpeg")
+        self.assertEqual(c[2]["source"]["media_type"], "image/png")
+        self.assertEqual(c[3]["type"], "text")
+        self.assertEqual(antes[0]["content"][1]["source"]["media_type"], "image/png", "não pode mexer no guardado")
     def test_skill_desconhecida(self):
         with self.assertRaises(fc.ErroFerramenta):
             fc.executar("usar_skill", {"nome": "nao-existe"}, self.ctx)

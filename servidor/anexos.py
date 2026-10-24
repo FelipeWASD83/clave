@@ -149,6 +149,45 @@ def expandir(bloco: dict) -> dict:
             "source": {"type": "text", "media_type": "text/plain", "data": texto or " "}}
 
 
+def tipo_imagem(dados: bytes) -> str | None:
+    """O tipo de verdade de uma imagem, lido dos primeiros bytes (a extensão do arquivo pode mentir)."""
+    tipo = tipo_de("", dados[:16])
+    return tipo if tipo in IMAGENS else None
+
+
+def _tipo_do_base64(dados_b64: str) -> str | None:
+    try:
+        return tipo_imagem(base64.b64decode(dados_b64[:24] + "=" * (-len(dados_b64[:24]) % 4)))
+    except (ValueError, TypeError):
+        return None
+
+
+def corrigir_imagens(blocos):
+    """Acerta o media_type de cada imagem pelo conteúdo, inclusive dentro de resultados de ferramenta.
+
+    A API recusa o pedido inteiro quando o tipo declarado não bate com a imagem (um JPEG salvo como .png, por
+    exemplo), e como a imagem fica no histórico o erro se repetia a cada mensagem. Imagem que não é imagem de
+    verdade vira um aviso de texto. Não mexe no que foi guardado: devolve cópias."""
+    if not isinstance(blocos, list):
+        return blocos
+    saida = []
+    for b in blocos:
+        if isinstance(b, dict) and b.get("type") == "image" and isinstance(b.get("source"), dict) \
+                and b["source"].get("type") == "base64":
+            tipo = _tipo_do_base64(str(b["source"].get("data") or ""))
+            if tipo is None:
+                saida.append({"type": "text", "text": t("[Uma imagem que a API não aceitaria foi tirada daqui.]")})
+            elif tipo != b["source"].get("media_type"):
+                saida.append({**b, "source": {**b["source"], "media_type": tipo}})
+            else:
+                saida.append(b)
+        elif isinstance(b, dict) and b.get("type") == "tool_result" and isinstance(b.get("content"), list):
+            saida.append({**b, "content": corrigir_imagens(b["content"])})
+        else:
+            saida.append(b)
+    return saida
+
+
 def expandir_conteudo(conteudo) -> list | str:
     if isinstance(conteudo, str):
         return conteudo
@@ -158,7 +197,7 @@ def expandir_conteudo(conteudo) -> list | str:
             saida.append(expandir(b))
         else:
             saida.append(b)
-    return saida
+    return corrigir_imagens(saida)
 
 
 def _planilha_como_texto(aid: str, reg: dict, dados: bytes) -> str:

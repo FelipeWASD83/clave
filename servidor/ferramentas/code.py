@@ -520,9 +520,12 @@ def _f_ler_arquivo(e, ctx: Contexto):
         dados = p.read_bytes()
         if len(dados) > 5 * 1024 * 1024:
             raise ErroFerramenta(t("Imagem maior que 5 MB; reduza antes (por exemplo, com um script Python)."))
+        tipo = anexos.tipo_imagem(dados)
+        if tipo is None:
+            raise ErroFerramenta(t("O arquivo {caminho} tem extensão de imagem, mas não é PNG, JPG, GIF nem WebP de verdade (pode ser SVG, BMP ou um arquivo corrompido). Converta antes, por exemplo com um script Python.", caminho=p))
         ctx.lidos.add(str(p))
         return [{"type": "text", "text": t("Imagem: {caminho}", caminho=p)},
-                {"type": "image", "source": {"type": "base64", "media_type": IMAGENS[ext],
+                {"type": "image", "source": {"type": "base64", "media_type": tipo,
                                              "data": base64.b64encode(dados).decode("ascii")}}]
     if ext == ".pdf":
         dados = p.read_bytes()

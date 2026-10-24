@@ -23,6 +23,7 @@
   "[... lista cortada em 400 itens ...]": "[... list cut at 400 items ...]",
   "(pasta vazia)": "(empty folder)",
   "Arquivo não encontrado: {caminho}": "File not found: {caminho}",
+  "O arquivo {caminho} tem extensão de imagem, mas não é PNG, JPG, GIF nem WebP de verdade (pode ser SVG, BMP ou um arquivo corrompido). Converta antes, por exemplo com um script Python.": "The file {caminho} has an image extension, but it is not really a PNG, JPG, GIF or WebP (it may be SVG, BMP or a corrupted file). Convert it first, for example with a Python script.",
   "Imagem maior que 5 MB; reduza antes (por exemplo, com um script Python).": "Image larger than 5 MB; shrink it first (for example, with a Python script).",
   "Imagem: {caminho}": "Image: {caminho}",
   "PDF maior que 30 MB.": "PDF larger than 30 MB.",

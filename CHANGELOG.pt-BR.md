@@ -2,6 +2,16 @@
 
 [English](CHANGELOG.md) · **Português**
 
+## 5.2.1 (23/10/2026)
+
+**Corrigido**
+
+- **A conversa não trava mais por causa de uma imagem salva com a extensão errada.** Quando o Claude lia um JPEG
+  chamado `.png` (ou o contrário), o Clave dizia o tipo errado para a API, que recusava o pedido inteiro, e como a
+  imagem ficava no histórico o erro voltava a cada mensagem. Agora o tipo é lido da própria imagem, tanto na leitura do
+  arquivo quanto no envio do histórico, então conversas que já estavam travadas voltam a funcionar. Arquivo que só
+  parece imagem (um SVG chamado `.png`, por exemplo) é recusado com uma mensagem clara em vez de quebrar a conversa.
+
 ## 5.2.0 (23/10/2026)
 
 **Mudou**

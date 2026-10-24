@@ -2,6 +2,17 @@
 
 **English** · [Português](CHANGELOG.pt-BR.md)
 
+## 5.2.1 (2026-10-23)
+
+**Fixed**
+
+- **A conversation no longer gets stuck on an image saved with the wrong extension.** When Claude read a JPEG named
+  `.png` (or the reverse), Clave told the API the wrong type, the API refused the whole request, and since the image
+  stayed in the history the error came back on every message. Now the type is read from the image itself, both when
+  Claude reads the file and when the history is sent, so conversations already stuck start working again. A file that
+  only looks like an image (an SVG named `.png`, for example) is refused with a clear message instead of breaking the
+  conversation.
+
 ## 5.2.0 (2026-10-23)
 
 **Changed**
